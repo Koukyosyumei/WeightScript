@@ -1,33 +1,155 @@
-"""Independent dense decoder adapters for Llama and Qwen2 (default RoPE only)."""
+"""Independent full-sequence dense rotary decoder execution (no native forward)."""
 
-import copy
 import math
 
 import torch
 import torch.nn.functional as F
 from transformers.activations import ACT2FN
 
-SUPPORTED = {"llama", "qwen2"}
+CAPABILITIES = {
+    "llama": {
+        "class": "LlamaForCausalLM",
+        "rope": {"default", "linear", "dynamic", "llama3"},
+    },
+    "qwen2": {
+        "class": "Qwen2ForCausalLM",
+        "rope": {"default", "linear", "dynamic", "llama3"},
+    },
+    "mistral": {
+        "class": "MistralForCausalLM",
+        "rope": {"default", "linear", "dynamic", "llama3"},
+    },
+}
+SUPPORTED = set(CAPABILITIES)
 
 
 def validate(model):
     c = model.config
-    if c.model_type not in SUPPORTED:
-        raise ValueError("unsupported decoder architecture")
-    if getattr(c, "rope_scaling", None) not in (None, {}):
-        raise ValueError("scaled/dynamic RoPE needs a separate adapter")
-    if getattr(c, "use_sliding_window", False) or getattr(c, "sliding_window", None):
-        # Llama config normally has no window; Qwen2 may store a window while disabled.
-        if c.model_type != "qwen2" or getattr(c, "use_sliding_window", False):
-            raise ValueError("sliding-window attention is unsupported")
+    capability = CAPABILITIES.get(c.model_type)
+    if capability is None:
+        raise ValueError(
+            f"unsupported decoder architecture: {c.model_type}; no semantic adapter"
+        )
+    if type(model).__name__ != capability["class"]:
+        raise ValueError("custom decoder subclasses are unsupported")
+    scaling = getattr(c, "rope_scaling", None) or {}
+    if not isinstance(scaling, dict):
+        raise ValueError("RoPE scaling must be an object")
+    kind = scaling.get("rope_type", scaling.get("type", "default"))
+    if kind not in capability["rope"]:
+        raise ValueError(f"unsupported RoPE variant: {kind}")
+
+    def positive(value):
+        return type(value) in (int, float) and math.isfinite(value) and value > 0
+
+    if not positive(c.rope_theta) or (
+        kind != "default" and not positive(scaling.get("factor"))
+    ):
+        raise ValueError("invalid RoPE base or factor")
+    if kind == "llama3" and (
+        not all(
+            positive(scaling.get(k))
+            for k in (
+                "original_max_position_embeddings",
+                "low_freq_factor",
+                "high_freq_factor",
+            )
+        )
+        or scaling["low_freq_factor"] >= scaling["high_freq_factor"]
+    ):
+        raise ValueError("invalid llama3 RoPE frequency bounds")
+    if c.hidden_act not in ACT2FN:
+        raise ValueError("unsupported decoder activation")
     if getattr(c, "partial_rotary_factor", 1.0) != 1.0:
         raise ValueError("partial rotary dimensions unsupported")
-    if model.training or any(
-        p.dtype != torch.float32 or p.device.type != "cpu" for p in model.parameters()
+    dim = getattr(c, "head_dim", None) or c.hidden_size // c.num_attention_heads
+    if (
+        dim <= 0
+        or dim % 2
+        or c.num_key_value_heads <= 0
+        or c.num_attention_heads % c.num_key_value_heads
     ):
-        raise ValueError("adapter requires eval-mode float32 CPU model")
-    if type(model).__name__ not in {"LlamaForCausalLM", "Qwen2ForCausalLM"}:
-        raise ValueError("custom decoder subclasses are unsupported")
+        raise ValueError("invalid rotary or grouped-query dimensions")
+    if kind == "dynamic" and dim <= 2:
+        raise ValueError("dynamic RoPE requires head dimension greater than two")
+    params = list(model.parameters())
+    if (
+        model.training
+        or not params
+        or any(
+            p.dtype not in {torch.float32, torch.float16, torch.bfloat16}
+            or p.device.type not in {"cpu", "cuda"}
+            or p.device != params[0].device
+            or p.dtype != params[0].dtype
+            for p in params
+        )
+    ):
+        raise ValueError(
+            "adapter requires eval-mode homogeneous floating CPU/CUDA weights"
+        )
+    if getattr(model, "is_quantized", False):
+        raise ValueError("quantized weights are unsupported")
+    layers = getattr(c, "layer_types", None)
+    if layers is not None and (
+        len(layers) != c.num_hidden_layers
+        or any(t not in {"full_attention", "sliding_attention"} for t in layers)
+    ):
+        raise ValueError("unsupported attention layer types")
+    if (
+        layers
+        and "sliding_attention" in layers
+        and not getattr(c, "sliding_window", None)
+    ):
+        raise ValueError("sliding attention requires a positive window")
+    window = getattr(c, "sliding_window", None)
+    if c.model_type == "llama" and (
+        window is not None or (layers and "sliding_attention" in layers)
+    ):
+        raise ValueError("Llama native attention does not implement sliding windows")
+    if window is not None and (type(window) is not int or window <= 0):
+        raise ValueError("invalid sliding window")
+
+
+def rotary(c, length, dim, device, dtype):
+    """Compute rotary frequencies independently of Transformers model helpers."""
+    scaling = getattr(c, "rope_scaling", None) or {}
+    kind = scaling.get("rope_type", scaling.get("type", "default"))
+    base = c.rope_theta
+    if kind == "dynamic" and length > c.max_position_embeddings:
+        factor = scaling["factor"]
+        base *= (factor * length / c.max_position_embeddings - (factor - 1)) ** (
+            dim / (dim - 2)
+        )
+    inv = 1.0 / (
+        base ** (torch.arange(0, dim, 2, device=device, dtype=torch.float32) / dim)
+    )
+    if kind == "linear":
+        inv /= scaling["factor"]
+    elif kind == "llama3":
+        wavelength = 2 * math.pi / inv
+        original = scaling["original_max_position_embeddings"]
+        low, high = scaling["low_freq_factor"], scaling["high_freq_factor"]
+        smooth = (original / wavelength - low) / (high - low)
+        interpolated = (1 - smooth) * inv / scaling["factor"] + smooth * inv
+        inv = torch.where(
+            wavelength > original / low,
+            inv / scaling["factor"],
+            torch.where(wavelength < original / high, inv, interpolated),
+        )
+    angles = (
+        torch.arange(length, device=device, dtype=torch.float32)[:, None] * inv[None, :]
+    )
+    angles = torch.cat((angles, angles), -1)
+    return angles.cos().to(dtype)[None, None], angles.sin().to(dtype)[None, None]
+
+
+def layer_window(c, index):
+    types = getattr(c, "layer_types", None)
+    if types:
+        return c.sliding_window if types[index] == "sliding_attention" else None
+    if c.model_type == "mistral" or getattr(c, "use_sliding_window", False):
+        return getattr(c, "sliding_window", None)
+    return None
 
 
 def extract(model):
@@ -38,7 +160,13 @@ def extract(model):
     return {
         "format": f"weightscript-{c.model_type}-v1",
         "base_sha256": fingerprint(model),
-        "semantics": "float32 causal inference; RMSNorm; default RoPE; GQA; no KV cache",
+        "semantics": (
+            "float32 causal inference; RMSNorm; default RoPE; GQA; no KV cache"
+            if next(model.parameters()).dtype == torch.float32
+            and not getattr(c, "rope_scaling", None)
+            and not any(layer_window(c, i) for i in range(c.num_hidden_layers))
+            else "causal inference; float32-accumulating RMSNorm/softmax; configured RoPE/windows; GQA; no KV cache"
+        ),
         "blocks": [
             {
                 "layer": i,
@@ -70,6 +198,8 @@ def extract(model):
 
 def validate_program(model, program):
     base = extract(model)
+    if not isinstance(program, dict):
+        raise ValueError("program must be an object")
     if set(program) != set(base) or any(
         program[k] != base[k] for k in base if k != "edits"
     ):
@@ -77,6 +207,8 @@ def validate_program(model, program):
     if not isinstance(program["edits"], list):
         raise ValueError("edits must be a list")
     for e in program["edits"]:
+        if not isinstance(e, dict):
+            raise ValueError("each edit must be an object")
         op = e.get("op")
         fields = {"op", "layer"}
         if op in {"head_scale", "attention_scale"}:
@@ -101,18 +233,23 @@ def validate_program(model, program):
         if "neurons" in e and (
             not isinstance(e["neurons"], list)
             or not e["neurons"]
-            or len(set(e["neurons"])) != len(e["neurons"])
             or any(
                 type(n) is not int or not 0 <= n < model.config.intermediate_size
                 for n in e["neurons"]
             )
+            or len(set(e["neurons"])) != len(e["neurons"])
         ):
             raise ValueError("invalid neuron indices")
         f = e.get("factor", e.get("strength"))
         if type(f) not in (int, float) or not math.isfinite(f) or abs(f) > 1e4:
             raise ValueError("invalid factor")
         if op == "remove_direction":
-            d = torch.tensor(e["direction"], dtype=torch.float32)
+            values = e["direction"]
+            if not isinstance(values, list) or any(
+                type(v) not in (int, float) for v in values
+            ):
+                raise ValueError("invalid residual direction")
+            d = torch.tensor(values, dtype=torch.float32)
             if (
                 d.shape != (model.config.hidden_size,)
                 or not torch.isfinite(d).all()
@@ -128,9 +265,11 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
         validate_program(model, program)
     c = model.config
     if (
-        ids.ndim != 2
+        not isinstance(ids, torch.Tensor)
+        or ids.dtype not in {torch.int32, torch.int64}
+        or ids.device != next(model.parameters()).device
+        or ids.ndim != 2
         or not ids.numel()
-        or ids.shape[1] > c.max_position_embeddings
         or ids.min() < 0
         or ids.max() >= c.vocab_size
     ):
@@ -138,26 +277,25 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
     w = model.state_dict()
     x = F.embedding(ids, w["model.embed_tokens.weight"])
     length = ids.shape[1]
-    head_dim = getattr(c, "head_dim", c.hidden_size // c.num_attention_heads)
-    positions = torch.arange(length, dtype=torch.float32)
-    inv = 1.0 / (
-        c.rope_theta ** (torch.arange(0, head_dim, 2, dtype=torch.float32) / head_dim)
-    )
-    frequencies = positions[:, None] * inv[None, :]
-    rotary = torch.cat((frequencies, frequencies), -1)
-    cos = rotary.cos()[None, None]
-    sin = rotary.sin()[None, None]
+    head_dim = getattr(c, "head_dim", None) or c.hidden_size // c.num_attention_heads
+    cos, sin = rotary(c, length, head_dim, x.device, x.dtype)
+    if attention_mask is not None and (
+        not isinstance(attention_mask, torch.Tensor)
+        or attention_mask.shape != ids.shape
+        or attention_mask.device != ids.device
+        or not ((attention_mask == 0) | (attention_mask == 1)).all()
+    ):
+        raise ValueError("attention mask must be binary and match tokens/device")
 
     def rotate(z):
         first, second = z.chunk(2, -1)
         return torch.cat((-second, first), -1)
 
     def norm(z, prefix):
-        return (
-            z
-            * torch.rsqrt(z.pow(2).mean(-1, keepdim=True) + c.rms_norm_eps)
-            * w[prefix + ".weight"]
+        normalized = z.float() * torch.rsqrt(
+            z.float().pow(2).mean(-1, keepdim=True) + c.rms_norm_eps
         )
+        return normalized.to(z.dtype) * w[prefix + ".weight"]
 
     def linear(z, prefix, weight=None):
         return F.linear(
@@ -166,7 +304,7 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
             w.get(prefix + ".bias"),
         )
 
-    causal = torch.ones(length, length, dtype=torch.bool).tril()
+    causal = torch.ones(length, length, dtype=torch.bool, device=x.device).tril()
     traces = []
     for block in program["blocks"]:
         i = block["layer"]
@@ -190,12 +328,15 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
         k = k.repeat_interleave(repeat, 1)
         v = v.repeat_interleave(repeat, 1)
         scores = q @ k.transpose(-1, -2) / math.sqrt(head_dim)
-        scores = torch.where(causal, scores, torch.finfo(scores.dtype).min)
+        allowed = causal
+        window = layer_window(c, i)
+        if window:
+            positions = torch.arange(length, device=x.device)
+            allowed = allowed & (positions[:, None] - positions[None, :] < window)
         if attention_mask is not None:
-            scores += (
-                1 - attention_mask[:, None, None, :].to(scores.dtype)
-            ) * torch.finfo(scores.dtype).min
-        attention = scores.softmax(-1)
+            allowed = allowed[None, None] & attention_mask[:, None, None, :].bool()
+        scores = torch.where(allowed, scores, torch.finfo(scores.dtype).min)
+        attention = scores.softmax(-1, dtype=torch.float32).to(q.dtype)
         out = attention @ v
         for e in edits:
             if e["op"] == "head_scale":
@@ -205,13 +346,17 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
         )
         z = norm(x, block["norms"][1])
         hidden = ACT2FN[m["op"]](linear(z, m["gate"])) * linear(z, m["up"])
-        effective = w[m["write"] + ".weight"].clone()
+        effective = w[m["write"] + ".weight"]
+        if any(e["op"] in {"neuron_scale", "remove_direction"} for e in edits):
+            effective = effective.clone()
         for e in edits:
             if e["op"] == "neuron_scale":
                 effective[:, e["neurons"]] *= e["factor"]
             elif e["op"] == "remove_direction":
-                d = effective.new_tensor(e["direction"])
-                d /= d.norm()
+                d = torch.tensor(
+                    e["direction"], device=effective.device, dtype=torch.float32
+                )
+                d = (d / d.norm()).to(effective.dtype)
                 columns = effective[:, e["neurons"]]
                 effective[:, e["neurons"]] = (
                     columns - e["strength"] * d[:, None] * (d @ columns)[None, :]
@@ -231,11 +376,28 @@ def forward(model, program, ids, attention_mask=None, capture=False, validated=F
 
 
 @torch.no_grad()
-def compile(model, program):
+def compile(model, program, *, share_untouched=False):
     validate_program(model, program)
-    result = copy.deepcopy(model).eval()
+    from .raw import isolated_copy
+
+    touched = []
+    for edit in program["edits"]:
+        prefix = f"model.layers.{edit['layer']}."
+        suffix = {
+            "head_scale": "self_attn.o_proj",
+            "attention_scale": "self_attn.q_proj",
+            "neuron_scale": "mlp.down_proj",
+            "remove_direction": "mlp.down_proj",
+        }[edit["op"]]
+        touched.append(prefix + suffix + ".weight")
+        if (
+            edit["op"] == "attention_scale"
+            and prefix + suffix + ".bias" in model.state_dict()
+        ):
+            touched.append(prefix + suffix + ".bias")
+    result = isolated_copy(model, touched, share_untouched)
     c = model.config
-    dim = getattr(c, "head_dim", c.hidden_size // c.num_attention_heads)
+    dim = getattr(c, "head_dim", None) or c.hidden_size // c.num_attention_heads
     for e in program["edits"]:
         b = result.model.layers[e["layer"]]
         op = e["op"]
@@ -252,8 +414,8 @@ def compile(model, program):
             b.mlp.down_proj.weight[:, e["neurons"]] *= e["factor"]
         elif op == "remove_direction":
             w = b.mlp.down_proj.weight
-            d = w.new_tensor(e["direction"])
-            d /= d.norm()
+            d = torch.tensor(e["direction"], device=w.device, dtype=torch.float32)
+            d = (d / d.norm()).to(w.dtype)
             cols = w[:, e["neurons"]]
             w[:, e["neurons"]] = cols - e["strength"] * d[:, None] * (d @ cols)[None, :]
     if any(not torch.isfinite(p).all() for p in result.parameters()):

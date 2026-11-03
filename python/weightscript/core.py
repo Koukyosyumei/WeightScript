@@ -15,30 +15,36 @@ import torch.nn.functional as F
 from transformers import AutoModelForCausalLM
 from transformers.activations import ACT2FN
 
+from .adapters import SUPPORTED
 
-def load_model(source):
+
+def load_model(source, *, device="cpu", dtype=torch.float32):
     model = (
         AutoModelForCausalLM.from_pretrained(
             source,
             attn_implementation="eager",
-            torch_dtype=torch.float32,
+            torch_dtype=dtype,
             trust_remote_code=False,
         )
-        .cpu()
+        .to(device)
         .eval()
     )
-    if any(p.dtype != torch.float32 for p in model.parameters()):
-        raise ValueError("expected float32 checkpoint")
+    if any(p.dtype != dtype for p in model.parameters()):
+        raise ValueError("checkpoint does not match requested floating dtype")
     return model
 
 
 def validate_model(model):
     c = model.config
-    if c.model_type in {"llama", "qwen2"}:
+    if c.model_type in SUPPORTED:
         from .adapters import validate
 
         return validate(model)
-    if c.model_type != "gpt2" or type(model).__name__ != "GPT2LMHeadModel":
+    if c.model_type != "gpt2":
+        raise ValueError(
+            f"unsupported decoder architecture: {c.model_type}; no semantic adapter"
+        )
+    if type(model).__name__ != "GPT2LMHeadModel":
         raise ValueError(
             "this adapter supports standard GPT2LMHeadModel checkpoints only"
         )
@@ -92,12 +98,20 @@ def fingerprint(model):
     for name, tensor in sorted(model.state_dict().items()):
         h.update(name.encode())
         h.update(str(tuple(tensor.shape)).encode())
-        h.update(tensor.detach().cpu().contiguous().numpy().tobytes())
+        h.update(
+            tensor.detach()
+            .cpu()
+            .contiguous()
+            .reshape(-1)
+            .view(torch.uint8)
+            .numpy()
+            .tobytes()
+        )
     return h.hexdigest()
 
 
 def extract(model):
-    if model.config.model_type in {"llama", "qwen2"}:
+    if model.config.model_type in SUPPORTED:
         from .adapters import extract as adapter_extract
 
         return adapter_extract(model)
@@ -133,7 +147,7 @@ def extract(model):
 
 
 def validate_program(model, program):
-    if model.config.model_type in {"llama", "qwen2"}:
+    if model.config.model_type in SUPPORTED:
         from .adapters import validate_program as adapter_validate
 
         return adapter_validate(model, program)
@@ -208,7 +222,7 @@ def direction(edit, reference):
 def program_forward(
     model, program, input_ids, attention_mask=None, capture=False, validated=False
 ):
-    if model.config.model_type in {"llama", "qwen2"}:
+    if model.config.model_type in SUPPORTED:
         from .adapters import forward
 
         return forward(model, program, input_ids, attention_mask, capture, validated)
@@ -315,13 +329,27 @@ def program_forward(
 
 
 @torch.no_grad()
-def compile_edits(model, program):
-    if model.config.model_type in {"llama", "qwen2"}:
+def compile_edits(model, program, *, share_untouched=False):
+    if model.config.model_type in SUPPORTED:
         from .adapters import compile as adapter_compile
 
-        return adapter_compile(model, program)
+        return adapter_compile(model, program, share_untouched=share_untouched)
     validate_program(model, program)
-    updated = copy.deepcopy(model).eval()
+    from .raw import isolated_copy
+
+    touched = []
+    for edit in program["edits"]:
+        prefix = f"transformer.h.{edit['layer']}."
+        suffix = {
+            "head_scale": "attn.c_proj",
+            "attention_scale": "attn.c_attn",
+            "neuron_scale": "mlp.c_proj",
+            "remove_direction": "mlp.c_proj",
+        }[edit["op"]]
+        touched.append(prefix + suffix + ".weight")
+        if edit["op"] == "attention_scale":
+            touched.append(prefix + suffix + ".bias")
+    updated = isolated_copy(model, touched, share_untouched)
     c = model.config
     for edit in program["edits"]:
         block = updated.transformer.h[edit["layer"]]
