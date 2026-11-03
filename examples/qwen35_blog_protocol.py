@@ -165,6 +165,50 @@ def _last_boxed(text: str):
     return None
 
 
+# mathqa.loop_signals. The last word is dropped because a token cap usually
+# stops inside a word. repetitive_end follows the docstring of that function.
+# The mcqa.loop_signals helper it calls is not in the public exp8 release.
+# The blog cut share is finish_reason "length" at 32,768 tokens, not these flags.
+_LOOP_MAX_PERIOD = 200
+_LOOP_MIN_REPEATS = 3
+_LOOP_MIN_SPAN = 40
+
+
+def loop_signals(text: str) -> dict:
+    words = text.split()
+    trimmed = words[:-1]
+    count = len(trimmed)
+    verbatim = False
+    for period in range(1, _LOOP_MAX_PERIOD + 1):
+        repeats = max(_LOOP_MIN_REPEATS, -(-_LOOP_MIN_SPAN // period))
+        if repeats * period > count:
+            break
+        block = trimmed[count - period :]
+        if all(
+            trimmed[count - (offset + 1) * period : count - offset * period] == block
+            for offset in range(1, repeats)
+        ):
+            verbatim = True
+            break
+    window = words[-200:]
+    positions = len(window) - 3
+    repetitive = False
+    if positions > 0:
+        counts: dict[tuple[str, ...], int] = {}
+        grams = []
+        for index in range(positions):
+            gram = tuple(window[index : index + 4])
+            grams.append(gram)
+            counts[gram] = counts.get(gram, 0) + 1
+        hot = sum(1 for gram in grams if counts[gram] >= 3)
+        repetitive = hot * 2 >= positions
+    return {
+        "verbatim_loop_end": verbatim,
+        "repetitive_end": repetitive,
+        "words": len(words),
+    }
+
+
 def _grade(text: str, gold: str) -> dict:
     pred = _last_boxed(text)
     correct = False
@@ -319,6 +363,7 @@ def generate_smoke(args) -> dict:
         new_ids = output[0, inputs["input_ids"].shape[1] :]
         text = tokenizer.decode(new_ids, skip_special_tokens=False)
         graded = _grade(text, problem["answer"])
+        signals = loop_signals(text)
         hit_cap = (
             int(new_ids.shape[0]) >= args.max_new_tokens
             and int(new_ids[-1]) != tokenizer.eos_token_id
@@ -331,12 +376,16 @@ def generate_smoke(args) -> dict:
             if elapsed
             else None,
             "hit_length_cap": bool(hit_cap),
+            "verbatim_loop_end": signals["verbatim_loop_end"],
+            "repetitive_end": signals["repetitive_end"],
+            "words": signals["words"],
             "text": text,
             **graded,
         }
         print(
             f"{label}: {row['new_tokens']} tokens in {row['seconds']}s "
-            f"cap={row['hit_length_cap']} boxed={row['pred']!r}",
+            f"cap={row['hit_length_cap']} boxed={row['pred']!r} "
+            f"verbatim_loop={row['verbatim_loop_end']} repetitive={row['repetitive_end']}",
             flush=True,
         )
         return row
@@ -367,6 +416,11 @@ def generate_smoke(args) -> dict:
         "published_math500_samples": 4,
         "published_math500_problems": 500,
         "edit_applied": edit,
+        "loop_metrics": (
+            "verbatim_loop_end matches mathqa.loop_signals, which drops the last word. "
+            "repetitive_end follows that docstring; mcqa.loop_signals is not in the public release. "
+            "The blog cut share counts finish_reason length at 32768 tokens."
+        ),
         "samples": samples,
     }
 

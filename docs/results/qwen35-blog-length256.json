@@ -1,0 +1,349 @@
+{
+ "status": "not_reproduced",
+ "kind": "published_edit_bitexact_and_bounded_smoke",
+ "model_id": "Qwen/Qwen3.5-0.8B",
+ "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+ "isolated_transformers": "5.17.0",
+ "product_transformers_unchanged": "4.57.1",
+ "published_scores_not_rerun": {
+  "source": "exp8_math/eval/*/merged.json",
+  "unedited_math500_acc": 0.079,
+  "unedited_math500_cut_share": 0.93,
+  "unedited_gsm8k_acc": 0.13836239575435935,
+  "p10c_math500_acc": 0.1235,
+  "p25c_math500_acc": 0.141,
+  "p50c_math500_acc": 0.481,
+  "p50c_gsm8k_acc": 0.6709628506444276,
+  "p50c_math500_cut_share": 0.3305
+ },
+ "edits": {
+  "seconds": 2.974,
+  "runs": {
+   "p10c": {
+    "tensors": 30,
+    "changed_entries_total": 72986982,
+    "bit_exact": true,
+    "tensors_detail": [
+     {
+      "name": "model.language_model.layers.10.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1838146,
+      "base_sha256": "588e20883705d942ccab8d166e35f6d4969b4da0992af5dc84bcb8b6070fa26d",
+      "edited_sha256": "42518e5689cf34e470176fac7d53a693c4712b846b23b5da100addb8ae977369"
+     },
+     {
+      "name": "model.language_model.layers.10.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3207668,
+      "base_sha256": "e32e37cffba5b41c4939ad74507e10dea14db631b6fef69c16b1a37dd3dc9b12",
+      "edited_sha256": "179278297ec7da49c6cc45c0760e65ffe153c24530062f767a07b85f7f80b08b"
+     },
+     {
+      "name": "model.language_model.layers.11.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3199525,
+      "base_sha256": "5120ba8e1da3aeb89ddcf924f2c5e5108fdfe63fb072a4f270dd3508c7e24e3f",
+      "edited_sha256": "fc382248e229a485cacc36ac8208b37ebf5ac21f4249dbce4cd33504e6ad2cd0"
+     },
+     {
+      "name": "model.language_model.layers.11.self_attn.o_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1854441,
+      "base_sha256": "fd07e3e0b48deb3d36314fb39863cc30739c0d0cd9575da79bc26f562ba2762e",
+      "edited_sha256": "5f88ed8a9ac543a07fd46265fb06d45a87dcc3ecc876b0db4091573ebcdc3608"
+     },
+     {
+      "name": "model.language_model.layers.12.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1806630,
+      "base_sha256": "7fd66cf843f4ded4175804494f9ed9ed91375bf224d99a209789bb762c7e19ed",
+      "edited_sha256": "412fb7925fbeb7c8328933d276b5ce7d1414dc9aeb9d37b4e8a78a64f3bdce78"
+     },
+     {
+      "name": "model.language_model.layers.12.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3126907,
+      "base_sha256": "2d5f2fef40eb81eddb32ab0ca8e4e53e5578c53f335cdd6b54d9d62051b0759e",
+      "edited_sha256": "4168a74f7301990474a539f5fd4bac9a7ade6470290053337d2bafb6cec402d5"
+     },
+     {
+      "name": "model.language_model.layers.13.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1821858,
+      "base_sha256": "ed7cb4978176a6fadd07c3fd9d90fb6ab0ac125021e198d8f4dce00fa7169c3b",
+      "edited_sha256": "bcdf1505130e992b1d50a9a464e28643adc05b2f8e61c2d57be0d931b30b9a5e"
+     },
+     {
+      "name": "model.language_model.layers.13.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3143337,
+      "base_sha256": "a903cbbf112b0c17b53cc7c89faed3df7fa718ec5f0a148ab474b6a75a064210",
+      "edited_sha256": "7eaba2bbe427901be735e043308db551382cf653af186539d501060b0d012dec"
+     },
+     {
+      "name": "model.language_model.layers.14.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1786208,
+      "base_sha256": "4104c25ec4cce12ad592be6a296c4cc0275e2e8f4b00521f49bb03187d8a83c0",
+      "edited_sha256": "4bdfbbe480f77a49bc2ff5bd436ec5d58ab5dcc5c28415014872ce1fe6f79668"
+     },
+     {
+      "name": "model.language_model.layers.14.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3077921,
+      "base_sha256": "96d8150df0567e3d748b0388e6a20781b0569388a4ffa2a34faa531c85642803",
+      "edited_sha256": "9abf1652e72d3251d617f2a8c778667eb74bfa9d7dbcfd1bbe84740843aa3172"
+     },
+     {
+      "name": "model.language_model.layers.15.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3036185,
+      "base_sha256": "ef60d2c687bab19464dca9c8bfd7777e46ad226df0c9e25643b0bab04b5a1cca",
+      "edited_sha256": "39bfa7519a77338844a856af8864e2c326710e519044c4f37888a1d7d3e41a3d"
+     },
+     {
+      "name": "model.language_model.layers.15.self_attn.o_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1778365,
+      "base_sha256": "2f5be1b0f59d3bf45a992e18c26b3658ce5112527ea570b00d05fe1a48140092",
+      "edited_sha256": "2341b059c744d197585e9b41d4c36fc7bd1dcb51b1d050086bc0e16a52bc1bde"
+     },
+     {
+      "name": "model.language_model.layers.16.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1752956,
+      "base_sha256": "726ecc2ab3ba05f84cbff821eca9425519c30aec5d7ab1cf3aceaea7af38722a",
+      "edited_sha256": "949eb36dfea70031c6d18838c9eff3c2169e29969b97f2983900d1ef6c9f6b79"
+     },
+     {
+      "name": "model.language_model.layers.16.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3003946,
+      "base_sha256": "e12df33b47e0bb61125b8fe421d0aba4a75e6bf0b07e1b233f79937b978356d0",
+      "edited_sha256": "8a6465b4d6aba2481df7b07643d50e0e06e5a38519c8083af99540e586bacc81"
+     },
+     {
+      "name": "model.language_model.layers.17.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1758590,
+      "base_sha256": "73a8878d3e33c44b82f667c38243a535b6a3ca73c3a5fcf8c7dde790d246744d",
+      "edited_sha256": "34dacc6d32aa7126b0f84aca1b1abdfa8626e47856c1594961b5f932dd5446a6"
+     },
+     {
+      "name": "model.language_model.layers.17.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3013386,
+      "base_sha256": "412058832c188e22c34c358c8e59601fbc9a945b7ac7fb8ed5b4712302b237a8",
+      "edited_sha256": "75e07dcdb1d557490980cdbeaf98ba844393ceeb1be30e6e6da59b43dd0645bc"
+     },
+     {
+      "name": "model.language_model.layers.18.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1711544,
+      "base_sha256": "45929a42f3c3e0b9ade395dfb3ac8acc5084dd010cd4045cd8f570629b19d1e3",
+      "edited_sha256": "21f61cb6f179bab597edbf10a087183e20564a11afd1ade8a09cc4442f774f50"
+     },
+     {
+      "name": "model.language_model.layers.18.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 2954165,
+      "base_sha256": "f41124d728ee26c54cd15b22cdd10138cbfe5a04c6e7fe514f53d86d4780d838",
+      "edited_sha256": "54e1eaebe9edc251eabd8b69e31604b3cc72b39b46ae5ddb3853b57ad268c432"
+     },
+     {
+      "name": "model.language_model.layers.19.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3043697,
+      "base_sha256": "638eedeb701b94aa861f4438e615c07ec6c60ee703db1bfee2de577bb6498c3e",
+      "edited_sha256": "c2cd3a4d4505d932137b3d0f3ae4225aa5adab221c257202739163f1ec8a2b28"
+     },
+     {
+      "name": "model.language_model.layers.19.self_attn.o_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1727860,
+      "base_sha256": "1cc073772f5471e681af8b4cd8b8ceedf2ede22b2e062949671cf0f17335e8bf",
+      "edited_sha256": "877694275071f1a2e6cad1e539b35cc3e0c077fda0a9993e61435ff4cf394cc9"
+     },
+     {
+      "name": "model.language_model.layers.20.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1758062,
+      "base_sha256": "15d1f278000fcab352ac74ed65c6dadd83dea32d95805681215e7531d8b5add5",
+      "edited_sha256": "bd681a8485732797d473f0df7faf7578a971b3617763ca8b281ffe889ec08e4b"
+     },
+     {
+      "name": "model.language_model.layers.20.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 2982508,
+      "base_sha256": "95321f2c16e168880266841a7ba2839bc0830079d02a052e0b109c19132b01db",
+      "edited_sha256": "a802b25ebceb11c2f6149c9bf41d46d435f512c8ff774607d419b0b66792a339"
+     },
+     {
+      "name": "model.language_model.layers.21.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1770315,
+      "base_sha256": "facb92f1502efd9987c3c2341f6934687f633ee6d99ea7b00d4e083236d54ec1",
+      "edited_sha256": "ed4425dc04ea4254f14b407ee266b050c097747ac36aa6f3e7bf9c73ded2bdac"
+     },
+     {
+      "name": "model.language_model.layers.21.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3061835,
+      "base_sha256": "af9fa5ecc9556068d867a410180e79bb3b5ac93c05059b8c98fef526c4483d9c",
+      "edited_sha256": "b9dbb08aea760132d7fc3c6f4534c1b82904e7f1abe313003b7acd99170923c0"
+     },
+     {
+      "name": "model.language_model.layers.22.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1795459,
+      "base_sha256": "0c0430dd7c274bf62f0b6144a8a39034695b0bc00090b66070e68b0327c6aa11",
+      "edited_sha256": "117f8095ab8ab8886a3aac1f9483c99e64e37cc15354eb76d5e63f9ad2b7d372"
+     },
+     {
+      "name": "model.language_model.layers.22.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3103784,
+      "base_sha256": "198e2fabef4ee48484d9c952018e465376acea23511f126b7edceef8a66f50a1",
+      "edited_sha256": "42d336dfc48eb2d51ab758c70c4893880fedb003cf40235baf19e634e6b40fef"
+     },
+     {
+      "name": "model.language_model.layers.8.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1769753,
+      "base_sha256": "f999552cfea17861edc5f5dd25b48f51e89fe3f12e3d7b27c482993d61f773b9",
+      "edited_sha256": "ee351ef752258869e6e5f98493b528acb35ee03314926cfc248d8fc8e8c17ec9"
+     },
+     {
+      "name": "model.language_model.layers.8.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3069682,
+      "base_sha256": "05fb318d3507148575b60805a4d34ccaba09aab41705d75a33fe101a78ff841c",
+      "edited_sha256": "d4c827e6fcf6489d5da6fd4a1bd4ac18e791a8cf47b6f506a6d1aeaab846bb04"
+     },
+     {
+      "name": "model.language_model.layers.9.linear_attn.out_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 1844797,
+      "base_sha256": "253571bd7bcb82ae7d6c3db2a5ba0ea44b62deb54d2dbc5cd43672c4081691ca",
+      "edited_sha256": "cb860208e6858420c6e9b705d2e11e35f3050aa3c96564beaa995fb68b3b924a"
+     },
+     {
+      "name": "model.language_model.layers.9.mlp.down_proj.weight",
+      "form": "lowrank",
+      "changed_entries": 3187452,
+      "base_sha256": "09751bd4c7ef156fd8c5cf4e3be0d6250c7cccc14cf30883fbb28d213fec6132",
+      "edited_sha256": "33b68a87cb7d82624b34075ded1cf1e40b66afab08e92d5c92cb50b4fe9eee2b"
+     }
+    ]
+   },
+   "p25c": {
+    "tensors": 1,
+    "changed_entries_total": 262144,
+    "bit_exact": true,
+    "tensors_detail": [
+     {
+      "name": "model.language_model.layers.15.self_attn.o_proj.weight",
+      "form": "sparse",
+      "changed_entries": 262144,
+      "base_sha256": "2f5be1b0f59d3bf45a992e18c26b3658ce5112527ea570b00d05fe1a48140092",
+      "edited_sha256": "3ece11f84f90d983f9a5e47e4c4c26906b4d7b8aa0e6f3ff56308033ba4e3caf"
+     }
+    ]
+   },
+   "p50c": {
+    "tensors": 2,
+    "changed_entries_total": 130188,
+    "bit_exact": true,
+    "tensors_detail": [
+     {
+      "name": "model.language_model.layers.15.mlp.down_proj.weight",
+      "form": "sparse",
+      "changed_entries": 65260,
+      "base_sha256": "ef60d2c687bab19464dca9c8bfd7777e46ad226df0c9e25643b0bab04b5a1cca",
+      "edited_sha256": "82e2d733ea64feaeb4af93a1e065641d3df98b494a8b7576ef2f52e90fe2ee53"
+     },
+     {
+      "name": "model.language_model.layers.19.mlp.down_proj.weight",
+      "form": "sparse",
+      "changed_entries": 64928,
+      "base_sha256": "638eedeb701b94aa861f4438e615c07ec6c60ee703db1bfee2de577bb6498c3e",
+      "edited_sha256": "8ef3c61bc36af113ad58e89dbb0a4a14dcba5a45cb750c15ab515c82ddd12eb2"
+     }
+    ]
+   }
+  }
+ },
+ "smoke": {
+  "load_seconds": 1.685,
+  "architecture": "Qwen3_5ForCausalLM",
+  "parameters": 752393024,
+  "dtype": "bfloat16",
+  "device": "cpu",
+  "kernel_fallback": [
+   "causal_conv1d",
+   "flash-linear-attention"
+  ],
+  "problem_id": "test/precalculus/807.json",
+  "subject": "Precalculus",
+  "level": 2,
+  "gold": "\\left( 3, \\frac{\\pi}{2} \\right)",
+  "prompt_tokens": 73,
+  "max_new_tokens": 256,
+  "protocol_max_new_tokens": 32768,
+  "samples_per_problem": 1,
+  "problems": 1,
+  "published_math500_samples": 4,
+  "published_math500_problems": 500,
+  "edit_applied": {
+   "run": "p50c",
+   "changed_entries": 130188,
+   "tensors": 2
+  },
+  "loop_metrics": "verbatim_loop_end matches mathqa.loop_signals, which drops the last word. repetitive_end follows that docstring; mcqa.loop_signals is not in the public release. The blog cut share counts finish_reason length at 32768 tokens.",
+  "samples": [
+   {
+    "label": "untouched",
+    "new_tokens": 256,
+    "seconds": 347.106,
+    "tokens_per_second": 0.7375,
+    "hit_length_cap": true,
+    "verbatim_loop_end": false,
+    "repetitive_end": false,
+    "words": 110,
+    "text": "Here's my thought process for converting the point $(0,3)$ to polar coordinates:\n\n1.  **Analyze the Request:**\n    *   **Input:** A rectangular coordinate point $P(0, 3)$.\n    *   **Goal:** Convert it to polar coordinates.\n    *   **Output Format:** $(r, \\theta)$ with specific constraints: $r > 0$, $0 \\le \\theta < 2\\pi$.\n    *   **Constraint Check:** The point given is $(0, 3)$. In Cartesian notation $(x, y)$, this means $x=0$ and $y=3$. This point lies on the positive $y$-axis.\n\n2.  **Recall Polar Coordinates Formulas:**\n    *   Rectangular form: $x = r \\cos(\\theta)$, $y = r \\sin(\\theta)$.\n    *   Relationship between Cartesian and Polar:\n        *   $\\tan(\\theta) = \\frac{y}{x}$\n        *   $\\sin(\\theta) = \\frac{y}{r}$\n        *   $\\cos(\\theta) = \\frac{x}{r}$\n    *   Since the",
+    "pred": null,
+    "correct": false,
+    "grader": "no closed boxed answer; math-verify was not called",
+    "grader_error": null,
+    "saw_end_think": false
+   },
+   {
+    "label": "p50c",
+    "new_tokens": 256,
+    "seconds": 322.677,
+    "tokens_per_second": 0.7934,
+    "hit_length_cap": true,
+    "verbatim_loop_end": false,
+    "repetitive_end": false,
+    "words": 135,
+    "text": "Here's my thought process for converting the point $(0,3)$ to polar coordinates:\n\n1.  **Analyze the Request:**\n    *   **Input:** A rectangular coordinate point $P(0, 3)$.\n        *   Here, the first component is usually $x$ and the second is $y$. However, in standard math notation, $(x,y)$ or $(r, \\theta)$ implies Cartesian coordinates where $r = \\sqrt{x^2+y^2}$ and $\\tan(\\theta) = y/x$.\n        *   Let's check the notation used in the prompt: \"Convert the point $(0,3)$\".\n        *   Standard convention: In a pair of numbers representing a point, like $(x_1, x_2)$, it's often $x$-coordinate then $y$-coordinate. Sometimes it's $y$-then $x$, but here the order is $(0,3)$. If this represents a vector or position vector in Cartesian space, the first number is usually $x$ (horizontal) and the second is $y$ (vertical). Wait, let me double-check.\n            *   Usually, Cartesian points are written as $(x,y)",
+    "pred": null,
+    "correct": false,
+    "grader": "no closed boxed answer; math-verify was not called",
+    "grader_error": null,
+    "saw_end_think": false
+   }
+  ]
+ },
+ "smoke_error": null,
+ "deviations": [
+  "The product runtime stays on transformers 4.57.1 and still fails closed for qwen3_5. Loading used an isolated transformers 5.17.0.",
+  "Generation, when run, uses Hugging Face on CPU. The published evaluator uses vLLM.",
+  "transformers 5.17.0 has no presence_penalty generation argument. The smoke subtracts 1.5 from a logit when that token already occurred in the generated span, which is vLLM's output-token presence penalty, and then applies temperature, top-k, and top-p.",
+  "The smoke length cap is not 32768, and the smoke is one problem and one sample. It is not the 500-problem four-sample MATH-500 score or the 93 percent unedited cut rate.",
+  "No frontier editor ran. Astra was gpt-6-astra through Codex. A Grok editor was not called. The direct edit, when applied, is the published diff.",
+  "The public checkpoint is multimodal. The smoke loads the published text config (qwen3_5_text, Qwen3_5ForCausalLM) and does not load the vision tower. Edit tensor names in the file remain model.language_model.*.",
+  "The harness driver, forward-pass server, and practice activations are not in the public logs. The prompts that were sent, the edit diffs, the score files, and the evaluation code are.",
+  "causal_conv1d and flash-linear-attention are not installed. Transformers used its reference PyTorch kernels for the convolution and gated delta rule."
+ ]
+}
