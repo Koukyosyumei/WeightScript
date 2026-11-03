@@ -1,0 +1,136 @@
+{
+ "blog_table_blockers": [
+  "dataset was a local JSONL, not the published Hugging Face split",
+  "scored set is a prefix, not the full loaded split",
+  "row count is not the published full split",
+  "sampling or sample count deviates from the published protocol",
+  "engine is not declared as vllm",
+  "edited:dataset was a local JSONL, not the published Hugging Face split",
+  "edited:scored set is a prefix, not the full loaded split",
+  "edited:row count is not the published full split",
+  "edited:sampling or sample count deviates from the published protocol",
+  "edited:engine is not declared as vllm"
+ ],
+ "blog_table_settings": false,
+ "checkpoint_fingerprints_match": false,
+ "comparable": true,
+ "complete": true,
+ "delta_acc": 0.0,
+ "edited": {
+  "acc": 0.0,
+  "acc_equiv": 0.0,
+  "acc_lenient": 0.0,
+  "arm": "edited",
+  "checkpoint_fingerprint": "2b517d82493620f03ae9dd79792119819a4c53e69ed4b44d4f7c87a3c5489ae8",
+  "checkpoint_id": "p50c",
+  "complete": true,
+  "completed_ids": [
+   "test/precalculus/807.json"
+  ],
+  "cut_share": 1.0,
+  "dataset": "math500",
+  "deviations": [
+   "samples=1 is below the published 4",
+   "max_new_tokens=512 is below the published 32768"
+  ],
+  "grader": {
+   "article_version": "0.9.0",
+   "available": true,
+   "primary": "math-verify",
+   "secondary": "hendrycks_is_equiv",
+   "version": "0.9.0",
+   "version_matches_article": true
+  },
+  "headline": "acc",
+  "headline_value": 0.0,
+  "mean_tokens": 512.0,
+  "metrics_are_article_grader": true,
+  "n_configured": 1,
+  "n_problems": 1,
+  "no_answer_finished_share": 0.0,
+  "protocol": "think35",
+  "repetitive_end_share": 0.0,
+  "samples": 1,
+  "source_model": "Qwen/Qwen3.5-0.8B",
+  "source_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "spent_walltime_s": 377.44405416899826,
+  "split": "test",
+  "stopped_reason": "completed",
+  "verbatim_loop_end_share": 0.0
+ },
+ "incomparable_because": [],
+ "notes": [
+  "cut_share is the blog hit-token-limit column (finish_reason == length).",
+  "verbatim_loop_end is mathqa.loop_signals. repetitive_end follows that docstring; mcqa.loop_signals is not public.",
+  "acc_equiv is Hendrycks is_equiv, not the article accuracy.",
+  "Engine, dtype, and the vLLM constructor seed are caller-declared and are not observed.",
+  "Dataset revision pinning is not in the published loader.",
+  "The 13-word practice filter is not applied.",
+  "This run did not pin a dataset revision."
+ ],
+ "per_example": [
+  {
+   "edited_correct": [
+    false
+   ],
+   "edited_cut": [
+    true
+   ],
+   "edited_equiv": [
+    false
+   ],
+   "id": "test/precalculus/807.json",
+   "untouched_correct": [
+    false
+   ],
+   "untouched_cut": [
+    true
+   ],
+   "untouched_equiv": [
+    false
+   ]
+  }
+ ],
+ "untouched": {
+  "acc": 0.0,
+  "acc_equiv": 0.0,
+  "acc_lenient": 0.0,
+  "arm": "untouched",
+  "checkpoint_fingerprint": "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696",
+  "checkpoint_id": "untouched",
+  "complete": true,
+  "completed_ids": [
+   "test/precalculus/807.json"
+  ],
+  "cut_share": 1.0,
+  "dataset": "math500",
+  "deviations": [
+   "samples=1 is below the published 4",
+   "max_new_tokens=512 is below the published 32768"
+  ],
+  "grader": {
+   "article_version": "0.9.0",
+   "available": true,
+   "primary": "math-verify",
+   "secondary": "hendrycks_is_equiv",
+   "version": "0.9.0",
+   "version_matches_article": true
+  },
+  "headline": "acc",
+  "headline_value": 0.0,
+  "mean_tokens": 512.0,
+  "metrics_are_article_grader": true,
+  "n_configured": 1,
+  "n_problems": 1,
+  "no_answer_finished_share": 0.0,
+  "protocol": "think35",
+  "repetitive_end_share": 0.0,
+  "samples": 1,
+  "source_model": "Qwen/Qwen3.5-0.8B",
+  "source_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "spent_walltime_s": 380.20554227499815,
+  "split": "test",
+  "stopped_reason": "completed",
+  "verbatim_loop_end_share": 0.0
+ }
+}

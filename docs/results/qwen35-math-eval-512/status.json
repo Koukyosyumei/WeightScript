@@ -1,0 +1,133 @@
+{
+ "blog_table_blockers": [
+  "dataset was a local JSONL, not the published Hugging Face split",
+  "scored set is a prefix, not the full loaded split",
+  "row count is not the published full split",
+  "sampling or sample count deviates from the published protocol",
+  "engine is not declared as vllm",
+  "edited:dataset was a local JSONL, not the published Hugging Face split",
+  "edited:scored set is a prefix, not the full loaded split",
+  "edited:row count is not the published full split",
+  "edited:sampling or sample count deviates from the published protocol",
+  "edited:engine is not declared as vllm"
+ ],
+ "blog_table_settings": false,
+ "comparable": true,
+ "complete": true,
+ "dataset": "math500",
+ "edit_applied": {
+  "changed_entries": 130188,
+  "run": "p50c",
+  "tensors": 2
+ },
+ "edited_summary": {
+  "acc": 0.0,
+  "acc_equiv": 0.0,
+  "acc_lenient": 0.0,
+  "arm": "edited",
+  "checkpoint_fingerprint": "2b517d82493620f03ae9dd79792119819a4c53e69ed4b44d4f7c87a3c5489ae8",
+  "checkpoint_id": "p50c",
+  "complete": true,
+  "completed_ids": [
+   "test/precalculus/807.json"
+  ],
+  "cut_share": 1.0,
+  "dataset": "math500",
+  "deviations": [
+   "samples=1 is below the published 4",
+   "max_new_tokens=512 is below the published 32768"
+  ],
+  "grader": {
+   "article_version": "0.9.0",
+   "available": true,
+   "primary": "math-verify",
+   "secondary": "hendrycks_is_equiv",
+   "version": "0.9.0",
+   "version_matches_article": true
+  },
+  "headline": "acc",
+  "headline_value": 0.0,
+  "mean_tokens": 512.0,
+  "metrics_are_article_grader": true,
+  "n_configured": 1,
+  "n_problems": 1,
+  "no_answer_finished_share": 0.0,
+  "protocol": "think35",
+  "repetitive_end_share": 0.0,
+  "samples": 1,
+  "source_model": "Qwen/Qwen3.5-0.8B",
+  "source_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "spent_walltime_s": 377.44405416899826,
+  "split": "test",
+  "stopped_reason": "completed",
+  "verbatim_loop_end_share": 0.0
+ },
+ "engine": "transformers",
+ "incomparable_because": [],
+ "kind": "harness_prefix_transformers_cpu",
+ "load": {
+  "architecture": "Qwen3_5ForCausalLM",
+  "device": "cpu",
+  "dtype": "bfloat16",
+  "kernel_fallback": [
+   "causal_conv1d",
+   "flash-linear-attention"
+  ],
+  "load_seconds": 1.071,
+  "parameters": 752393024
+ },
+ "max_examples": 1,
+ "max_new_tokens": 512,
+ "max_samples": 1,
+ "model_id": "Qwen/Qwen3.5-0.8B",
+ "protocol": "think35",
+ "published_math500_problems": 500,
+ "published_math500_samples": 4,
+ "published_max_new_tokens": 32768,
+ "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+ "selection": "canonical_prefix",
+ "split": "test",
+ "status": "not_reproduced",
+ "untouched_summary": {
+  "acc": 0.0,
+  "acc_equiv": 0.0,
+  "acc_lenient": 0.0,
+  "arm": "untouched",
+  "checkpoint_fingerprint": "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696",
+  "checkpoint_id": "untouched",
+  "complete": true,
+  "completed_ids": [
+   "test/precalculus/807.json"
+  ],
+  "cut_share": 1.0,
+  "dataset": "math500",
+  "deviations": [
+   "samples=1 is below the published 4",
+   "max_new_tokens=512 is below the published 32768"
+  ],
+  "grader": {
+   "article_version": "0.9.0",
+   "available": true,
+   "primary": "math-verify",
+   "secondary": "hendrycks_is_equiv",
+   "version": "0.9.0",
+   "version_matches_article": true
+  },
+  "headline": "acc",
+  "headline_value": 0.0,
+  "mean_tokens": 512.0,
+  "metrics_are_article_grader": true,
+  "n_configured": 1,
+  "n_problems": 1,
+  "no_answer_finished_share": 0.0,
+  "protocol": "think35",
+  "repetitive_end_share": 0.0,
+  "samples": 1,
+  "source_model": "Qwen/Qwen3.5-0.8B",
+  "source_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "spent_walltime_s": 380.20554227499815,
+  "split": "test",
+  "stopped_reason": "completed",
+  "verbatim_loop_end_share": 0.0
+ }
+}
