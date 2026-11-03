@@ -160,6 +160,29 @@ def test_missing_math_verify_does_not_fill_correct(grader_cache):
     assert unboxed["grader"] == "not_applicable"
 
 
+def test_distribution_metadata_supplies_the_article_version(grader_cache, monkeypatch):
+    class Bare:
+        def parse(self, text, parsing_timeout=None):
+            return text
+
+        def verify(self, gold, pred, timeout_seconds=None):
+            return gold == pred
+
+    grader_cache._MV.update(module=Bare(), error=None, loaded=True)
+
+    def fake_version(name):
+        assert name == "math-verify"
+        return "0.9.0"
+
+    monkeypatch.setattr("importlib.metadata.version", fake_version)
+    graded = grade_response("\\boxed{24}", "24", finish_reason="stop", n_tokens=3)
+    assert graded["correct"] is True
+    assert graded["grader_version"] == "0.9.0"
+    status = extract_module.math_verify_status()
+    assert status["version"] == "0.9.0"
+    assert status["version_matches_article"] is True
+
+
 def test_verifier_signature_mismatch_stays_ungraded(grader_cache):
     class Broken:
         __version__ = "0.9.0"

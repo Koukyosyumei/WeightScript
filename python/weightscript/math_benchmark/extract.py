@@ -267,9 +267,31 @@ def _load_math_verify():
     return math_verify, None
 
 
+def _distribution_version(module) -> str | None:
+    """Read the math-verify version.
+
+    Release 0.9.0 does not set ``__version__``. The installed distribution
+    metadata is the version the article pins.
+    """
+
+    version = getattr(module, "__version__", None)
+    if isinstance(version, str) and version:
+        return version
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as dist_version
+
+    try:
+        found = dist_version("math-verify")
+    except PackageNotFoundError:
+        return None
+    if isinstance(found, str) and found:
+        return found
+    return None
+
+
 def math_verify_status() -> dict:
     module, error = _load_math_verify()
-    version = None if module is None else getattr(module, "__version__", None)
+    version = None if module is None else _distribution_version(module)
     return {
         "available": module is not None,
         "version": version,
@@ -300,7 +322,7 @@ def math_verify_equal(
     module, import_error = _load_math_verify()
     if module is None:
         return None, None, f"math-verify is not installed ({import_error})"
-    version = getattr(module, "__version__", None)
+    version = _distribution_version(module)
     timeout = _timeout()
     try:
         parsed_gold = module.parse("\\boxed{" + gold + "}", parsing_timeout=timeout)

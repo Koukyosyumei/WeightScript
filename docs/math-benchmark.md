@@ -50,7 +50,8 @@ The pinned stack from `mathqa.py` is `math-verify==0.9.0`,
 `latex2sympy2_extended==1.11.0`, and `antlr4-python3-runtime==4.13.2`.
 Install that stack in the evaluation environment when a blog-table number is
 required. This package does not install it and does not import it until a
-boxed answer is graded.
+boxed answer is graded. math-verify 0.9.0 does not set `__version__`. The
+harness reads the `math-verify` distribution version so that pin is visible.
 
 If math-verify is missing, or its `parse` / `verify` signature does not match,
 `correct` is null. Hendrycks `is_equiv` still fills `equiv`. That field is the
@@ -221,3 +222,10 @@ It does not download a model.
 Declared limits that are not bugs are listed in
 `weightscript.math_benchmark.DECLARED_LIMITS` and in the sections above.
 No LLM judge is used.
+
+`examples/qwen35_math_eval.py` is the Qwen3.5 caller. It loads the text model,
+applies one published in-memory edit, and passes generations to
+`run_evaluation`. Grading, resume, loop metrics, and the equal-budget
+comparison stay in this package. A Transformers CPU run, a local JSONL split,
+and a token cap below 32,768 are recorded deviations. They do not reproduce
+the blog table.
