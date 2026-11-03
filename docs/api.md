@@ -57,10 +57,12 @@ Decompilation and semantic editing are lazy exports as well. `validate_rule`,
 `match_qk_primitives`, `disjoint_domains`, `summarize_stages`,
 `decompile_and_edit`, `synthesize_rules`, `synthesize_sequence_rules`,
 `synthesize_binary`, `lower`, `compile_rule`, `cegis`, and `replay_patch`
-import their implementations on first access. Stage `accepted` records
-final-token agreement on the caller-supplied rows. Full-span replay, logit
-error, and QK residual are separate measurements. See
-[decompilation](decompilation.md).
+import their implementations on first access. Saved greedy artifacts record
+final-token agreement in stage `accepted`. Current drivers score every requested
+answer position, and a failed initial linear LayerNorm agreement rejects the
+stage. `decompile_coefficient` and `execute_coefficient` stay in
+`weightscript.backends.upstream_search`. Full-span replay, logit error, and QK
+residual are separate measurements. See [decompilation](decompilation.md).
 
 `head_scale`, `attention_scale`, `neuron_scale` and `remove_direction` are
 numerical edits, not recovered symbolic algorithms. Direct transactions use

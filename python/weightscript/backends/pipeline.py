@@ -35,6 +35,19 @@ def disjoint_domains(**domains):
     return hashes
 
 
+def _answer_fields(row, calibration, evaluation):
+    if "answer_position_agreement" not in calibration:
+        return
+    row["calibration_answer_agreement"] = calibration["answer_position_agreement"]
+    row["calibration_sequence_agreement"] = calibration.get("answer_sequence_agreement")
+    row["acceptance_metric"] = calibration.get("acceptance_metric")
+    if evaluation is not None and "answer_position_agreement" in evaluation:
+        row["evaluation_answer_agreement"] = evaluation["answer_position_agreement"]
+        row["evaluation_sequence_agreement"] = evaluation.get(
+            "answer_sequence_agreement"
+        )
+
+
 def summarize_stages(artifact):
     """Return measured stage and primitive counts for a three-stage artifact.
 
@@ -42,57 +55,71 @@ def summarize_stages(artifact):
     evidence and does not treat a matrix fit as a replaced primitive.
     """
     data = artifact.to_dict() if hasattr(artifact, "to_dict") else artifact
-    if (
-        not isinstance(data, dict)
-        or data.get("backend") != "decompiling_transformers.three_stage"
-    ):
-        raise ValueError("expected a three-stage artifact")
+    if not isinstance(data, dict) or data.get("backend") not in {
+        "decompiling_transformers.three_stage",
+        "decompiling_transformers.coefficient_search",
+    }:
+        raise ValueError("expected a three-stage or coefficient-search artifact")
     output = data["nodes"][-1]["attributes"]
     stages = []
     for stage in output["stages"]:
-        if stage["name"] == "component":
+        if stage["name"] == "component" and "artifact" in stage:
             fidelity = stage["artifact"]["fidelity"]
             evaluation = fidelity.get("evaluation")
-            stages.append(
-                {
-                    "name": "component",
-                    "accepted": stage["accepted"],
-                    "edges_before": fidelity["component_edges_before"],
-                    "edges_after": fidelity["component_edges_after"],
-                    "trials": len(fidelity["trials"]),
-                    "search_complete": len(fidelity["trials"])
-                    >= fidelity["component_edges_before"],
-                    "calibration_agreement": fidelity["calibration"][
-                        "final_token_agreement"
-                    ],
-                    "evaluation_agreement": None
-                    if evaluation is None
-                    else evaluation["final_token_agreement"],
-                    "max_logit_error": fidelity["calibration"]["max_logit_error"],
-                    "logit_reconstruction": fidelity.get("logit_reconstruction"),
-                    "normalization_assumption_passed": fidelity[
-                        "normalization_assumption_passed"
-                    ],
-                }
-            )
-            continue
-        evaluation = stage.get("evaluation")
-        stages.append(
-            {
-                "name": stage["name"],
+            row = {
+                "name": "component",
                 "accepted": stage["accepted"],
-                "edges_before": stage["edges_before"],
-                "edges_after": stage["edges_after"],
-                "trials": len(stage["trials"]),
-                "search_complete": len(stage["trials"]) >= stage["edges_before"],
-                "calibration_agreement": stage["calibration"]["final_token_agreement"],
+                "edges_before": fidelity["component_edges_before"],
+                "edges_after": fidelity["component_edges_after"],
+                "trials": len(fidelity["trials"]),
+                "search_complete": len(fidelity["trials"])
+                >= fidelity["component_edges_before"],
+                "calibration_agreement": fidelity["calibration"][
+                    "final_token_agreement"
+                ],
                 "evaluation_agreement": None
                 if evaluation is None
                 else evaluation["final_token_agreement"],
-                "max_logit_error": stage["calibration"]["max_logit_error"],
-                "renderer_adaptation": stage.get("renderer_adaptation"),
+                "max_logit_error": fidelity["calibration"]["max_logit_error"],
+                "logit_reconstruction": fidelity.get("logit_reconstruction"),
+                "normalization_assumption_passed": fidelity[
+                    "normalization_assumption_passed"
+                ],
             }
-        )
+            _answer_fields(row, fidelity["calibration"], evaluation)
+            stages.append(row)
+            continue
+        evaluation = stage.get("evaluation")
+        calibration = stage["calibration"]
+        row = {
+            "name": stage["name"],
+            "accepted": stage["accepted"],
+            "edges_before": stage["edges_before"],
+            "edges_after": stage["edges_after"],
+            "trials": len(stage.get("trials", [])),
+            "search_complete": stage.get(
+                "search_complete",
+                len(stage.get("trials", [])) >= stage["edges_before"],
+            ),
+            "calibration_agreement": calibration["final_token_agreement"],
+            "evaluation_agreement": None
+            if evaluation is None
+            else evaluation["final_token_agreement"],
+            "max_logit_error": calibration["max_logit_error"],
+            "renderer_adaptation": stage.get("renderer_adaptation"),
+            "normalization_assumption_passed": stage.get(
+                "normalization_assumption_passed"
+            ),
+        }
+        if "meter" in stage:
+            row["optimizer_steps"] = stage["meter"].get("optimizer_steps")
+            row["stop"] = stage["meter"].get("stop")
+        replacement = stage.get("mlp_replacement")
+        if replacement:
+            row["mlp_installed"] = list(replacement.get("installed", []))
+            row["mlp_rejections"] = len(replacement.get("rejected", []))
+        _answer_fields(row, calibration, evaluation)
+        stages.append(row)
     primitives = output.get("primitive_matches", [])
     counts = {}
     hypotheses = []

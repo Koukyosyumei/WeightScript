@@ -1,0 +1,14 @@
+{
+  "majority": {
+    "checkpoint": "bin_majority-@1l1h16d3lr01drop",
+    "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8"
+  },
+  "copy": {
+    "checkpoint": "unique_copy-@2l1h64d3lr01drop",
+    "source_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3"
+  },
+  "sort": {
+    "checkpoint": "sort-@1l1h256d3lr01drop",
+    "source_sha256": "e7b4fdd85bfd63133175cfd26f1cfaacbc3db4de2f2d15228334187a4974488e"
+  }
+}

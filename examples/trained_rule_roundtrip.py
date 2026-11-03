@@ -384,6 +384,234 @@ def run_suite(checkout, output, tasks):
     return summary
 
 
+def _with_answers(rows, sep):
+    answered = []
+    for row in rows:
+        ids = row["input_ids"]
+        start = ids.index(sep) + 1
+        if start >= len(ids):
+            raise ValueError("sequence has no answer token after the separator")
+        answered.append({"input_ids": ids, "answer_start": start})
+    return answered
+
+
+def _replay_coefficient(model, artifact, checkout, rows):
+    from weightscript.backends.upstream import (
+        agreement_metrics,
+        empty_decision_counts,
+        score_decisions,
+    )
+    from weightscript.backends.upstream_search import execute_coefficient
+    from weightscript.evaluate import batches
+
+    counts = empty_decision_counts()
+    for chunk, ids in batches(rows, 8):
+        native = model(ids, use_cache=False).logits
+        actual = execute_coefficient(
+            model, artifact, checkout, ids, "qk", apply_mlp=False
+        )
+        score_decisions(chunk, actual, native, counts)
+    return agreement_metrics(counts)
+
+
+def run_coefficient(checkout, output, tasks, steps, pretrain_steps, max_seconds):
+    """Bounded coefficient-search pilot. Does not overwrite the greedy rejection files."""
+    import traceback
+
+    from weightscript.backends.pipeline import disjoint_domains, summarize_stages
+    from weightscript.backends.upstream_search import decompile_coefficient
+    from weightscript.core import fingerprint, load_model, write_json
+
+    names = {
+        "majority": "bin_majority-@1l1h16d3lr01drop",
+        "copy": "unique_copy-@2l1h64d3lr01drop",
+        "sort": "sort-@1l1h256d3lr01drop",
+    }
+    specs = {
+        "majority": {
+            "bos": 2,
+            "sep": 3,
+            "eos": 4,
+            "population": 2,
+            "kind": "majority",
+            "calibration": (1, 3, 5),
+            "oracle": (7,),
+            "final": (9,),
+            "per": (1, 1, 1),
+        },
+        "copy": {
+            "bos": 150,
+            "sep": 151,
+            "eos": 152,
+            "population": 150,
+            "kind": "copy",
+            "calibration": (2, 3, 4),
+            "oracle": (6,),
+            "final": (8,),
+            "per": (8, 16, 16),
+        },
+        "sort": {
+            "bos": 150,
+            "sep": 151,
+            "eos": 152,
+            "population": 150,
+            "kind": "sorted",
+            "calibration": (2, 3, 4),
+            "oracle": (6,),
+            "final": (8,),
+            "per": (8, 16, 16),
+        },
+    }
+    out = Path(output)
+    out.mkdir(parents=True, exist_ok=True)
+    summary = {}
+    for task in tasks:
+        spec = specs[task]
+        bos, sep, eos = spec["bos"], spec["sep"], spec["eos"]
+        if task == "majority":
+
+            def bits(lengths):
+                chosen = []
+                for length in lengths:
+                    for item in itertools.product((0, 1), repeat=length):
+                        if item.count(0) != item.count(1):
+                            chosen.append(item)
+                return chosen
+
+            groups = [
+                bits(spec["calibration"]),
+                bits(spec["oracle"]),
+                bits(spec["final"]),
+            ]
+        else:
+            used = set()
+            groups = []
+            for lengths, count, seed in zip(
+                (spec["calibration"], spec["oracle"], spec["final"]),
+                spec["per"],
+                (11, 22, 33),
+            ):
+                chosen, used = _contents(lengths, count, seed, spec["population"], used)
+                groups.append(chosen)
+
+        def continuation(content, kind=spec["kind"], eos_id=eos):
+            if kind == "majority":
+                return [0 if content.count(0) > content.count(1) else 1]
+            if kind == "copy":
+                return [*content, eos_id]
+            return [*sorted(content), eos_id]
+
+        full = [
+            _with_answers(_pack(group, bos, sep, continuation), sep) for group in groups
+        ]
+        domain_hashes = disjoint_domains(
+            calibration=full[0], oracle=full[1], final=full[2]
+        )
+        print(
+            f"coefficient {task} steps={steps} pretrain={pretrain_steps} cap={max_seconds}s",
+            flush=True,
+        )
+        model = load_model(str(Path(checkout) / "share/saved_models" / names[task]))
+        source = fingerprint(model)
+        case = {
+            "checkpoint": names[task],
+            "source_sha256": source,
+            "task_kind": spec["kind"],
+            "domains": domain_hashes,
+            "domain_sizes": {
+                name: len(rows)
+                for name, rows in zip(("calibration", "oracle", "final"), full)
+            },
+            "answer_positions": {
+                name: sum(len(row["input_ids"]) - row["answer_start"] for row in rows)
+                for name, rows in zip(("calibration", "oracle", "final"), full)
+            },
+            "budget": {
+                "steps": steps,
+                "pretrain_steps": pretrain_steps,
+                "max_seconds": max_seconds,
+            },
+            "native_task": {
+                name: _native_task(model, rows, sep)
+                for name, rows in zip(("calibration", "oracle", "final"), full)
+            },
+        }
+        artifact = None
+        try:
+            causal = decompile_coefficient(
+                model,
+                checkout,
+                full[0],
+                full[1],
+                steps=steps,
+                pretrain_steps=pretrain_steps,
+                max_seconds=max_seconds,
+                batch_size=8,
+                min_fidelity=0.99,
+                seed=0,
+                max_mlp_rows=128,
+                max_behavior_tests=1,
+                max_feature_dim=256,
+            )
+            if fingerprint(model) != source:
+                raise RuntimeError("coefficient search mutated source weights")
+            artifact = causal.to_dict()
+            case["causal_summary"] = summarize_stages(artifact)
+            case["final_qk_replay"] = _replay_coefficient(
+                model, artifact, checkout, full[2]
+            )
+            if fingerprint(model) != source:
+                raise RuntimeError("coefficient replay mutated source weights")
+        except Exception:  # noqa: BLE001 - persist this task, then continue the pilot
+            case["task_error"] = traceback.format_exc()
+        summary[task] = case
+        write_json(
+            out / f"{task}-summary.json",
+            {key: value for key, value in case.items() if key != "artifact"},
+        )
+        if artifact is not None:
+            write_json(out / f"{task}-stages.json", artifact)
+        print(
+            task,
+            json.dumps(
+                {
+                    "accepted": None
+                    if "causal_summary" not in case
+                    else case["causal_summary"]["accepted"],
+                    "stages": None
+                    if "causal_summary" not in case
+                    else [
+                        {
+                            "name": row["name"],
+                            "accepted": row["accepted"],
+                            "answer": row.get("evaluation_answer_agreement"),
+                            "assumption": row.get("normalization_assumption_passed"),
+                            "stop": row.get("stop"),
+                        }
+                        for row in case["causal_summary"]["stages"]
+                    ],
+                    "mlp": None
+                    if artifact is None
+                    else artifact["fidelity"].get("mlp_replacement"),
+                    "task_error": "task_error" in case,
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+    write_json(
+        out / "suite-index.json",
+        {
+            task: {
+                "checkpoint": summary[task]["checkpoint"],
+                "source_sha256": summary[task]["source_sha256"],
+            }
+            for task in summary
+        },
+    )
+    return summary
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("model", nargs="?")
@@ -392,8 +620,23 @@ def main():
     p.add_argument("--calibration-steps", type=int, default=32)
     p.add_argument("--output", default="artifacts/trained-roundtrip")
     p.add_argument("--suite", action="store_true")
+    p.add_argument("--coefficient", action="store_true")
+    p.add_argument("--steps", type=int, default=8)
+    p.add_argument("--pretrain-steps", type=int, default=2)
+    p.add_argument("--max-seconds", type=int, default=180)
     p.add_argument("--tasks", default="majority,copy,sort")
     args = p.parse_args()
+    if args.coefficient:
+        torch.set_num_threads(2)
+        run_coefficient(
+            args.checkout,
+            args.output,
+            [task for task in args.tasks.split(",") if task],
+            args.steps,
+            args.pretrain_steps,
+            args.max_seconds,
+        )
+        return
     if args.suite:
         torch.set_num_threads(2)
         run_suite(

@@ -1,0 +1,266 @@
+{
+  "checkpoint": "unique_copy-@2l1h64d3lr01drop",
+  "source_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+  "task_kind": "copy",
+  "domains": {
+    "calibration": "710b4016e85fe2734f69c81b228d6e93c613d9f283565733467472862de9b809",
+    "oracle": "8b7ecccc7e8bf48ccadfc4354dc62cf0246fc628724ce9e6cb763d714e326a2b",
+    "final": "f4aed3033904fd4e8bd8d866e1d841198729bdd14c6c97416d460029545917d5"
+  },
+  "domain_sizes": {
+    "calibration": 24,
+    "oracle": 16,
+    "final": 16
+  },
+  "answer_positions": {
+    "calibration": 96,
+    "oracle": 112,
+    "final": 144
+  },
+  "budget": {
+    "steps": 16,
+    "pretrain_steps": 4,
+    "max_seconds": 180
+  },
+  "native_task": {
+    "calibration": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 96,
+      "sequences": 24
+    },
+    "oracle": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 112,
+      "sequences": 16
+    },
+    "final": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 144,
+      "sequences": 16
+    }
+  },
+  "causal_summary": {
+    "accepted": false,
+    "claim": "measured answer-position fidelity of a capped local coefficient search; not a paper reproduction or logit equivalence",
+    "checkpoint_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches",
+      "QK renderer fallback for full-path renderer undefined heatmap labels",
+      "full-path output ablation warm-started from the previous stage",
+      "QK affine query bias warm-started from the full-path query vector, then AdamW"
+    ],
+    "normalization": {
+      "positions": "implicit positions 0..length-1",
+      "layernorm": "per-vertex calibration log-variance, then AdamW on LN_var within the step cap",
+      "acceptance": "every requested answer position, and the initial linear LayerNorm engine must already match"
+    },
+    "stages": [
+      {
+        "name": "component",
+        "accepted": true,
+        "edges_before": 32,
+        "edges_after": 29,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.8333333333333334,
+        "evaluation_agreement": 1.0,
+        "max_logit_error": 12.2293701171875,
+        "renderer_adaptation": null,
+        "normalization_assumption_passed": true,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "calibration_answer_agreement": 1.0,
+        "calibration_sequence_agreement": 1.0,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 1.0,
+        "evaluation_sequence_agreement": 1.0
+      },
+      {
+        "name": "full_path",
+        "accepted": false,
+        "edges_before": 35,
+        "edges_after": 34,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.375,
+        "evaluation_agreement": 0.625,
+        "max_logit_error": 16.499357223510742,
+        "renderer_adaptation": "upstream full-path renderer has undefined heatmap labels; rendered equivalent expanded config with upstream QK renderer",
+        "normalization_assumption_passed": false,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "calibration_answer_agreement": 0.9895833333333334,
+        "calibration_sequence_agreement": 0.9583333333333334,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 0.9642857142857143,
+        "evaluation_sequence_agreement": 0.75
+      },
+      {
+        "name": "qk",
+        "accepted": false,
+        "edges_before": 26,
+        "edges_after": 26,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.5416666666666666,
+        "evaluation_agreement": 0.625,
+        "max_logit_error": 17.20706558227539,
+        "renderer_adaptation": null,
+        "normalization_assumption_passed": false,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "mlp_installed": [],
+        "mlp_rejections": 2,
+        "calibration_answer_agreement": 0.9895833333333334,
+        "calibration_sequence_agreement": 0.9583333333333334,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 0.9107142857142857,
+        "evaluation_sequence_agreement": 0.375
+      }
+    ],
+    "primitive_interpretations": {},
+    "primitive_hypotheses": [],
+    "primitive_rejections": []
+  },
+  "final_qk_replay": {
+    "final_token_agreement": 0.75,
+    "answer_position_agreement": 0.9722222222222222,
+    "answer_sequence_agreement": 0.75,
+    "answer_positions": 144,
+    "examples": 16,
+    "acceptance_metric": "answer_positions",
+    "counterexamples": [
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47
+        ],
+        "position": 17,
+        "actual": 42,
+        "expected": 152
+      },
+      {
+        "input_ids": [
+          150,
+          17,
+          2,
+          123,
+          97,
+          92,
+          28,
+          62,
+          3,
+          151,
+          17,
+          2,
+          123,
+          97,
+          92,
+          28,
+          62,
+          3
+        ],
+        "position": 17,
+        "actual": 92,
+        "expected": 152
+      },
+      {
+        "input_ids": [
+          150,
+          138,
+          113,
+          80,
+          41,
+          126,
+          123,
+          8,
+          22,
+          151,
+          138,
+          113,
+          80,
+          41,
+          126,
+          123,
+          8,
+          22
+        ],
+        "position": 17,
+        "actual": 123,
+        "expected": 152
+      },
+      {
+        "input_ids": [
+          150,
+          47,
+          81,
+          73,
+          44,
+          90,
+          109,
+          111,
+          85,
+          151,
+          47,
+          81,
+          73,
+          44,
+          90,
+          109,
+          111
+        ],
+        "position": 16,
+        "actual": 152,
+        "expected": 85
+      }
+    ]
+  },
+  "final_replay_not_used_for_acceptance": {
+    "note": "Final rows were not used for acceptance. Full-path final agreement does not overturn the oracle rejection.",
+    "component": {
+      "answer_position_agreement": 1.0,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 1.0
+    },
+    "full_path": {
+      "answer_position_agreement": 1.0,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 1.0
+    },
+    "qk_without_mlp": {
+      "answer_position_agreement": 0.9722222222222222,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.75
+    },
+    "qk_with_mlp": {
+      "answer_position_agreement": 0.9722222222222222,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.75,
+      "installed": false
+    }
+  }
+}

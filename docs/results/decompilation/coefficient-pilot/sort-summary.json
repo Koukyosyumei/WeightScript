@@ -1,0 +1,331 @@
+{
+  "checkpoint": "sort-@1l1h256d3lr01drop",
+  "source_sha256": "e7b4fdd85bfd63133175cfd26f1cfaacbc3db4de2f2d15228334187a4974488e",
+  "task_kind": "sorted",
+  "domains": {
+    "calibration": "fccf04d8e4bd13c29b0dc4e68b38c522a0475f891b9ed0886892e3829898c457",
+    "oracle": "91ed77f97b6dbdf25c46250327b756fc7475596f41831c4ea43ee0289266a234",
+    "final": "a3157b2c6e2df9b4a261abee164932ab6444628721d2254d322e59de8af31b94"
+  },
+  "domain_sizes": {
+    "calibration": 24,
+    "oracle": 16,
+    "final": 16
+  },
+  "answer_positions": {
+    "calibration": 96,
+    "oracle": 112,
+    "final": 144
+  },
+  "budget": {
+    "steps": 16,
+    "pretrain_steps": 4,
+    "max_seconds": 180
+  },
+  "native_task": {
+    "calibration": {
+      "position_agreement": 0.9583333333333334,
+      "sequence_agreement": 0.8333333333333334,
+      "positions": 96,
+      "sequences": 24
+    },
+    "oracle": {
+      "position_agreement": 0.9821428571428571,
+      "sequence_agreement": 0.875,
+      "positions": 112,
+      "sequences": 16
+    },
+    "final": {
+      "position_agreement": 0.9930555555555556,
+      "sequence_agreement": 0.9375,
+      "positions": 144,
+      "sequences": 16
+    }
+  },
+  "causal_summary": {
+    "accepted": false,
+    "claim": "measured answer-position fidelity of a capped local coefficient search; not a paper reproduction or logit equivalence",
+    "checkpoint_sha256": "e7b4fdd85bfd63133175cfd26f1cfaacbc3db4de2f2d15228334187a4974488e",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches",
+      "QK renderer fallback for full-path renderer undefined heatmap labels",
+      "full-path output ablation warm-started from the previous stage",
+      "QK affine query bias warm-started from the full-path query vector, then AdamW"
+    ],
+    "normalization": {
+      "positions": "implicit positions 0..length-1",
+      "layernorm": "per-vertex calibration log-variance, then AdamW on LN_var within the step cap",
+      "acceptance": "every requested answer position, and the initial linear LayerNorm engine must already match"
+    },
+    "stages": [
+      {
+        "name": "component",
+        "accepted": false,
+        "edges_before": 13,
+        "edges_after": 13,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.041666666666666664,
+        "evaluation_agreement": 0.0625,
+        "max_logit_error": 22.664443969726562,
+        "renderer_adaptation": null,
+        "normalization_assumption_passed": false,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "calibration_answer_agreement": 0.9270833333333334,
+        "calibration_sequence_agreement": 0.7083333333333334,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 0.9464285714285714,
+        "evaluation_sequence_agreement": 0.625
+      },
+      {
+        "name": "full_path",
+        "accepted": false,
+        "edges_before": 15,
+        "edges_after": 14,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.0,
+        "evaluation_agreement": 0.0,
+        "max_logit_error": 35.39897537231445,
+        "renderer_adaptation": "upstream full-path renderer has undefined heatmap labels; rendered equivalent expanded config with upstream QK renderer",
+        "normalization_assumption_passed": false,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "calibration_answer_agreement": 0.3229166666666667,
+        "calibration_sequence_agreement": 0.0,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 0.13392857142857142,
+        "evaluation_sequence_agreement": 0.0
+      },
+      {
+        "name": "qk",
+        "accepted": false,
+        "edges_before": 4,
+        "edges_after": 4,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 0.0,
+        "evaluation_agreement": 0.0,
+        "max_logit_error": 33.257930755615234,
+        "renderer_adaptation": null,
+        "normalization_assumption_passed": false,
+        "optimizer_steps": 16,
+        "stop": "step_cap",
+        "mlp_installed": [],
+        "mlp_rejections": 1,
+        "calibration_answer_agreement": 0.28125,
+        "calibration_sequence_agreement": 0.0,
+        "acceptance_metric": "answer_positions",
+        "evaluation_answer_agreement": 0.15178571428571427,
+        "evaluation_sequence_agreement": 0.0
+      }
+    ],
+    "primitive_interpretations": {},
+    "primitive_hypotheses": [],
+    "primitive_rejections": []
+  },
+  "final_qk_replay": {
+    "final_token_agreement": 0.1875,
+    "answer_position_agreement": 0.1111111111111111,
+    "answer_sequence_agreement": 0.0,
+    "answer_positions": 144,
+    "examples": 16,
+    "acceptance_metric": "answer_positions",
+    "counterexamples": [
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151
+        ],
+        "position": 9,
+        "actual": 152,
+        "expected": 42
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42
+        ],
+        "position": 10,
+        "actual": 152,
+        "expected": 47
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47
+        ],
+        "position": 11,
+        "actual": 152,
+        "expected": 59
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47,
+          59
+        ],
+        "position": 12,
+        "actual": 152,
+        "expected": 70
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47,
+          59,
+          70
+        ],
+        "position": 13,
+        "actual": 152,
+        "expected": 122
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47,
+          59,
+          70,
+          122
+        ],
+        "position": 14,
+        "actual": 152,
+        "expected": 135
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47,
+          59,
+          70,
+          122,
+          135
+        ],
+        "position": 15,
+        "actual": 152,
+        "expected": 136
+      },
+      {
+        "input_ids": [
+          150,
+          146,
+          42,
+          59,
+          70,
+          122,
+          136,
+          135,
+          47,
+          151,
+          42,
+          47,
+          59,
+          70,
+          122,
+          135,
+          136
+        ],
+        "position": 16,
+        "actual": 152,
+        "expected": 146
+      }
+    ]
+  },
+  "final_replay_not_used_for_acceptance": {
+    "note": "Final rows were not used for acceptance. The linear LayerNorm assumption already failed on calibration.",
+    "component": {
+      "answer_position_agreement": 0.9652777777777778,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.6875
+    },
+    "full_path": {
+      "answer_position_agreement": 0.08333333333333333,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.0
+    },
+    "qk_without_mlp": {
+      "answer_position_agreement": 0.1111111111111111,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.0
+    },
+    "qk_with_mlp": {
+      "answer_position_agreement": 0.1111111111111111,
+      "answer_positions": 144,
+      "answer_sequence_agreement": 0.0,
+      "installed": false
+    }
+  }
+}

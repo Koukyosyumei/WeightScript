@@ -22,6 +22,113 @@ REVISION = "787398b0f4393a90ad02cd8e71be48d1e85d2b21"
 URL = "https://github.com/lacoco-lab/decompiling_transformers"
 
 
+def answer_logit_positions(length, answer_start):
+    """Logit indices whose argmax is a requested answer.
+
+    ``answer_start`` is the index of the first answer token in the full
+    sequence. Logit ``t`` predicts token ``t + 1``, so the supervised indices
+    run from the separator through the second-to-last position. Without
+    ``answer_start``, the only requested position is the final logit. That is
+    the historical metric for prefixes that already end at the separator.
+    """
+    if answer_start is None:
+        if length < 1:
+            raise ValueError("empty sequence has no answer position")
+        return [length - 1]
+    if type(answer_start) is not int or not 0 < answer_start < length:
+        raise ValueError("answer_start must be the index of the first answer token")
+    return list(range(answer_start - 1, length - 1))
+
+
+def empty_decision_counts():
+    return {
+        "final_correct": 0,
+        "final_total": 0,
+        "position_correct": 0,
+        "position_total": 0,
+        "sequence_correct": 0,
+        "sequence_total": 0,
+        "span": False,
+        "counterexamples": [],
+    }
+
+
+def score_decisions(rows, actual, target, counts=None):
+    """Accumulate argmax agreement on every requested answer position."""
+    if actual.shape[:2] != target.shape[:2]:
+        raise ValueError("logit shape mismatch")
+    if not torch.isfinite(actual).all() or not torch.isfinite(target).all():
+        raise ValueError("nonfinite stage logits")
+    counts = empty_decision_counts() if counts is None else counts
+    for i, row in enumerate(rows):
+        length = len(row["input_ids"])
+        if actual.shape[1] != length:
+            raise ValueError("sequence length mismatch")
+        start = row.get("answer_start")
+        if start is not None:
+            counts["span"] = True
+        indices = answer_logit_positions(length, start)
+        final_match = bool(actual[i, -1].argmax() == target[i, -1].argmax())
+        counts["final_correct"] += int(final_match)
+        counts["final_total"] += 1
+        sequence_match = True
+        for index in indices:
+            match = bool(actual[i, index].argmax() == target[i, index].argmax())
+            counts["position_correct"] += int(match)
+            counts["position_total"] += 1
+            sequence_match = sequence_match and match
+            if not match and len(counts["counterexamples"]) < 8:
+                counts["counterexamples"].append(
+                    {
+                        "input_ids": list(row["input_ids"][: index + 1]),
+                        "position": index,
+                        "actual": int(actual[i, index].argmax()),
+                        "expected": int(target[i, index].argmax()),
+                    }
+                )
+        counts["sequence_correct"] += int(sequence_match)
+        counts["sequence_total"] += 1
+    return counts
+
+
+def agreement_metrics(counts, error=None):
+    if counts["final_total"] == 0 or counts["position_total"] == 0:
+        raise ValueError("no answer positions to score")
+    metrics = {
+        "final_token_agreement": counts["final_correct"] / counts["final_total"],
+        "answer_position_agreement": counts["position_correct"]
+        / counts["position_total"],
+        "answer_sequence_agreement": counts["sequence_correct"]
+        / counts["sequence_total"],
+        "answer_positions": counts["position_total"],
+        "examples": counts["final_total"],
+        "acceptance_metric": "answer_positions" if counts["span"] else "final_token",
+        "counterexamples": list(counts["counterexamples"]),
+    }
+    if error is not None:
+        metrics["max_logit_error"] = error
+    return metrics
+
+
+def stage_accepted(initial, calibration, evaluation, min_fidelity):
+    """Accept a stage only when every requested answer position matches.
+
+    ``initial`` is the linear engine before mask or auxiliary optimization.
+    A later mask that repairs only the first answer token does not override a
+    failed LayerNorm assumption, and an evaluation miss keeps the stage rejected.
+    """
+    if not 0 <= min_fidelity <= 1:
+        raise ValueError("invalid fidelity")
+    assumption = initial["answer_position_agreement"] >= min_fidelity
+    accepted = assumption and calibration["answer_position_agreement"] >= min_fidelity
+    if evaluation is not None:
+        accepted = accepted and evaluation["answer_position_agreement"] >= min_fidelity
+    return {
+        "accepted": bool(accepted),
+        "normalization_assumption_passed": bool(assumption),
+    }
+
+
 def modules(checkout):
     root = Path(checkout).resolve()
     revision = subprocess.check_output(
@@ -179,28 +286,23 @@ def decompile(
 
     def measure(mask, items=native_batches, targets=native):
         nonlocal forward_calls
-        matches = total = 0
+        counts = empty_decision_counts()
         error = 0.0
-        for (_, ids), target in zip(items, targets):
+        for (chunk, ids), target in zip(items, targets):
             logits = hooked(
                 ids, masks=mask.expand(len(ids), -1), oa_vecs=oa, use_cache=False
             ).logits
             forward_calls += 1
-            if not torch.isfinite(logits).all() or not torch.isfinite(target).all():
-                raise ValueError("nonfinite upstream or reference logits")
-            # Match the final decision; report this domain explicitly.
-            matches += int((logits[:, -1].argmax(-1) == target[:, -1].argmax(-1)).sum())
-            total += len(ids)
             error = max(error, float((logits - target).abs().max()))
-        return {
-            "final_token_agreement": matches / total,
-            "max_logit_error": error,
-            "examples": total,
-        }
+            score_decisions(chunk, logits, target, counts)
+        return agreement_metrics(counts, error)
 
     try:
         initial = measure(masks)
-        if require_initial_fidelity and initial["final_token_agreement"] < min_fidelity:
+        if (
+            require_initial_fidelity
+            and initial["answer_position_agreement"] < min_fidelity
+        ):
             raise ValueError(
                 f"upstream normalization/reconstruction assumption failed: {initial}"
             )
@@ -212,7 +314,7 @@ def decompile(
             trial = masks.clone()
             trial[index] = 0
             metric = measure(trial)
-            accepted = metric["final_token_agreement"] >= min_fidelity
+            accepted = metric["answer_position_agreement"] >= min_fidelity
             if accepted:
                 masks = trial
             trials.append({"edge": list(edge), "accepted": accepted, "metrics": metric})
@@ -291,11 +393,15 @@ def decompile(
             ],
         },
         {
-            "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+            "claim": (
+                "empirical agreement on every requested answer position; no paper-wide reproduction claim"
+                if any("answer_start" in row for row in rows)
+                else "empirical final-token fidelity on specified domains; no paper-wide reproduction claim"
+            ),
             "layernorm": "calibrated linearization"
             if linear_ln
             else "native LayerNorm",
-            "normalization_assumption_passed": initial["final_token_agreement"]
+            "normalization_assumption_passed": initial["answer_position_agreement"]
             >= min_fidelity,
             "logit_reconstruction": initial["max_logit_error"] <= 1e-4
             and final["max_logit_error"] <= 1e-4,

@@ -14,7 +14,17 @@ import torch.nn.functional as F
 from ..core import fingerprint
 from ..evaluate import batches
 from ..ir import Artifact, Node
-from .upstream import REVISION, URL, _engine, decompile, modules
+from .upstream import (
+    REVISION,
+    URL,
+    _engine,
+    agreement_metrics,
+    decompile,
+    empty_decision_counts,
+    modules,
+    score_decisions,
+    stage_accepted,
+)
 
 
 def _tuple(value):
@@ -84,40 +94,22 @@ def _qk_batch_compatibility(hooked):
 
 
 def _measure(hooked, oa, mask, items, targets):
-    correct = total = all_correct = positions = 0
+    counts = empty_decision_counts()
     error = 0.0
-    counterexamples = []
+    all_correct = positions = 0
     with torch.no_grad():
         for (rows, ids), target in zip(items, targets):
             actual = hooked(
                 ids, masks=mask.expand(len(ids), -1), oa_vecs=oa, use_cache=False
             ).logits
-            if not torch.isfinite(actual).all() or not torch.isfinite(target).all():
-                raise ValueError("nonfinite stage logits")
-            match = actual[:, -1].argmax(-1) == target[:, -1].argmax(-1)
-            correct += int(match.sum())
-            total += len(ids)
+            error = max(error, float((actual - target).abs().max()))
             all_correct += int((actual.argmax(-1) == target.argmax(-1)).sum())
             positions += ids.numel()
-            error = max(error, float((actual - target).abs().max()))
-            for row, good, pred, expected in zip(
-                rows, match, actual[:, -1].argmax(-1), target[:, -1].argmax(-1)
-            ):
-                if not good and len(counterexamples) < 20:
-                    counterexamples.append(
-                        {
-                            "input_ids": row["input_ids"],
-                            "actual": int(pred),
-                            "expected": int(expected),
-                        }
-                    )
-    return {
-        "final_token_agreement": correct / total,
-        "all_token_agreement": all_correct / positions,
-        "max_logit_error": error,
-        "examples": total,
-        "counterexamples": counterexamples,
-    }
+            score_decisions(rows, actual, target, counts)
+    metrics = agreement_metrics(counts, error)
+    # all_token_agreement still counts prompt positions. It is not the acceptance metric.
+    metrics["all_token_agreement"] = all_correct / positions
+    return metrics
 
 
 def _fit(hooked, oa, mask, items, targets, steps, learning_rate):
@@ -213,17 +205,20 @@ def decompile_stages(
         True,
     )
     hooked.remove_hooks()
+    component_decision = stage_accepted(
+        component.fidelity["initial"],
+        component.fidelity["calibration"],
+        component.fidelity["evaluation"],
+        min_fidelity,
+    )
     stages = [
         {
             "name": "component",
             "artifact": component.to_dict(),
-            "accepted": component.fidelity["calibration"]["final_token_agreement"]
-            >= min_fidelity
-            and (
-                not evaluation_rows
-                or component.fidelity["evaluation"]["final_token_agreement"]
-                >= min_fidelity
-            ),
+            "accepted": component_decision["accepted"],
+            "normalization_assumption_passed": component_decision[
+                "normalization_assumption_passed"
+            ],
         }
     ]
     calls = 0
@@ -309,7 +304,7 @@ def decompile_stages(
                 trial = mask.clone()
                 trial[index] = 0
                 metric = _measure(hooked, oa, trial, items, targets)
-                accepted = metric["final_token_agreement"] >= min_fidelity
+                accepted = metric["answer_position_agreement"] >= min_fidelity
                 if accepted:
                     mask = trial
                 trials.append({"edge": edge, "accepted": accepted, "metrics": metric})
@@ -317,6 +312,7 @@ def decompile_stages(
             validation = (
                 _measure(hooked, oa, mask, tests, test_targets) if tests else None
             )
+            decision = stage_accepted(initial, final, validation, min_fidelity)
             calls += (3 + len(trials)) * len(items) + calibration_steps + len(tests)
             converter = (
                 upstream.convert_mask_to_config_qk_
@@ -364,11 +360,10 @@ def decompile_stages(
                     "trials": trials,
                     "edges_before": len(mask),
                     "edges_after": int(mask.sum()),
-                    "accepted": final["final_token_agreement"] >= min_fidelity
-                    and (
-                        validation is None
-                        or validation["final_token_agreement"] >= min_fidelity
-                    ),
+                    "normalization_assumption_passed": decision[
+                        "normalization_assumption_passed"
+                    ],
+                    "accepted": decision["accepted"],
                 }
             )
         finally:
@@ -410,7 +405,7 @@ def decompile_stages(
             "normalization": {
                 "positions": "implicit positions 0..length-1 on the caller-supplied token ids",
                 "layernorm": "upstream engines consume per-vertex log-variance fit on the calibration rows",
-                "acceptance": "final-token argmax agreement; max_logit_error is separate and can reject a logit-level claim",
+                "acceptance": "argmax agreement on every requested answer position; a failed initial linear-LayerNorm agreement rejects the stage; max_logit_error is a separate logit-level claim",
             },
             "accepted": all(s["accepted"] for s in stages),
             "pruned_forward_calls_after_component": calls,
