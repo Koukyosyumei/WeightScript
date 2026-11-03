@@ -287,7 +287,9 @@ def _timeout():
     return None
 
 
-def math_verify_equal(pred: str, gold: str) -> tuple[bool | None, str | None, str | None]:
+def math_verify_equal(
+    pred: str, gold: str
+) -> tuple[bool | None, str | None, str | None]:
     """Return ``(correct, version, error)``.
 
     ``correct`` is None when math-verify cannot be called with the article's
@@ -308,7 +310,11 @@ def math_verify_equal(pred: str, gold: str) -> tuple[bool | None, str | None, st
     if not parsed_gold or not parsed_pred:
         return False, version, None
     try:
-        return bool(module.verify(parsed_gold, parsed_pred, timeout_seconds=timeout)), version, None
+        return (
+            bool(module.verify(parsed_gold, parsed_pred, timeout_seconds=timeout)),
+            version,
+            None,
+        )
     except TypeError as error:
         return None, version, f"math-verify verify signature mismatch: {error}"
     except Exception as error:  # noqa: BLE001
@@ -352,7 +358,9 @@ def _lenient_correct(text: str, pred, good, gold: str):
     loose_grade, _, loose_error = math_verify_equal(loose, gold)
     number_grade = None
     if numbers:
-        number_grade, _, number_error = math_verify_equal(numbers[-1].replace(",", ""), gold)
+        number_grade, _, number_error = math_verify_equal(
+            numbers[-1].replace(",", ""), gold
+        )
         loose_error = loose_error or number_error
     if loose_grade is None and number_grade is None:
         return None
@@ -367,14 +375,18 @@ def hit_token_limit(finish_reason: str | None) -> bool | None:
     return finish_reason == "length"
 
 
-def grade_response(text: str, gold: str, *, finish_reason: str | None, n_tokens: int | None = None) -> dict:
+def grade_response(
+    text: str, gold: str, *, finish_reason: str | None, n_tokens: int | None = None
+) -> dict:
     """Grade one generation. ``correct`` follows mathqa.is_correct, or is null."""
 
     if not isinstance(text, str):
         raise ValueError("generation text must be a string")
     if not isinstance(gold, str) or gold == "":
         raise ValueError("gold answer must be a non-empty string")
-    if n_tokens is not None and (isinstance(n_tokens, bool) or not isinstance(n_tokens, int) or n_tokens < 0):
+    if n_tokens is not None and (
+        isinstance(n_tokens, bool) or not isinstance(n_tokens, int) or n_tokens < 0
+    ):
         raise ValueError("n_tokens must be a non-negative int or None")
     pred, n_boxes = extract_answer(text)
     equiv = bool(pred is not None and is_equiv(pred, gold))

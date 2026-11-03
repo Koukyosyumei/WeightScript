@@ -192,7 +192,9 @@ def user_turn(problem: str, *, instruction: str = INSTRUCTION) -> str:
     return problem + "\n" + instruction
 
 
-def render_chat(tokenizer, problem: str, *, thinking: bool, instruction: str = INSTRUCTION) -> str:
+def render_chat(
+    tokenizer, problem: str, *, thinking: bool, instruction: str = INSTRUCTION
+) -> str:
     """Apply the checkpoint's own chat template.
 
     The published runner calls ``apply_chat_template(..., enable_thinking=thinking)``.
@@ -200,7 +202,9 @@ def render_chat(tokenizer, problem: str, *, thinking: bool, instruction: str = I
     is not invented here.
     """
 
-    messages = [{"role": "user", "content": user_turn(problem, instruction=instruction)}]
+    messages = [
+        {"role": "user", "content": user_turn(problem, instruction=instruction)}
+    ]
     try:
         rendered = tokenizer.apply_chat_template(
             messages,

@@ -36,7 +36,10 @@ def verbatim_loop_end(words: list[str]) -> bool:
         if repeats * period > n:
             break
         block = trimmed[n - period :]
-        if all(trimmed[n - (j + 1) * period : n - j * period] == block for j in range(1, repeats)):
+        if all(
+            trimmed[n - (j + 1) * period : n - j * period] == block
+            for j in range(1, repeats)
+        ):
             return True
     return False
 

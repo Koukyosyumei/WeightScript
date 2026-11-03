@@ -29,14 +29,20 @@ def _hf_url(dataset: str, split: str) -> tuple[str, str]:
         if split != "test":
             raise ValueError("MATH-500 publishes a test split only")
         repo = MATH500_HF["repo"]
-        return f"https://huggingface.co/datasets/{repo}/resolve/main/test.jsonl", "jsonl"
+        return (
+            f"https://huggingface.co/datasets/{repo}/resolve/main/test.jsonl",
+            "jsonl",
+        )
     if dataset == "gsm8k":
         if split not in ("test", "train"):
             raise ValueError("GSM8K snapshot splits are test and train")
         repo = GSM8K_HF["repo"]
         config = GSM8K_HF["config"]
         name = f"{split}-00000-of-00001.parquet"
-        return f"https://huggingface.co/datasets/{repo}/resolve/main/{config}/{name}", "parquet"
+        return (
+            f"https://huggingface.co/datasets/{repo}/resolve/main/{config}/{name}",
+            "parquet",
+        )
     raise ValueError("snapshot supports math500 and gsm8k")
 
 
@@ -101,7 +107,9 @@ def _download(url: str, dest: Path, opener) -> dict:
             headers = {key.lower(): value for key, value in response.headers.items()}
             length = headers.get("content-length")
             if length is not None and int(length) > MAX_PUBLISHED_BYTES:
-                raise ValueError(f"{url} announces {length} bytes, above {MAX_PUBLISHED_BYTES}")
+                raise ValueError(
+                    f"{url} announces {length} bytes, above {MAX_PUBLISHED_BYTES}"
+                )
             chunks = []
             total = 0
             while True:
@@ -129,7 +137,9 @@ def _download(url: str, dest: Path, opener) -> dict:
     }
 
 
-def fetch_split(dataset: str, split: str, dest=None, *, opener=None, check_count: bool = True) -> dict:
+def fetch_split(
+    dataset: str, split: str, dest=None, *, opener=None, check_count: bool = True
+) -> dict:
     """Download one published split into ``dest`` and return its provenance.
 
     ``dest`` is required unless ``dataset_cache_dir()`` resolves a directory.
@@ -158,7 +168,9 @@ def fetch_split(dataset: str, split: str, dest=None, *, opener=None, check_count
         "note": "Local JSONL is not load_hf. blog_table_settings stays false for this file.",
     }
     provenance_path.parent.mkdir(parents=True, exist_ok=True)
-    provenance_path.write_text(json.dumps(pending, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+    provenance_path.write_text(
+        json.dumps(pending, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+    )
     try:
         if kind == "jsonl":
             rows = math500_rows(raw_path.read_text())
@@ -166,7 +178,9 @@ def fetch_split(dataset: str, split: str, dest=None, *, opener=None, check_count
             rows = gsm8k_rows(rows_from_parquet(raw_path), split)
     except Exception as error:
         pending["convert_error"] = f"{type(error).__name__}: {error}"
-        provenance_path.write_text(json.dumps(pending, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+        provenance_path.write_text(
+            json.dumps(pending, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+        )
         raise
     jsonl_path.parent.mkdir(parents=True, exist_ok=True)
     jsonl_path.write_text("".join(dump_jsonl_line(row) + "\n" for row in rows))
@@ -184,12 +198,18 @@ def fetch_split(dataset: str, split: str, dest=None, *, opener=None, check_count
         "jsonl_sha256": _sha256(jsonl_path.read_bytes()),
         "row_count": len(loaded),
         "published_count": expected,
-        "count_matches_published": expected == len(loaded) if expected is not None else None,
+        "count_matches_published": expected == len(loaded)
+        if expected is not None
+        else None,
         "content_sha256": loaded.provenance["content_sha256"],
         "scores_as_published_hf_split": False,
         "note": "Local JSONL is not load_hf. blog_table_settings stays false for this file.",
     }
-    provenance_path.write_text(json.dumps(provenance, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
+    provenance_path.write_text(
+        json.dumps(provenance, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+    )
     if check_count and expected is not None and len(loaded) != expected:
-        raise ValueError(f"{dataset} {split} has {len(loaded)} rows, published count is {expected}")
+        raise ValueError(
+            f"{dataset} {split} has {len(loaded)} rows, published count is {expected}"
+        )
     return provenance

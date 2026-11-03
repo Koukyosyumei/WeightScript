@@ -82,7 +82,9 @@ def _print_summary(summary: dict) -> None:
         "deviations",
         "metrics_are_article_grader",
     )
-    print(json.dumps({key: summary[key] for key in fields}, indent=1, ensure_ascii=False))
+    print(
+        json.dumps({key: summary[key] for key in fields}, indent=1, ensure_ascii=False)
+    )
 
 
 def command_protocol(args) -> int:
@@ -108,7 +110,9 @@ def command_protocol(args) -> int:
 
 
 def command_run(args) -> int:
-    examples = load_jsonl(args.dataset, dataset=args.dataset_name, split=args.split, role="evaluation")
+    examples = load_jsonl(
+        args.dataset, dataset=args.dataset_name, split=args.split, role="evaluation"
+    )
     generations = None
     if args.generations:
         generations = {}
@@ -120,7 +124,9 @@ def command_run(args) -> int:
 
     def generate(requests):
         if generations is None:
-            raise SystemExit("run needs --generations; a live model generator belongs in the caller's process")
+            raise SystemExit(
+                "run needs --generations; a live model generator belongs in the caller's process"
+            )
         found = []
         for request in requests:
             if "gold" in request or "answer" in request:
@@ -140,20 +146,28 @@ def command_run(args) -> int:
         budgets=_budgets(args),
         tokenizer=_tokenizer(args.tokenizer),
     )
-    write_summary(Path(args.out).with_suffix(Path(args.out).suffix + ".summary.json"), summary)
+    write_summary(
+        Path(args.out).with_suffix(Path(args.out).suffix + ".summary.json"), summary
+    )
     _print_summary(summary)
-    print("blog numbers require compare's blog_table_settings; this summary does not assert them")
+    print(
+        "blog numbers require compare's blog_table_settings; this summary does not assert them"
+    )
     return 0
 
 
 def command_compare(args) -> int:
     report = compare_runs(args.untouched, args.edited)
     printable = {key: value for key, value in report.items() if key != "per_example"}
-    printable["per_example_count"] = None if report["per_example"] is None else len(report["per_example"])
+    printable["per_example_count"] = (
+        None if report["per_example"] is None else len(report["per_example"])
+    )
     print(json.dumps(printable, indent=1, ensure_ascii=False))
     if args.per_example and report["per_example"] is not None:
         destination = Path(args.per_example)
-        destination.write_text(json.dumps(report["per_example"], indent=1, ensure_ascii=False) + "\n")
+        destination.write_text(
+            json.dumps(report["per_example"], indent=1, ensure_ascii=False) + "\n"
+        )
     if not report["comparable"] or not report["complete"]:
         return 2
     return 0
@@ -208,21 +222,36 @@ def command_smoke(args) -> int:
     budgets = Budgets(max_samples=1, max_new_tokens=32, walltime_s=args.walltime_s)
     first = run_evaluation(
         examples,
-        RunSpec(checkpoint_id="untouched-smoke", checkpoint_fingerprint="fp-untouched", arm="untouched", **common),
+        RunSpec(
+            checkpoint_id="untouched-smoke",
+            checkpoint_fingerprint="fp-untouched",
+            arm="untouched",
+            **common,
+        ),
         untouched,
         out / "untouched.jsonl",
         budgets=budgets,
     )
     run_evaluation(
         examples,
-        RunSpec(checkpoint_id="untouched-smoke", checkpoint_fingerprint="fp-untouched", arm="untouched", **common),
+        RunSpec(
+            checkpoint_id="untouched-smoke",
+            checkpoint_fingerprint="fp-untouched",
+            arm="untouched",
+            **common,
+        ),
         untouched,
         out / "untouched.jsonl",
         budgets=budgets,
     )
     second = run_evaluation(
         examples,
-        RunSpec(checkpoint_id="edited-smoke", checkpoint_fingerprint="fp-edited", arm="edited", **common),
+        RunSpec(
+            checkpoint_id="edited-smoke",
+            checkpoint_fingerprint="fp-edited",
+            arm="edited",
+            **common,
+        ),
         edited,
         out / "edited.jsonl",
         budgets=budgets,
@@ -247,7 +276,10 @@ def command_smoke(args) -> int:
             ensure_ascii=False,
         )
     )
-    write_summary(out / "compare.json", {key: value for key, value in report.items() if key != "per_example"})
+    write_summary(
+        out / "compare.json",
+        {key: value for key, value in report.items() if key != "per_example"},
+    )
     return 0 if report["comparable"] and report["complete"] else 2
 
 
@@ -261,10 +293,14 @@ def command_fetch(args) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Weight-space programming math evaluation harness")
+    parser = argparse.ArgumentParser(
+        description="Weight-space programming math evaluation harness"
+    )
     parser.add_argument("--protocol", default="think35")
     parser.add_argument("--source-model", default="Qwen/Qwen3.5-0.8B")
-    parser.add_argument("--source-revision", default="2fc06364715b967f1860aea9cf38778875588b17")
+    parser.add_argument(
+        "--source-revision", default="2fc06364715b967f1860aea9cf38778875588b17"
+    )
     parser.add_argument("--engine", default=None)
     parser.add_argument("--dtype", default=None)
     parser.add_argument("--max-examples", type=int, default=None)
@@ -276,32 +312,54 @@ def build_parser() -> argparse.ArgumentParser:
     protocol_parser = sub.add_parser("protocol", help="print one published protocol")
     protocol_parser.set_defaults(func=command_protocol)
 
-    run_parser = sub.add_parser("run", help="grade stored generations; does not call a model")
+    run_parser = sub.add_parser(
+        "run", help="grade stored generations; does not call a model"
+    )
     run_parser.add_argument("--dataset", required=True)
-    run_parser.add_argument("--dataset-name", required=True, choices=("math500", "gsm8k", "fixture"))
+    run_parser.add_argument(
+        "--dataset-name", required=True, choices=("math500", "gsm8k", "fixture")
+    )
     run_parser.add_argument("--split", required=True)
-    run_parser.add_argument("--generations", required=True, help="JSONL of example_id, sample_index, text, finish_reason")
+    run_parser.add_argument(
+        "--generations",
+        required=True,
+        help="JSONL of example_id, sample_index, text, finish_reason",
+    )
     run_parser.add_argument("--out", required=True)
     run_parser.add_argument("--arm", required=True, choices=("untouched", "edited"))
     run_parser.add_argument("--checkpoint-id", required=True)
     run_parser.add_argument("--checkpoint-fingerprint", required=True)
-    run_parser.add_argument("--tokenizer", default=None, help="optional local tokenizer; applies enable_thinking")
+    run_parser.add_argument(
+        "--tokenizer",
+        default=None,
+        help="optional local tokenizer; applies enable_thinking",
+    )
     run_parser.set_defaults(func=command_run)
 
-    compare_parser = sub.add_parser("compare", help="compare untouched and edited result files")
+    compare_parser = sub.add_parser(
+        "compare", help="compare untouched and edited result files"
+    )
     compare_parser.add_argument("--untouched", required=True)
     compare_parser.add_argument("--edited", required=True)
     compare_parser.add_argument("--per-example", default=None)
     compare_parser.set_defaults(func=command_compare)
 
-    smoke_parser = sub.add_parser("smoke", help="canned two-problem run; not a benchmark score")
+    smoke_parser = sub.add_parser(
+        "smoke", help="canned two-problem run; not a benchmark score"
+    )
     smoke_parser.add_argument("--out", required=True)
     smoke_parser.set_defaults(func=command_smoke)
 
-    fetch_parser = sub.add_parser("fetch", help="download one published split into a chosen directory")
-    fetch_parser.add_argument("--dataset-name", required=True, choices=("math500", "gsm8k"))
+    fetch_parser = sub.add_parser(
+        "fetch", help="download one published split into a chosen directory"
+    )
+    fetch_parser.add_argument(
+        "--dataset-name", required=True, choices=("math500", "gsm8k")
+    )
     fetch_parser.add_argument("--split", required=True)
-    fetch_parser.add_argument("--dest", default=None, help="directory; or set WEIGHTSCRIPT_CACHE_DIR")
+    fetch_parser.add_argument(
+        "--dest", default=None, help="directory; or set WEIGHTSCRIPT_CACHE_DIR"
+    )
     fetch_parser.set_defaults(func=command_fetch)
     return parser
 

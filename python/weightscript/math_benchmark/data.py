@@ -38,7 +38,12 @@ class Example:
     index: int
 
     def to_json(self) -> dict:
-        return {"id": self.id, "problem": self.problem, "answer": self.answer, "index": self.index}
+        return {
+            "id": self.id,
+            "problem": self.problem,
+            "answer": self.answer,
+            "index": self.index,
+        }
 
 
 @dataclass(frozen=True)
@@ -80,7 +85,11 @@ def _sha256_bytes(payload: bytes) -> str:
 
 def _content_hash(examples: tuple[Example, ...]) -> str:
     lines = [
-        json.dumps({"id": item.id, "problem": item.problem, "answer": item.answer}, ensure_ascii=False, sort_keys=True)
+        json.dumps(
+            {"id": item.id, "problem": item.problem, "answer": item.answer},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
         for item in examples
     ]
     return _sha256_bytes(("\n".join(lines) + "\n").encode())
@@ -90,13 +99,17 @@ def _check_role(dataset: str, split: str, role: str) -> None:
     if role not in ("evaluation", "practice"):
         raise SplitIsolationError("role must be 'evaluation' or 'practice'")
     if dataset == "math500" and (role != "evaluation" or split != "test"):
-        raise SplitIsolationError("MATH-500 is an evaluation set: role=evaluation and split=test")
+        raise SplitIsolationError(
+            "MATH-500 is an evaluation set: role=evaluation and split=test"
+        )
     if dataset == "gsm8k" and role == "evaluation" and split != "test":
         raise SplitIsolationError("GSM8K evaluation uses the test split only")
     if dataset == "gsm8k" and role == "practice" and split != "train":
         raise SplitIsolationError("GSM8K practice uses the train split only")
     if dataset == "math_train" and (role != "practice" or split != "train"):
-        raise SplitIsolationError("MATH train is practice only and is not an evaluation set")
+        raise SplitIsolationError(
+            "MATH train is practice only and is not an evaluation set"
+        )
     if role == "evaluation" and split == "train":
         raise SplitIsolationError("an evaluation run cannot use a train split")
     if role == "practice" and split == "test":
@@ -116,7 +129,9 @@ def _answer_for(dataset: str, raw: str, solution: str | None) -> str:
     return raw
 
 
-def _build(name: str, split: str, role: str, rows: list[dict], provenance: dict) -> ExampleSet:
+def _build(
+    name: str, split: str, role: str, rows: list[dict], provenance: dict
+) -> ExampleSet:
     _check_role(name, split, role)
     examples = []
     seen = set()
@@ -142,7 +157,9 @@ def _build(name: str, split: str, role: str, rows: list[dict], provenance: dict)
             "role": role,
             "row_count": len(packed),
             "published_count": expected,
-            "count_matches_published": expected == len(packed) if expected is not None else None,
+            "count_matches_published": expected == len(packed)
+            if expected is not None
+            else None,
             "content_sha256": _content_hash(packed),
             "example_ids_sha256": _sha256_bytes(
                 json.dumps([item.id for item in packed], ensure_ascii=False).encode()
@@ -158,7 +175,11 @@ def dump_jsonl_line(payload: dict) -> str:
     """One JSON object, with Unicode line separators escaped so the row stays one line."""
 
     text = json.dumps(payload, ensure_ascii=False, sort_keys=True)
-    return text.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029").replace("\u0085", "\\u0085")
+    return (
+        text.replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+        .replace("\u0085", "\\u0085")
+    )
 
 
 def _json_objects(text: str, file_path: Path) -> list[dict]:
@@ -225,7 +246,13 @@ def load_jsonl(path, *, dataset: str, split: str, role: str) -> ExampleSet:
     )
 
 
-def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir: str | None = None):
+def load_hf(
+    dataset: str,
+    *,
+    split: str,
+    revision: str | None = None,
+    cache_dir: str | None = None,
+):
     """Load a published Hugging Face split. Imports ``datasets`` only here.
 
     ``dataset`` is ``math500`` or ``gsm8k``. MATH-500 accepts only ``test``.
@@ -247,7 +274,9 @@ def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir:
         config = GSM8K_HF["config"]
         role = "evaluation" if split == "test" else "practice"
     else:
-        raise ValueError("load_hf supports math500 and gsm8k; use load_jsonl for other files")
+        raise ValueError(
+            "load_hf supports math500 and gsm8k; use load_jsonl for other files"
+        )
     try:
         from datasets import load_dataset  # noqa: PLC0415
     except ImportError as error:
@@ -269,7 +298,11 @@ def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir:
     for index, row in enumerate(loaded):
         if dataset == "math500":
             rows.append(
-                {"id": row["unique_id"], "problem": row["problem"], "answer": row["answer"]}
+                {
+                    "id": row["unique_id"],
+                    "problem": row["problem"],
+                    "answer": row["answer"],
+                }
             )
         else:
             rows.append(
@@ -315,7 +348,9 @@ def assert_disjoint(evaluation: ExampleSet, practice: ExampleSet) -> None:
         if key in practice_text:
             overlaps.append((item.id, practice_text[key]))
     if overlaps:
-        shown = ", ".join(f"{eval_id}~{practice_id}" for eval_id, practice_id in overlaps[:5])
+        shown = ", ".join(
+            f"{eval_id}~{practice_id}" for eval_id, practice_id in overlaps[:5]
+        )
         raise SplitIsolationError(
             f"{len(overlaps)} evaluation problem(s) match practice text after NFKC/casefold "
             f"normalization ({shown}). This is not the article's 13-word filter."

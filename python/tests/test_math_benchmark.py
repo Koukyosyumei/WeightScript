@@ -42,7 +42,9 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
     path.write_text("".join(json.dumps(row) + "\n" for row in rows))
 
 
-def _examples(tmp_path: Path, rows=None, *, dataset="fixture", split="test", role="evaluation"):
+def _examples(
+    tmp_path: Path, rows=None, *, dataset="fixture", split="test", role="evaluation"
+):
     rows = rows or [
         {"id": "a", "problem": "What is 20+4?", "answer": "24"},
         {"id": "b", "problem": "What is 3+4?", "answer": "7"},
@@ -144,12 +146,16 @@ def test_boxed_extraction_follows_the_published_limits():
 
 
 def test_missing_math_verify_does_not_fill_correct(grader_cache):
-    grader_cache._MV.update(module=None, error=ImportError("math-verify is not installed"), loaded=True)
+    grader_cache._MV.update(
+        module=None, error=ImportError("math-verify is not installed"), loaded=True
+    )
     graded = grade_response("\\boxed{24}", "24", finish_reason="stop", n_tokens=4)
     assert graded["equiv"] is True
     assert graded["correct"] is None
     assert graded["grader"] == "unavailable"
-    unboxed = grade_response("I never boxed it.", "24", finish_reason="stop", n_tokens=4)
+    unboxed = grade_response(
+        "I never boxed it.", "24", finish_reason="stop", n_tokens=4
+    )
     assert unboxed["correct"] is False
     assert unboxed["grader"] == "not_applicable"
 
@@ -191,12 +197,21 @@ def test_split_isolation_and_gsm8k_gold(tmp_path):
     raw = tmp_path / "gsm.jsonl"
     _write_jsonl(
         raw,
-        [{"id": "g0", "problem": "How many?", "answer": "Natalia sold clips.\n#### 1,024"}],
+        [
+            {
+                "id": "g0",
+                "problem": "How many?",
+                "answer": "Natalia sold clips.\n#### 1,024",
+            }
+        ],
     )
     evaluation = load_jsonl(raw, dataset="gsm8k", split="test", role="evaluation")
     assert evaluation.examples[0].answer == "1024"
     assert evaluation.provenance["file_sha256"]
-    assert evaluation.provenance["article_13gram_decontamination"] == "not_applied_filter_unpublished"
+    assert (
+        evaluation.provenance["article_13gram_decontamination"]
+        == "not_applied_filter_unpublished"
+    )
     math_rows = tmp_path / "math.jsonl"
     _write_jsonl(math_rows, [{"id": "m0", "problem": "Tuple?", "answer": "1,000"}])
     math500 = load_jsonl(math_rows, dataset="math500", split="test", role="evaluation")
@@ -206,19 +221,32 @@ def test_split_isolation_and_gsm8k_gold(tmp_path):
     with pytest.raises(SplitIsolationError):
         load_jsonl(math_rows, dataset="math500", split="test", role="practice")
     practice_path = tmp_path / "practice.jsonl"
-    _write_jsonl(practice_path, [{"id": "t0", "problem": "How many?", "answer": "#### 5"}])
-    practice = load_jsonl(practice_path, dataset="gsm8k", split="train", role="practice")
+    _write_jsonl(
+        practice_path, [{"id": "t0", "problem": "How many?", "answer": "#### 5"}]
+    )
+    practice = load_jsonl(
+        practice_path, dataset="gsm8k", split="train", role="practice"
+    )
     with pytest.raises(SplitIsolationError, match="13-word"):
         assert_disjoint(evaluation, practice)
     other = load_jsonl(
-        _touch(tmp_path / "other.jsonl", [{"id": "t1", "problem": "Unrelated?", "answer": "#### 5"}]),
+        _touch(
+            tmp_path / "other.jsonl",
+            [{"id": "t1", "problem": "Unrelated?", "answer": "#### 5"}],
+        ),
         dataset="gsm8k",
         split="train",
         role="practice",
     )
     assert_disjoint(evaluation, other)
     with pytest.raises(SplitIsolationError):
-        run_evaluation(practice, _spec(), lambda requests: [], tmp_path / "no.jsonl", budgets=_budgets())
+        run_evaluation(
+            practice,
+            _spec(),
+            lambda requests: [],
+            tmp_path / "no.jsonl",
+            budgets=_budgets(),
+        )
 
 
 def _touch(path: Path, rows: list[dict]) -> Path:
@@ -228,7 +256,13 @@ def _touch(path: Path, rows: list[dict]) -> Path:
 
 def test_chat_template_requires_enable_thinking():
     class Good:
-        def apply_chat_template(self, messages, tokenize=False, add_generation_prompt=True, enable_thinking=None):
+        def apply_chat_template(
+            self,
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=None,
+        ):
             assert enable_thinking is True
             assert tokenize is False
             return messages[0]["content"] + "<gen>"
@@ -270,7 +304,12 @@ def test_requests_hide_gold_and_accuracy_is_a_mean(tmp_path, grader_cache):
         tmp_path / "run.jsonl",
         budgets=_budgets(max_examples=1, max_samples=2),
     )
-    assert {key for request in seen for key in ("gold", "answer", "solution") if key in request} == set()
+    assert {
+        key
+        for request in seen
+        for key in ("gold", "answer", "solution")
+        if key in request
+    } == set()
     assert summary["n_problems"] == 1
     assert summary["acc"] == 0.5
     assert summary["headline"] == "acc"
@@ -282,7 +321,9 @@ def test_requests_hide_gold_and_accuracy_is_a_mean(tmp_path, grader_cache):
     assert report["blog_table_settings"] is False
 
 
-def test_resume_skips_completed_examples_and_rejects_a_different_config(tmp_path, grader_cache):
+def test_resume_skips_completed_examples_and_rejects_a_different_config(
+    tmp_path, grader_cache
+):
     _install_verifier(grader_cache, lambda gold, pred: gold == pred)
     examples = _examples(tmp_path)
     calls = []
@@ -302,7 +343,9 @@ def test_resume_skips_completed_examples_and_rejects_a_different_config(tmp_path
     assert calls == ["a", "b", "b"]
     stored = out.read_bytes()
     with pytest.raises(ConfigMismatch, match="checkpoint_id"):
-        run_evaluation(examples, _spec(checkpoint="other"), generate, out, budgets=_budgets())
+        run_evaluation(
+            examples, _spec(checkpoint="other"), generate, out, budgets=_budgets()
+        )
     assert out.read_bytes() == stored
     out.write_bytes(stored + b'{"record":"sample","cut":')
     calls.clear()
@@ -325,13 +368,19 @@ def test_non_trailing_hole_is_rejected_without_rewriting(tmp_path, grader_cache)
 
     run_evaluation(examples, _spec(), generate, out, budgets=_budgets(max_samples=2))
     lines = out.read_text().splitlines()
-    sample_lines = [line for line in lines if '"sample_index":1' in line and '"example_id":"a"' in line]
+    sample_lines = [
+        line
+        for line in lines
+        if '"sample_index":1' in line and '"example_id":"a"' in line
+    ]
     assert sample_lines
     damaged = "\n".join(line for line in lines if line not in sample_lines) + "\n"
     before = damaged.encode()
     out.write_bytes(before)
     with pytest.raises(IntegrityError, match="unfinished"):
-        run_evaluation(examples, _spec(), generate, out, budgets=_budgets(max_samples=2))
+        run_evaluation(
+            examples, _spec(), generate, out, budgets=_budgets(max_samples=2)
+        )
     assert out.read_bytes() == before
 
 
@@ -374,7 +423,9 @@ def test_bad_finish_is_not_stored(tmp_path):
         return [{"text": "\\boxed{1}", "finish_reason": "abort", "n_tokens": 1}]
 
     with pytest.raises(Exception, match="finish_reason"):
-        run_evaluation(examples, _spec(), generate, out, budgets=_budgets(max_examples=1))
+        run_evaluation(
+            examples, _spec(), generate, out, budgets=_budgets(max_examples=1)
+        )
     text = out.read_text()
     assert "abort" not in text
     assert '"record":"sample"' not in text
@@ -395,7 +446,13 @@ def test_comparison_requires_equal_full_sets(tmp_path, grader_cache):
             return [{"text": text, "finish_reason": finish, "n_tokens": 4}]
 
         path = tmp_path / f"{arm}.jsonl"
-        run_evaluation(examples, _spec(arm=arm, checkpoint=checkpoint), generate, path, budgets=_budgets())
+        run_evaluation(
+            examples,
+            _spec(arm=arm, checkpoint=checkpoint),
+            generate,
+            path,
+            budgets=_budgets(),
+        )
         return path
 
     untouched = make("untouched", "base", "wrong")
@@ -415,14 +472,18 @@ def test_comparison_requires_equal_full_sets(tmp_path, grader_cache):
     run_evaluation(
         examples,
         _spec(arm="edited", checkpoint="edit-short"),
-        lambda requests: [{"text": "\\boxed{0}", "finish_reason": "stop", "n_tokens": 1}],
+        lambda requests: [
+            {"text": "\\boxed{0}", "finish_reason": "stop", "n_tokens": 1}
+        ],
         other,
         budgets=shorter,
     )
     mismatched = compare_runs(untouched, other)
     assert mismatched["comparable"] is False
     assert mismatched["delta_acc"] is None
-    assert any("max_new_tokens" in reason for reason in mismatched["incomparable_because"])
+    assert any(
+        "max_new_tokens" in reason for reason in mismatched["incomparable_because"]
+    )
 
     lines = edited.read_text().splitlines()
     kept = [line for line in lines if '"example_id":"a"' not in line]
@@ -431,7 +492,9 @@ def test_comparison_requires_equal_full_sets(tmp_path, grader_cache):
     picked = compare_runs(untouched, selected)
     assert picked["comparable"] is False
     assert picked["delta_acc"] is None
-    assert any("canonical prefix" in reason for reason in picked["incomparable_because"])
+    assert any(
+        "canonical prefix" in reason for reason in picked["incomparable_because"]
+    )
 
 
 def test_published_protocol_objects_match_the_evaluator_constants():
@@ -626,7 +689,9 @@ def test_jsonl_keeps_a_problem_that_contains_a_line_separator(tmp_path):
     raw = '{"id": "a", "problem": "a\u2028b", "answer": "1"}\n'
     raw_path = tmp_path / "raw.jsonl"
     raw_path.write_text(raw)
-    raw_loaded = load_jsonl(raw_path, dataset="fixture", split="test", role="evaluation")
+    raw_loaded = load_jsonl(
+        raw_path, dataset="fixture", split="test", role="evaluation"
+    )
     assert raw_loaded.examples[0].problem == "a\u2028b"
 
 
