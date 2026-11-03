@@ -1,0 +1,1626 @@
+{
+  "checkpoint": "unique_copy-@2l1h64d3lr01drop",
+  "source_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+  "task_kind": "copy",
+  "domains": {
+    "calibration": "fe214106dbb435a073e7416479d7759cd30d304f1ff625cef0714d141d142a50",
+    "oracle": "5a8ebe72ac46a1afa99fbc28ef7f3d904a6f4dfbd4c8d360aaa55822f9891b5e",
+    "final": "a5c63820f05b070df0ba5da7d7d165c2649475a7744f7cfea9be17fd6799f25e"
+  },
+  "domain_sizes": {
+    "calibration": 24,
+    "oracle": 16,
+    "final": 16
+  },
+  "position_assumption": "implicit positions 0..length-1; upstream training also drew random offsets",
+  "native_task": {
+    "calibration": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 96,
+      "sequences": 24
+    },
+    "oracle": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 112,
+      "sequences": 16
+    },
+    "final": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 144,
+      "sequences": 16
+    }
+  },
+  "causal_summary": {
+    "accepted": true,
+    "claim": "measured domain fidelity; stage execution does not establish paper reproduction or symbolic equivalence",
+    "checkpoint_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches",
+      "QK renderer fallback for full-path renderer undefined heatmap labels"
+    ],
+    "normalization": {
+      "positions": "implicit positions 0..length-1 on the caller-supplied token ids",
+      "layernorm": "upstream engines consume per-vertex log-variance fit on the calibration rows",
+      "acceptance": "final-token argmax agreement; max_logit_error is separate and can reject a logit-level claim"
+    },
+    "stages": [
+      {
+        "name": "component",
+        "accepted": true,
+        "edges_before": 32,
+        "edges_after": 8,
+        "trials": 32,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 1.0,
+        "max_logit_error": 14.610898971557617,
+        "logit_reconstruction": false,
+        "normalization_assumption_passed": true
+      },
+      {
+        "name": "full_path",
+        "accepted": true,
+        "edges_before": 8,
+        "edges_after": 6,
+        "trials": 8,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 1.0,
+        "max_logit_error": 16.024660110473633,
+        "renderer_adaptation": "upstream full-path renderer has undefined heatmap labels; rendered equivalent expanded config with upstream QK renderer"
+      },
+      {
+        "name": "qk",
+        "accepted": true,
+        "edges_before": 3,
+        "edges_after": 2,
+        "trials": 3,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 1.0,
+        "max_logit_error": 15.599770545959473,
+        "renderer_adaptation": null
+      }
+    ],
+    "primitive_interpretations": {
+      "opaque": 1
+    },
+    "primitive_hypotheses": [],
+    "primitive_rejections": []
+  },
+  "replay": {
+    "component": {
+      "oracle": {
+        "stage_vs_native": 0.9821428571428571,
+        "native_vs_gold": 1.0,
+        "positions": 112,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              149,
+              135,
+              144,
+              15,
+              83,
+              85,
+              151,
+              149
+            ],
+            "stage": 33,
+            "native": 135,
+            "gold": 135
+          },
+          {
+            "input_ids": [
+              150,
+              143,
+              139,
+              134,
+              110,
+              135,
+              109,
+              151,
+              143,
+              139,
+              134,
+              110
+            ],
+            "stage": 139,
+            "native": 135,
+            "gold": 135
+          }
+        ]
+      },
+      "final": {
+        "stage_vs_native": 0.8958333333333334,
+        "native_vs_gold": 1.0,
+        "positions": 144,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              128,
+              82,
+              135,
+              123,
+              113,
+              72,
+              18,
+              77,
+              151,
+              128,
+              82,
+              135
+            ],
+            "stage": 72,
+            "native": 123,
+            "gold": 123
+          },
+          {
+            "input_ids": [
+              150,
+              105,
+              79,
+              132,
+              127,
+              13,
+              109,
+              71,
+              81,
+              151,
+              105,
+              79
+            ],
+            "stage": 79,
+            "native": 132,
+            "gold": 132
+          },
+          {
+            "input_ids": [
+              150,
+              93,
+              31,
+              82,
+              62,
+              131,
+              69,
+              81,
+              1,
+              151,
+              93,
+              31,
+              82,
+              62,
+              131
+            ],
+            "stage": 131,
+            "native": 69,
+            "gold": 69
+          },
+          {
+            "input_ids": [
+              150,
+              93,
+              31,
+              82,
+              62,
+              131,
+              69,
+              81,
+              1,
+              151,
+              93,
+              31,
+              82,
+              62,
+              131,
+              69,
+              81
+            ],
+            "stage": 131,
+            "native": 1,
+            "gold": 1
+          },
+          {
+            "input_ids": [
+              150,
+              81,
+              0,
+              14,
+              104,
+              70,
+              89,
+              51,
+              49,
+              151,
+              81,
+              0,
+              14
+            ],
+            "stage": 14,
+            "native": 104,
+            "gold": 104
+          },
+          {
+            "input_ids": [
+              150,
+              81,
+              0,
+              14,
+              104,
+              70,
+              89,
+              51,
+              49,
+              151,
+              81,
+              0,
+              14,
+              104,
+              70,
+              89,
+              51
+            ],
+            "stage": 81,
+            "native": 49,
+            "gold": 49
+          },
+          {
+            "input_ids": [
+              150,
+              99,
+              117,
+              121,
+              91,
+              137,
+              116,
+              78,
+              124,
+              151,
+              99,
+              117,
+              121,
+              91,
+              137
+            ],
+            "stage": 117,
+            "native": 116,
+            "gold": 116
+          },
+          {
+            "input_ids": [
+              150,
+              99,
+              117,
+              121,
+              91,
+              137,
+              116,
+              78,
+              124,
+              151,
+              99,
+              117,
+              121,
+              91,
+              137,
+              116,
+              78
+            ],
+            "stage": 128,
+            "native": 124,
+            "gold": 124
+          }
+        ]
+      }
+    },
+    "full_path": {
+      "oracle": {
+        "stage_vs_native": 0.16071428571428573,
+        "native_vs_gold": 1.0,
+        "positions": 112,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35
+            ],
+            "stage": 35,
+            "native": 62,
+            "gold": 62
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62
+            ],
+            "stage": 2,
+            "native": 6,
+            "gold": 6
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6
+            ],
+            "stage": 2,
+            "native": 114,
+            "gold": 114
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114
+            ],
+            "stage": 2,
+            "native": 47,
+            "gold": 47
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114,
+              47
+            ],
+            "stage": 2,
+            "native": 30,
+            "gold": 30
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30
+            ],
+            "stage": 2,
+            "native": 152,
+            "gold": 152
+          },
+          {
+            "input_ids": [
+              150,
+              88,
+              20,
+              59,
+              68,
+              12,
+              81,
+              151,
+              88
+            ],
+            "stage": 88,
+            "native": 20,
+            "gold": 20
+          },
+          {
+            "input_ids": [
+              150,
+              88,
+              20,
+              59,
+              68,
+              12,
+              81,
+              151,
+              88,
+              20
+            ],
+            "stage": 134,
+            "native": 59,
+            "gold": 59
+          }
+        ]
+      },
+      "final": {
+        "stage_vs_native": 0.14583333333333334,
+        "native_vs_gold": 1.0,
+        "positions": 144,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146
+            ],
+            "stage": 69,
+            "native": 42,
+            "gold": 42
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42
+            ],
+            "stage": 42,
+            "native": 59,
+            "gold": 59
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59
+            ],
+            "stage": 69,
+            "native": 70,
+            "gold": 70
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70
+            ],
+            "stage": 69,
+            "native": 122,
+            "gold": 122
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122
+            ],
+            "stage": 69,
+            "native": 136,
+            "gold": 136
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136
+            ],
+            "stage": 136,
+            "native": 135,
+            "gold": 135
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135
+            ],
+            "stage": 69,
+            "native": 47,
+            "gold": 47
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47
+            ],
+            "stage": 69,
+            "native": 152,
+            "gold": 152
+          }
+        ]
+      }
+    },
+    "qk": {
+      "oracle": {
+        "stage_vs_native": 0.16071428571428573,
+        "native_vs_gold": 1.0,
+        "positions": 112,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35
+            ],
+            "stage": 35,
+            "native": 62,
+            "gold": 62
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62
+            ],
+            "stage": 2,
+            "native": 6,
+            "gold": 6
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6
+            ],
+            "stage": 2,
+            "native": 114,
+            "gold": 114
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114
+            ],
+            "stage": 2,
+            "native": 47,
+            "gold": 47
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114,
+              47
+            ],
+            "stage": 2,
+            "native": 30,
+            "gold": 30
+          },
+          {
+            "input_ids": [
+              150,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30,
+              151,
+              35,
+              62,
+              6,
+              114,
+              47,
+              30
+            ],
+            "stage": 2,
+            "native": 152,
+            "gold": 152
+          },
+          {
+            "input_ids": [
+              150,
+              88,
+              20,
+              59,
+              68,
+              12,
+              81,
+              151,
+              88
+            ],
+            "stage": 50,
+            "native": 20,
+            "gold": 20
+          },
+          {
+            "input_ids": [
+              150,
+              88,
+              20,
+              59,
+              68,
+              12,
+              81,
+              151,
+              88,
+              20
+            ],
+            "stage": 134,
+            "native": 59,
+            "gold": 59
+          }
+        ]
+      },
+      "final": {
+        "stage_vs_native": 0.14583333333333334,
+        "native_vs_gold": 1.0,
+        "positions": 144,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146
+            ],
+            "stage": 69,
+            "native": 42,
+            "gold": 42
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42
+            ],
+            "stage": 136,
+            "native": 59,
+            "gold": 59
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59
+            ],
+            "stage": 69,
+            "native": 70,
+            "gold": 70
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70
+            ],
+            "stage": 69,
+            "native": 122,
+            "gold": 122
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122
+            ],
+            "stage": 69,
+            "native": 136,
+            "gold": 136
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136
+            ],
+            "stage": 136,
+            "native": 135,
+            "gold": 135
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135
+            ],
+            "stage": 69,
+            "native": 47,
+            "gold": 47
+          },
+          {
+            "input_ids": [
+              150,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47,
+              151,
+              146,
+              42,
+              59,
+              70,
+              122,
+              136,
+              135,
+              47
+            ],
+            "stage": 69,
+            "native": 152,
+            "gold": 152
+          }
+        ]
+      }
+    }
+  },
+  "edit": {
+    "backend": "counterexample_guided_constraint_compiler",
+    "rule": {
+      "op": "span_next",
+      "kind": "sorted",
+      "bos": 150,
+      "sep": 151,
+      "eos": 152
+    },
+    "rounds": 2,
+    "bounded_oracle_passed": true,
+    "oracle_rescore": {
+      "checked": 4,
+      "accuracy": 1.0,
+      "counterexamples": []
+    },
+    "oracle_rows_absorbed": 4,
+    "refinement_stopped": null,
+    "source_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+    "audit": {
+      "architecture_preserved": true,
+      "gradient_updates": 0,
+      "changed_scalars": 704,
+      "tensors": [
+        {
+          "tensor": "transformer.h.1.mlp.c_proj.weight",
+          "changed": 640,
+          "total": 16384,
+          "aliases": [],
+          "delta_l2": 13.040828704833984
+        },
+        {
+          "tensor": "transformer.ln_f.bias",
+          "changed": 64,
+          "total": 64,
+          "aliases": [],
+          "delta_l2": 0.9848321676254272
+        }
+      ]
+    },
+    "forward_calls": 12,
+    "final_synthesis_examples": 8,
+    "oracle_examples": 4,
+    "claim": "bounded activation-informed synthesis; held-out rows are never supplied to LP or counterexample refinement",
+    "base_heldout": {
+      "examples": 4,
+      "labeled": 4,
+      "accuracy_wilson_95": [
+        0,
+        0.48989083645458353
+      ],
+      "target_nll_standard_error": 0.7350906089763874,
+      "accuracy": 0.0,
+      "target_nll": 15.208042621612549,
+      "forward_calls": 1,
+      "reference_forward_calls": 0,
+      "token_disagreement": null,
+      "reference_kl_per_token": null
+    },
+    "edited_heldout": {
+      "examples": 4,
+      "labeled": 4,
+      "accuracy_wilson_95": [
+        0,
+        0.48989083645458353
+      ],
+      "target_nll_standard_error": 3.161175232072405,
+      "accuracy": 0.0,
+      "target_nll": 11.682666063308716,
+      "forward_calls": 1,
+      "reference_forward_calls": 1,
+      "token_disagreement": 0.775,
+      "reference_kl_per_token": 6.5710502624511715
+    },
+    "heldout_decisions": {
+      "checked": 4,
+      "accuracy": 0.0,
+      "counterexamples": [
+        {
+          "input_ids": [
+            150,
+            146,
+            42,
+            59,
+            70,
+            122,
+            136,
+            135,
+            47,
+            151
+          ],
+          "actual": 148,
+          "expected": 42
+        },
+        {
+          "input_ids": [
+            150,
+            128,
+            82,
+            135,
+            123,
+            113,
+            72,
+            18,
+            77,
+            151
+          ],
+          "actual": 128,
+          "expected": 18
+        },
+        {
+          "input_ids": [
+            150,
+            105,
+            79,
+            132,
+            127,
+            13,
+            109,
+            71,
+            81,
+            151
+          ],
+          "actual": 1,
+          "expected": 13
+        },
+        {
+          "input_ids": [
+            150,
+            142,
+            62,
+            30,
+            14,
+            81,
+            72,
+            54,
+            16,
+            151
+          ],
+          "actual": 142,
+          "expected": 14
+        }
+      ]
+    },
+    "rounds_slim": [
+      {
+        "passed": false,
+        "synthesis": {
+          "checked": 4,
+          "accuracy": 1.0,
+          "counterexamples": []
+        },
+        "verification": {
+          "checked": 4,
+          "accuracy": 0.0,
+          "counterexamples": [
+            {
+              "input_ids": [
+                150,
+                35,
+                62,
+                6,
+                114,
+                47,
+                30,
+                151
+              ],
+              "actual": 35,
+              "expected": 6
+            },
+            {
+              "input_ids": [
+                150,
+                88,
+                20,
+                59,
+                68,
+                12,
+                81,
+                151
+              ],
+              "actual": 148,
+              "expected": 12
+            },
+            {
+              "input_ids": [
+                150,
+                45,
+                141,
+                110,
+                12,
+                147,
+                5,
+                151
+              ],
+              "actual": 45,
+              "expected": 5
+            },
+            {
+              "input_ids": [
+                150,
+                67,
+                79,
+                107,
+                48,
+                46,
+                28,
+                151
+              ],
+              "actual": 67,
+              "expected": 28
+            }
+          ]
+        },
+        "patch_rank_bound": 3,
+        "solver": {
+          "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+          "linear_constraint_count": 612,
+          "rational_violation_check": "unsat",
+          "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+        },
+        "changed_scalars": 256
+      },
+      {
+        "passed": true,
+        "synthesis": {
+          "checked": 8,
+          "accuracy": 1.0,
+          "counterexamples": []
+        },
+        "verification": null,
+        "patch_rank_bound": 7,
+        "solver": {
+          "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+          "linear_constraint_count": 1224,
+          "rational_violation_check": "unsat",
+          "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+        },
+        "changed_scalars": 704
+      }
+    ],
+    "requested_rule": {
+      "op": "span_next",
+      "kind": "sorted",
+      "bos": 150,
+      "sep": 151,
+      "eos": 152
+    },
+    "examples": [
+      4,
+      4,
+      4
+    ],
+    "limit": "bounded last-position patch on four prefixes; not a sequence-wide program transplant"
+  },
+  "semantic_fidelity": {
+    "claim": "bounded behavioral sequence hypothesis; not weight-only discovery or proof of an internal algorithm",
+    "accepted": true,
+    "selected_index": 0,
+    "calibration": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 96,
+      "sequences": 24,
+      "counterexamples": []
+    },
+    "evaluation": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 112,
+      "sequences": 16,
+      "counterexamples": []
+    },
+    "final": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 144,
+      "sequences": 16,
+      "counterexamples": []
+    },
+    "evaluation_passed": true,
+    "final_passed": true,
+    "candidate_metrics": [
+      {
+        "agreement": 1.0,
+        "rule_task_agreement": 1.0,
+        "model_task_agreement": 1.0,
+        "positions": 96,
+        "sequences": 24,
+        "counterexamples": []
+      },
+      {
+        "agreement": 0.20833333333333334,
+        "rule_task_agreement": 0.20833333333333334,
+        "model_task_agreement": 1.0,
+        "positions": 96,
+        "sequences": 24,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151
+            ],
+            "model": 119,
+            "rule": 115,
+            "gold": 119,
+            "error": null
+          },
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151,
+              119
+            ],
+            "model": 115,
+            "rule": null,
+            "gold": 115,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151,
+              119,
+              115
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151
+            ],
+            "model": 130,
+            "rule": 48,
+            "gold": 130,
+            "error": null
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151,
+              130
+            ],
+            "model": 48,
+            "rule": null,
+            "gold": 48,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151,
+              130,
+              48
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              121,
+              47,
+              151
+            ],
+            "model": 121,
+            "rule": 47,
+            "gold": 121,
+            "error": null
+          },
+          {
+            "input_ids": [
+              150,
+              121,
+              47,
+              151,
+              121
+            ],
+            "model": 47,
+            "rule": null,
+            "gold": 47,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              121,
+              47,
+              151,
+              121,
+              47
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              77,
+              36,
+              151
+            ],
+            "model": 77,
+            "rule": 36,
+            "gold": 77,
+            "error": null
+          },
+          {
+            "input_ids": [
+              150,
+              77,
+              36,
+              151,
+              77
+            ],
+            "model": 36,
+            "rule": null,
+            "gold": 36,
+            "error": "span prefix is outside the rule program"
+          },
+          {
+            "input_ids": [
+              150,
+              77,
+              36,
+              151,
+              77,
+              36
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "span prefix is outside the rule program"
+          }
+        ]
+      },
+      {
+        "agreement": 0.0,
+        "rule_task_agreement": 0.0,
+        "model_task_agreement": 1.0,
+        "positions": 96,
+        "sequences": 24,
+        "counterexamples": [
+          {
+            "input_ids": [
+              150,
+              115,
+              143,
+              151
+            ],
+            "model": 115,
+            "rule": null,
+            "gold": 115,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              115,
+              143,
+              151,
+              115
+            ],
+            "model": 143,
+            "rule": null,
+            "gold": 143,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              115,
+              143,
+              151,
+              115,
+              143
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151
+            ],
+            "model": 119,
+            "rule": null,
+            "gold": 119,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151,
+              119
+            ],
+            "model": 115,
+            "rule": null,
+            "gold": 115,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              119,
+              115,
+              151,
+              119,
+              115
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151
+            ],
+            "model": 130,
+            "rule": null,
+            "gold": 130,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151,
+              130
+            ],
+            "model": 48,
+            "rule": null,
+            "gold": 48,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              130,
+              48,
+              151,
+              130,
+              48
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              47,
+              131,
+              151
+            ],
+            "model": 47,
+            "rule": null,
+            "gold": 47,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              47,
+              131,
+              151,
+              47
+            ],
+            "model": 131,
+            "rule": null,
+            "gold": 131,
+            "error": "majority span is undefined"
+          },
+          {
+            "input_ids": [
+              150,
+              47,
+              131,
+              151,
+              47,
+              131
+            ],
+            "model": 152,
+            "rule": null,
+            "gold": 152,
+            "error": "majority span is undefined"
+          }
+        ]
+      }
+    ],
+    "forward_calls": 5
+  },
+  "semantic_rule": {
+    "op": "span_next",
+    "kind": "copy",
+    "bos": 150,
+    "sep": 151,
+    "eos": 152
+  },
+  "semantic_method": "finite-library behavioral sequence synthesis; model forward passes used"
+}

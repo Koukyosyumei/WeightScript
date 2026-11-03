@@ -1,0 +1,4895 @@
+{
+  "backend": "decompiling_transformers.three_stage",
+  "nodes": [
+    {
+      "id": "tokens",
+      "op": "tokens",
+      "inputs": [],
+      "attributes": {},
+      "weights": [],
+      "interpretation": "primitive"
+    },
+    {
+      "id": "output",
+      "op": "upstream_three_stage",
+      "inputs": [
+        "tokens"
+      ],
+      "attributes": {
+        "stages": [
+          {
+            "name": "component",
+            "artifact": {
+              "backend": "decompiling_transformers.stage1",
+              "nodes": [
+                {
+                  "id": "tokens",
+                  "op": "tokens",
+                  "inputs": [],
+                  "attributes": {},
+                  "weights": [],
+                  "interpretation": "primitive"
+                },
+                {
+                  "id": "positions",
+                  "op": "indices",
+                  "inputs": [],
+                  "attributes": {},
+                  "weights": [],
+                  "interpretation": "primitive"
+                },
+                {
+                  "id": "attention.0.0",
+                  "op": "upstream_attention_paths",
+                  "inputs": [
+                    "tokens",
+                    "positions"
+                  ],
+                  "attributes": {
+                    "paths": {
+                      "k": {
+                        "0": [
+                          "wpe"
+                        ]
+                      },
+                      "q": {
+                        "0": [
+                          "wpe"
+                        ]
+                      },
+                      "v": {
+                        "0": [
+                          "wte"
+                        ]
+                      },
+                      "mlp": []
+                    },
+                    "head": 0
+                  },
+                  "weights": [
+                    "transformer.h.0.attn.c_attn.weight",
+                    "transformer.h.0.attn.c_proj.weight"
+                  ],
+                  "interpretation": "opaque"
+                },
+                {
+                  "id": "attention.1.0",
+                  "op": "upstream_attention_paths",
+                  "inputs": [
+                    "tokens",
+                    "positions"
+                  ],
+                  "attributes": {
+                    "paths": {
+                      "k": {
+                        "0": [
+                          "wte",
+                          "attn_output-0-0"
+                        ]
+                      },
+                      "q": {
+                        "0": [
+                          "wte"
+                        ]
+                      },
+                      "v": {
+                        "0": [
+                          "wte"
+                        ]
+                      },
+                      "mlp": []
+                    },
+                    "head": 0
+                  },
+                  "weights": [
+                    "transformer.h.1.attn.c_attn.weight",
+                    "transformer.h.1.attn.c_proj.weight"
+                  ],
+                  "interpretation": "opaque"
+                },
+                {
+                  "id": "output",
+                  "op": "upstream_pruned_model",
+                  "inputs": [
+                    "tokens",
+                    "positions",
+                    "attention.0.0",
+                    "attention.1.0"
+                  ],
+                  "attributes": {
+                    "source": "a0-0 = Attention(Q=pos, K=pos, V=token)\na1-0 = Attention(Q=token, K=['token', 'a0-0'], V=token)\noutput = Unembed(inp=a1-0)",
+                    "config": {
+                      "0": {
+                        "k": {
+                          "0": [
+                            "wpe"
+                          ]
+                        },
+                        "q": {
+                          "0": [
+                            "wpe"
+                          ]
+                        },
+                        "v": {
+                          "0": [
+                            "wte"
+                          ]
+                        },
+                        "mlp": []
+                      },
+                      "1": {
+                        "k": {
+                          "0": [
+                            "wte",
+                            "attn_output-0-0"
+                          ]
+                        },
+                        "q": {
+                          "0": [
+                            "wte"
+                          ]
+                        },
+                        "v": {
+                          "0": [
+                            "wte"
+                          ]
+                        },
+                        "mlp": []
+                      },
+                      "lm_head": [
+                        "attn_output-1-0"
+                      ]
+                    },
+                    "edge_masks": [
+                      {
+                        "path": [
+                          0,
+                          "k",
+                          0,
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "k",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          0,
+                          "q",
+                          0,
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "q",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          0,
+                          "v",
+                          0,
+                          "wte"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          0,
+                          "v",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "k",
+                          0,
+                          "wte"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          1,
+                          "k",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "k",
+                          0,
+                          "attn_output-0-0"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          1,
+                          "k",
+                          0,
+                          "mlp-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "q",
+                          0,
+                          "wte"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          1,
+                          "q",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "q",
+                          0,
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "q",
+                          0,
+                          "mlp-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "v",
+                          0,
+                          "wte"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          1,
+                          "v",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "v",
+                          0,
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "v",
+                          0,
+                          "mlp-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "mlp",
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "mlp",
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "mlp",
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "mlp",
+                          "attn_output-1-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          1,
+                          "mlp",
+                          "mlp-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "attn_output-1-0"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "mlp-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "mlp-1"
+                        ],
+                        "value": 0
+                      }
+                    ],
+                    "normalization": [
+                      {
+                        "vertex": [
+                          1,
+                          "q",
+                          0
+                        ],
+                        "log_variance": -2.4459152221679688
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "mlp"
+                        ],
+                        "log_variance": -2.538968086242676
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "q",
+                          0
+                        ],
+                        "log_variance": -3.372870445251465
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "v",
+                          0
+                        ],
+                        "log_variance": -3.372870445251465
+                      },
+                      {
+                        "vertex": [
+                          1,
+                          "v",
+                          0
+                        ],
+                        "log_variance": -2.4459152221679688
+                      },
+                      {
+                        "vertex": [
+                          1,
+                          "mlp"
+                        ],
+                        "log_variance": 0.5238800644874573
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "k",
+                          0
+                        ],
+                        "log_variance": -3.372870445251465
+                      },
+                      {
+                        "vertex": [
+                          "lm_head"
+                        ],
+                        "log_variance": 0.8169921040534973
+                      },
+                      {
+                        "vertex": [
+                          1,
+                          "k",
+                          0
+                        ],
+                        "log_variance": -2.4459152221679688
+                      }
+                    ],
+                    "linear_ln": true
+                  },
+                  "weights": [],
+                  "interpretation": "opaque"
+                }
+              ],
+              "output": "output",
+              "provenance": {
+                "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+                "revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+                "checkpoint_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+                "driver": "greedy zero-ablation; upstream mask/hook/renderer implementations",
+                "completed_stages": [
+                  "component"
+                ],
+                "unimplemented_stages": [
+                  "full_path",
+                  "qk_reparameterization"
+                ],
+                "compatibility_adaptations": [
+                  "provide missing my_paths directory constant during import",
+                  "retain separate attention output biases in optimal-ablation vectors"
+                ]
+              },
+              "fidelity": {
+                "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+                "layernorm": "calibrated linearization",
+                "normalization_assumption_passed": true,
+                "logit_reconstruction": false,
+                "initial": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 19.58425521850586,
+                  "examples": 24
+                },
+                "calibration": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 14.610898971557617,
+                  "examples": 24
+                },
+                "evaluation": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 15.218113899230957,
+                  "examples": 16
+                },
+                "component_edges_before": 32,
+                "component_edges_after": 8,
+                "native_forward_calls": 7,
+                "pruned_forward_calls": 103,
+                "trials": [
+                  {
+                    "edge": [
+                      "lm_head",
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 19.65408706665039,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "attn_output-1-0"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.9583333333333334,
+                      "max_logit_error": 14.251379013061523,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "mlp-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 19.346969604492188,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "mlp-1"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 13.727029800415039,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 13.696033477783203,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 12.49380111694336,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "k",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.2916666666666667,
+                      "max_logit_error": 24.19696807861328,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "k",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 10.032020568847656,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 13.824787139892578,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 16.980682373046875,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 16.38459587097168,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "q",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.9583333333333334,
+                      "max_logit_error": 22.098831176757812,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "q",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 16.447235107421875,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "v",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.679332733154297,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "v",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.2916666666666667,
+                      "max_logit_error": 19.343603134155273,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "k",
+                      0,
+                      "attn_output-0-0"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.375,
+                      "max_logit_error": 20.18443489074707,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "k",
+                      0,
+                      "mlp-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.679332733154297,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "k",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "k",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.7083333333333334,
+                      "max_logit_error": 16.547439575195312,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "mlp",
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "mlp",
+                      "attn_output-1-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "mlp",
+                      "mlp-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "mlp",
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "mlp",
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.278175354003906,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "q",
+                      0,
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 17.19890594482422,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "q",
+                      0,
+                      "mlp-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 16.51505470275879,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "q",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 16.478801727294922,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "q",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.041666666666666664,
+                      "max_logit_error": 21.688852310180664,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "v",
+                      0,
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 15.406096458435059,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "v",
+                      0,
+                      "mlp-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 14.901040077209473,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "v",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 14.610898971557617,
+                      "examples": 24
+                    }
+                  },
+                  {
+                    "edge": [
+                      1,
+                      "v",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.0,
+                      "max_logit_error": 20.115564346313477,
+                      "examples": 24
+                    }
+                  }
+                ]
+              },
+              "version": "weightscript.ir.v1"
+            },
+            "accepted": true
+          },
+          {
+            "name": "full_path",
+            "engine_config": {
+              "0": {
+                "k": {
+                  "0": [
+                    "wpe"
+                  ]
+                },
+                "q": {
+                  "0": [
+                    "wpe"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": []
+              },
+              "1": {
+                "k": {
+                  "0": [
+                    "wte",
+                    "attn_output-0-0-wte"
+                  ]
+                },
+                "q": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": []
+              },
+              "lm_head": [
+                "attn_output-1-0-wte"
+              ]
+            },
+            "config": {
+              "0": {
+                "k": {
+                  "0": [
+                    "wpe"
+                  ]
+                },
+                "q": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": []
+              },
+              "1": {
+                "k": {
+                  "0": [
+                    "attn_output-0-0-wte"
+                  ]
+                },
+                "q": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": []
+              },
+              "lm_head": [
+                "attn_output-1-0-wte"
+              ]
+            },
+            "auxiliary": {
+              "output_vertex_oa": [
+                {
+                  "vertex": [
+                    1,
+                    "q",
+                    0
+                  ],
+                  "value": [
+                    0.09493196755647659,
+                    0.0731767937541008,
+                    -0.004288450814783573,
+                    -0.15175101161003113,
+                    0.03286270052194595,
+                    0.06538724899291992,
+                    -0.002483466174453497,
+                    0.07740218192338943,
+                    -0.08191768825054169,
+                    0.028763161972165108,
+                    -0.02569926157593727,
+                    -0.02259689010679722,
+                    0.026875605806708336,
+                    -0.014069436118006706,
+                    0.01474176999181509,
+                    -0.07621321082115173,
+                    -0.057017434388399124,
+                    0.03900117427110672,
+                    0.03374815732240677,
+                    -0.01532895676791668,
+                    0.08768133074045181,
+                    0.051840800791978836,
+                    0.0582583025097847,
+                    0.005613735876977444,
+                    -0.07705938071012497,
+                    -0.05890350416302681,
+                    -0.04565547779202461,
+                    -0.173007071018219,
+                    -0.10410658270120621,
+                    -0.06434520334005356,
+                    0.021912764757871628,
+                    -0.09720168262720108,
+                    0.10954952985048294,
+                    -0.06859215348958969,
+                    0.02115144394338131,
+                    -0.03569775074720383,
+                    -0.03333113342523575,
+                    -0.0029536529909819365,
+                    0.02051619440317154,
+                    -0.07440820336341858,
+                    -0.07835137844085693,
+                    0.11215157061815262,
+                    0.004412217065691948,
+                    -0.16267187893390656,
+                    -0.010705970227718353,
+                    0.09380173683166504,
+                    0.046830154955387115,
+                    -0.028545530512928963,
+                    0.04264048859477043,
+                    -0.04347158223390579,
+                    0.030620615929365158,
+                    0.0463687926530838,
+                    0.033363714814186096,
+                    0.04644810035824776,
+                    0.06007471680641174,
+                    0.0018525996711105108,
+                    0.0019692310597747564,
+                    -0.10648179799318314,
+                    0.017160464078187943,
+                    -0.027814362198114395,
+                    0.009383665397763252,
+                    -0.046552326530218124,
+                    0.12032364308834076,
+                    -0.0576782152056694
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.042350757867097855,
+                    0.07745804637670517,
+                    0.03707371652126312,
+                    0.0031630408484488726,
+                    0.005823636893182993,
+                    -0.006906141526997089,
+                    0.029542315751314163,
+                    0.07943814992904663,
+                    0.018905047327280045,
+                    0.03740067407488823,
+                    0.026844127103686333,
+                    -0.014881598763167858,
+                    0.023970061913132668,
+                    -0.01012358721345663,
+                    0.01393810659646988,
+                    0.04049170762300491,
+                    0.02877350151538849,
+                    0.00355564639903605,
+                    0.04755713418126106,
+                    -0.016581790521740913,
+                    -0.02206745743751526,
+                    0.010201902128756046,
+                    0.017743708565831184,
+                    0.01072194054722786,
+                    -0.05209837481379509,
+                    0.007011435925960541,
+                    -0.028528684750199318,
+                    -0.10189976543188095,
+                    -0.06497643887996674,
+                    -0.020741702988743782,
+                    0.025494521483778954,
+                    -0.04897500202059746,
+                    0.0283784419298172,
+                    -0.06722874939441681,
+                    -0.052257928997278214,
+                    -0.0439046174287796,
+                    0.02035028114914894,
+                    0.024931205436587334,
+                    0.017992578446865082,
+                    0.009135344997048378,
+                    -0.026354294270277023,
+                    0.0071839699521660805,
+                    0.010573647916316986,
+                    -0.06514132022857666,
+                    0.011125173419713974,
+                    -0.005361494142562151,
+                    0.01608559489250183,
+                    -0.03161616250872612,
+                    -0.017115237191319466,
+                    0.036443933844566345,
+                    -0.014248596504330635,
+                    -0.03676578029990196,
+                    -0.024358347058296204,
+                    -0.01692630909383297,
+                    -0.0013981855008751154,
+                    0.019156569615006447,
+                    -0.024906793609261513,
+                    -0.02895946241915226,
+                    0.027499455958604813,
+                    0.03474799171090126,
+                    -0.006615033373236656,
+                    -0.03271733596920967,
+                    0.06544683128595352,
+                    -0.05316201597452164
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": [
+                    -0.07518713176250458,
+                    0.0064393701031804085,
+                    -0.04057036340236664,
+                    -0.03213537484407425,
+                    0.02825346030294895,
+                    -0.01451854407787323,
+                    0.06425461173057556,
+                    -0.09558088332414627,
+                    -0.07712613046169281,
+                    0.016475770622491837,
+                    0.05184528976678848,
+                    -0.0526290200650692,
+                    0.015138174407184124,
+                    0.07461176067590714,
+                    0.04971718043088913,
+                    -0.017660994082689285,
+                    -0.016111033037304878,
+                    -0.09371992945671082,
+                    -0.031829867511987686,
+                    -0.04519743472337723,
+                    -0.036423828452825546,
+                    -0.02093779668211937,
+                    -0.0978957861661911,
+                    -0.0869523286819458,
+                    0.007075947243720293,
+                    -0.04647313430905342,
+                    -0.02602851390838623,
+                    0.1119162067770958,
+                    0.10216701030731201,
+                    -0.026179280132055283,
+                    0.10639401525259018,
+                    0.06998402625322342,
+                    -0.011562881991267204,
+                    0.045779772102832794,
+                    0.08323062211275101,
+                    0.08783774822950363,
+                    0.11946874111890793,
+                    0.03935346379876137,
+                    -0.08870511502027512,
+                    0.01643570512533188,
+                    -0.018028438091278076,
+                    -0.02343306504189968,
+                    -0.06600014865398407,
+                    0.05195685103535652,
+                    -0.042811840772628784,
+                    -0.056230757385492325,
+                    0.03555884584784508,
+                    0.07619110494852066,
+                    0.022937458008527756,
+                    -0.047510527074337006,
+                    0.09920062124729156,
+                    0.026155147701501846,
+                    -0.01960064470767975,
+                    -0.09138041734695435,
+                    -0.024065980687737465,
+                    0.16725276410579681,
+                    -0.04940114542841911,
+                    -0.011594871059060097,
+                    -0.0130010936409235,
+                    0.006095976568758488,
+                    -0.015535672195255756,
+                    0.07033631950616837,
+                    -0.027787014842033386,
+                    0.027225201949477196
+                  ]
+                },
+                {
+                  "vertex": [
+                    1,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.0530807226896286,
+                    0.39829498529434204,
+                    0.006964152678847313,
+                    0.04385079815983772,
+                    0.07609186321496964,
+                    0.060754481703042984,
+                    0.05840059369802475,
+                    -0.029393188655376434,
+                    0.03525518625974655,
+                    -0.008570421487092972,
+                    0.001102762296795845,
+                    -0.06155991181731224,
+                    -0.01820106990635395,
+                    -0.09953214973211288,
+                    0.019229354336857796,
+                    0.14550712704658508,
+                    0.0809994488954544,
+                    0.03842884302139282,
+                    -0.017851483076810837,
+                    0.013216177001595497,
+                    0.04109974950551987,
+                    -0.010877315886318684,
+                    0.29523366689682007,
+                    -0.017554696649312973,
+                    0.047470200806856155,
+                    0.4336361289024353,
+                    -0.026720911264419556,
+                    -0.47301405668258667,
+                    -0.019924476742744446,
+                    -0.059756264090538025,
+                    -0.004246234893798828,
+                    -0.06711435317993164,
+                    0.08101366460323334,
+                    -0.03407595679163933,
+                    -0.306201308965683,
+                    -0.07546508312225342,
+                    0.0958484411239624,
+                    0.0435357466340065,
+                    -0.05157633125782013,
+                    0.018238119781017303,
+                    -0.02632005140185356,
+                    -0.29877912998199463,
+                    -0.053197696805000305,
+                    -0.3407038152217865,
+                    0.04441919922828674,
+                    0.23831890523433685,
+                    0.06937365978956223,
+                    -0.13700109720230103,
+                    -0.013200522400438786,
+                    0.04789717495441437,
+                    0.00291389599442482,
+                    -0.31086140871047974,
+                    0.027254510670900345,
+                    -0.03540876507759094,
+                    -0.01986955851316452,
+                    -0.002763969823718071,
+                    -0.03019767440855503,
+                    -0.049169398844242096,
+                    0.021956583485007286,
+                    0.06489387154579163,
+                    -0.09174780547618866,
+                    -0.049385916441679,
+                    0.4424968659877777,
+                    -0.3500201404094696
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": [
+                    -0.05574497580528259,
+                    0.024131368845701218,
+                    -0.01010880246758461,
+                    0.045263081789016724,
+                    -0.06434981524944305,
+                    -0.0018162686610594392,
+                    0.037197645753622055,
+                    -0.016226420179009438,
+                    0.03982800990343094,
+                    0.06455470621585846,
+                    0.011906953528523445,
+                    0.07996179908514023,
+                    -0.06206698343157768,
+                    0.004732365719974041,
+                    0.0021025948226451874,
+                    0.08056755363941193,
+                    0.049743540585041046,
+                    -0.00902253482490778,
+                    -0.08671706914901733,
+                    0.03428863361477852,
+                    -0.020203087478876114,
+                    0.05550530180335045,
+                    -0.05785864591598511,
+                    0.009202903136610985,
+                    0.03273046016693115,
+                    0.07679308205842972,
+                    0.0489053912460804,
+                    -0.05936306342482567,
+                    0.037232477217912674,
+                    -0.01467707846313715,
+                    0.031286194920539856,
+                    -0.008205429650843143,
+                    -0.061174679547548294,
+                    -0.03663204237818718,
+                    -0.05560243874788284,
+                    -0.011568600311875343,
+                    0.026510659605264664,
+                    0.006378204561769962,
+                    -0.06511736661195755,
+                    0.04095012694597244,
+                    0.0460708923637867,
+                    -0.07071594893932343,
+                    0.06685693562030792,
+                    0.07750117778778076,
+                    -0.03595467284321785,
+                    -0.022591421380639076,
+                    -0.016855839639902115,
+                    -0.023934824392199516,
+                    -0.023570455610752106,
+                    0.025262121111154556,
+                    -0.020767996087670326,
+                    -0.05897188186645508,
+                    0.02212637849152088,
+                    -0.013993843458592892,
+                    0.047028470784425735,
+                    0.025418268516659737,
+                    0.009261279366910458,
+                    0.02167489379644394,
+                    -0.0014853532193228602,
+                    0.028207281604409218,
+                    0.030075235292315483,
+                    0.00786647293716669,
+                    -0.004181311000138521,
+                    0.04338398575782776
+                  ]
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": [
+                    -0.24762320518493652,
+                    0.7173188328742981,
+                    0.23404456675052643,
+                    0.3452412188053131,
+                    0.36903685331344604,
+                    0.3623313307762146,
+                    0.36055856943130493,
+                    -0.3145800232887268,
+                    0.339578777551651,
+                    -0.31109052896499634,
+                    0.3052046000957489,
+                    -0.3531204164028168,
+                    0.27665457129478455,
+                    -0.39918357133865356,
+                    -0.28339919447898865,
+                    0.20656216144561768,
+                    -0.22477054595947266,
+                    0.3467627167701721,
+                    -0.30573105812072754,
+                    -0.09624704718589783,
+                    -0.25323015451431274,
+                    0.28451985120773315,
+                    0.6008389592170715,
+                    -0.3191039264202118,
+                    -0.213898703455925,
+                    0.7323647141456604,
+                    0.2707432508468628,
+                    -0.7772077918052673,
+                    -0.32315951585769653,
+                    0.22029148042201996,
+                    0.29975104331970215,
+                    0.2449485808610916,
+                    -0.14165616035461426,
+                    -0.28862231969833374,
+                    -0.6074799299240112,
+                    -0.10596363991498947,
+                    0.392790287733078,
+                    -0.2549741566181183,
+                    -0.23478220403194427,
+                    -0.24207061529159546,
+                    -0.32496777176856995,
+                    -0.5788072943687439,
+                    0.08747156709432602,
+                    -0.05371508002281189,
+                    -0.2582538425922394,
+                    -0.06428023427724838,
+                    -0.22871975600719452,
+                    0.16264435648918152,
+                    -0.31600403785705566,
+                    -0.23969772458076477,
+                    0.28261834383010864,
+                    -0.5911015272140503,
+                    -0.2733815312385559,
+                    0.24911807477474213,
+                    -0.323580801486969,
+                    -0.3060855567455292,
+                    -0.295098215341568,
+                    0.25422418117523193,
+                    -0.2741847634315491,
+                    0.36651507019996643,
+                    0.20921505987644196,
+                    0.2495785504579544,
+                    0.7549986243247986,
+                    -0.059733957052230835
+                  ]
+                },
+                {
+                  "vertex": [
+                    1,
+                    "k",
+                    0
+                  ],
+                  "value": [
+                    0.0474272221326828,
+                    0.027317916974425316,
+                    0.10383366048336029,
+                    -0.007815860211849213,
+                    -0.007252904586493969,
+                    -0.0018562930636107922,
+                    0.024279069155454636,
+                    0.12886245548725128,
+                    -0.03352564573287964,
+                    0.00691681494936347,
+                    0.013995845802128315,
+                    -0.002795563079416752,
+                    0.06292128562927246,
+                    -0.011882057413458824,
+                    -0.019297150894999504,
+                    0.04335535690188408,
+                    0.025969745591282845,
+                    -0.009383028373122215,
+                    0.06737722456455231,
+                    -0.011673083528876305,
+                    -0.06487932801246643,
+                    -0.03774096071720123,
+                    -0.009278478100895882,
+                    -0.02583424188196659,
+                    -0.04349709674715996,
+                    -0.04070010408759117,
+                    -0.02560596540570259,
+                    -0.09664718061685562,
+                    -0.042997464537620544,
+                    -0.012091105803847313,
+                    -0.0006829947233200073,
+                    -0.02117621898651123,
+                    0.0661432072520256,
+                    -0.015244657173752785,
+                    -0.07399415224790573,
+                    -0.028400005772709846,
+                    -0.023515067994594574,
+                    0.05296294391155243,
+                    0.045558348298072815,
+                    0.0009673055610619485,
+                    -0.0414230115711689,
+                    0.007383156567811966,
+                    0.013822751119732857,
+                    -0.05452953651547432,
+                    0.023720217868685722,
+                    0.015237252227962017,
+                    -0.019087674096226692,
+                    -0.018690280616283417,
+                    -0.023952269926667213,
+                    0.010303247720003128,
+                    0.033192962408065796,
+                    -0.016777537763118744,
+                    -0.0036398775409907103,
+                    0.011770995333790779,
+                    -0.0012964406050741673,
+                    -0.013606018386781216,
+                    -0.05748356506228447,
+                    0.007995315827429295,
+                    -0.01825801283121109,
+                    0.03234594687819481,
+                    -0.030707528814673424,
+                    -0.02663964405655861,
+                    0.07628104090690613,
+                    -0.06618047505617142
+                  ]
+                }
+              ],
+              "LN_var": [
+                {
+                  "vertex": [
+                    1,
+                    "q",
+                    0
+                  ],
+                  "value": -2.4459152221679688
+                },
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": -2.538968086242676
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    0,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    1,
+                    "mlp"
+                  ],
+                  "value": 0.5238800644874573
+                },
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": 0.8169921040534973
+                },
+                {
+                  "vertex": [
+                    1,
+                    "k",
+                    0
+                  ],
+                  "value": -2.4459152221679688
+                },
+                {
+                  "vertex": [
+                    1,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -2.4459152221679688
+                }
+              ],
+              "input_vertex_oa": [
+                {
+                  "vertex": "attn_output-0-0-wte",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "vertex": "attn_output-1-0-wte",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "vertex": "wte",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "vertex": "wpe",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                }
+              ]
+            },
+            "source": [
+              [
+                "s1 = select(k=pos) \t  # layer 0 head 0",
+                "a1 = aggregate(s=s1, v=token) \t  # layer 0 head 0",
+                "s2 = select(q=token, k=a1) \t  # layer 1 head 0",
+                "s3 = select(k=a1) \t  # layer 1 head 0",
+                "a2 = aggregate(s=s2+s3, v=token) \t  # layer 1 head 0",
+                "logits1 = proj_to_vocab(a2)",
+                "logits2 = proj_to_vocab(bias)",
+                "prediction = softmax(logits1+\n\t\t\tlogits2)"
+              ],
+              {
+                "s1": [
+                  0,
+                  0,
+                  "wpe"
+                ],
+                "s2": [
+                  1,
+                  0,
+                  [
+                    "wte",
+                    "attn_output-0-0-wte"
+                  ]
+                ],
+                "s3": [
+                  1,
+                  0,
+                  "attn_output-0-0-wte"
+                ],
+                "logits1": "attn_output-1-0-wte",
+                "logits2": "vocab_bias"
+              }
+            ],
+            "renderer_adaptation": "upstream full-path renderer has undefined heatmap labels; rendered equivalent expanded config with upstream QK renderer",
+            "masks": [
+              {
+                "edge": [
+                  0,
+                  "k",
+                  0,
+                  "wpe"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  0,
+                  "q",
+                  0,
+                  "wpe"
+                ],
+                "value": 0
+              },
+              {
+                "edge": [
+                  0,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  1,
+                  "k",
+                  0,
+                  "wte"
+                ],
+                "value": 0
+              },
+              {
+                "edge": [
+                  1,
+                  "k",
+                  0,
+                  "attn_output-0-0-wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  1,
+                  "q",
+                  0,
+                  "wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  1,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  "lm_head",
+                  "attn_output-1-0-wte"
+                ],
+                "value": 1
+              }
+            ],
+            "initial": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.5833333333333334,
+              "max_logit_error": 14.478348731994629,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "calibrated": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.5833333333333334,
+              "max_logit_error": 12.547859191894531,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "calibration": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.475,
+              "max_logit_error": 16.024660110473633,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "evaluation": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.3125,
+              "max_logit_error": 21.453420639038086,
+              "examples": 16,
+              "counterexamples": []
+            },
+            "calibration_losses": [
+              2.557431221008301,
+              1.7722790241241455,
+              1.8493884801864624,
+              2.385288953781128,
+              1.6661401987075806,
+              1.6745758056640625,
+              2.27341890335083,
+              1.5754902362823486,
+              1.563959002494812,
+              2.143723249435425,
+              1.4917584657669067,
+              1.4779280424118042,
+              2.022442579269409,
+              1.413686752319336,
+              1.3905525207519531,
+              1.9150458574295044,
+              1.3376511335372925,
+              1.3001304864883423,
+              1.8156216144561768,
+              1.2644803524017334,
+              1.220080018043518,
+              1.719080924987793,
+              1.1954470872879028,
+              1.151668906211853,
+              1.6232082843780518,
+              1.1284716129302979,
+              1.0944024324417114,
+              1.528688907623291,
+              1.063065767288208,
+              1.0412465333938599,
+              1.4365925788879395,
+              1.0008624792099
+            ],
+            "trials": [
+              {
+                "edge": [
+                  "lm_head",
+                  "attn_output-1-0-wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.08333333333333333,
+                  "all_token_agreement": 0.3333333333333333,
+                  "max_logit_error": 20.473779678344727,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        121,
+                        47,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 121
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        24,
+                        114,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 24
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        77,
+                        36,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 77
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        75,
+                        127,
+                        1,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 75
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        21,
+                        117,
+                        71,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 21
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        104,
+                        141,
+                        21,
+                        65,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 104
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 17
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  0,
+                  "k",
+                  0,
+                  "wpe"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.9166666666666666,
+                  "all_token_agreement": 0.45,
+                  "max_logit_error": 17.728214263916016,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 17,
+                      "expected": 7
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  0,
+                  "q",
+                  0,
+                  "wpe"
+                ],
+                "accepted": true,
+                "metrics": {
+                  "final_token_agreement": 1.0,
+                  "all_token_agreement": 0.4583333333333333,
+                  "max_logit_error": 16.092622756958008,
+                  "examples": 24,
+                  "counterexamples": []
+                }
+              },
+              {
+                "edge": [
+                  0,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.375,
+                  "all_token_agreement": 0.18333333333333332,
+                  "max_logit_error": 19.94586753845215,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 143,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 115,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 48,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 131,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 52,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 29,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 42,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 15,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 61,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 136,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 110,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 27,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 53,
+                      "expected": 17
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        101,
+                        107,
+                        18,
+                        144,
+                        151
+                      ],
+                      "actual": 107,
+                      "expected": 101
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  "k",
+                  0,
+                  "attn_output-0-0-wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.375,
+                  "all_token_agreement": 0.18333333333333332,
+                  "max_logit_error": 19.94586753845215,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 143,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 115,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 48,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 131,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 52,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 29,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 42,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 15,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 61,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 136,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 110,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 27,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 53,
+                      "expected": 17
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        101,
+                        107,
+                        18,
+                        144,
+                        151
+                      ],
+                      "actual": 107,
+                      "expected": 101
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  "k",
+                  0,
+                  "wte"
+                ],
+                "accepted": true,
+                "metrics": {
+                  "final_token_agreement": 1.0,
+                  "all_token_agreement": 0.475,
+                  "max_logit_error": 16.024660110473633,
+                  "examples": 24,
+                  "counterexamples": []
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  "q",
+                  0,
+                  "wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.0,
+                  "all_token_agreement": 0.25833333333333336,
+                  "max_logit_error": 21.51302146911621,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 115,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 131,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        121,
+                        47,
+                        151
+                      ],
+                      "actual": 47,
+                      "expected": 121
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        24,
+                        114,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 24
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        77,
+                        36,
+                        151
+                      ],
+                      "actual": 36,
+                      "expected": 77
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 137,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 115,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 15,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 112,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        50,
+                        132,
+                        59,
+                        151
+                      ],
+                      "actual": 132,
+                      "expected": 50
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        75,
+                        127,
+                        1,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 75
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        21,
+                        117,
+                        71,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 21
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        104,
+                        141,
+                        21,
+                        65,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 104
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 110,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 152,
+                      "expected": 102
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.08333333333333333,
+                  "all_token_agreement": 0.3333333333333333,
+                  "max_logit_error": 20.473779678344727,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        121,
+                        47,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 121
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        24,
+                        114,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 24
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        77,
+                        36,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 77
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        75,
+                        127,
+                        1,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 75
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        21,
+                        117,
+                        71,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 21
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        104,
+                        141,
+                        21,
+                        65,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 104
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 17
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges_before": 8,
+            "edges_after": 6,
+            "accepted": true
+          },
+          {
+            "name": "qk",
+            "engine_config": {
+              "0": {
+                "k": {
+                  "0": [
+                    "wpe"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [],
+                "qk": {
+                  "0": []
+                }
+              },
+              "1": {
+                "k": {
+                  "0": [
+                    "attn_output-0-0-wte"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [],
+                "qk": {
+                  "0": [
+                    [
+                      "wte",
+                      "attn_output-0-0-wte"
+                    ]
+                  ]
+                }
+              },
+              "lm_head": [
+                "attn_output-1-0-wte"
+              ]
+            },
+            "config": {
+              "0": {
+                "k": {
+                  "0": [
+                    "wpe"
+                  ]
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [],
+                "qk": {
+                  "0": []
+                }
+              },
+              "1": {
+                "k": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [],
+                "qk": {
+                  "0": [
+                    [
+                      "wte",
+                      "attn_output-0-0-wte"
+                    ]
+                  ]
+                }
+              },
+              "lm_head": [
+                "attn_output-1-0-wte"
+              ]
+            },
+            "auxiliary": {
+              "output_vertex_oa": [
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.042350757867097855,
+                    0.07745804637670517,
+                    0.03707371652126312,
+                    0.0031630408484488726,
+                    0.005823636893182993,
+                    -0.006906141526997089,
+                    0.029542315751314163,
+                    0.07943814992904663,
+                    0.018905047327280045,
+                    0.03740067407488823,
+                    0.026844127103686333,
+                    -0.014881598763167858,
+                    0.023970061913132668,
+                    -0.01012358721345663,
+                    0.01393810659646988,
+                    0.04049170762300491,
+                    0.02877350151538849,
+                    0.00355564639903605,
+                    0.04755713418126106,
+                    -0.016581790521740913,
+                    -0.02206745743751526,
+                    0.010201902128756046,
+                    0.017743708565831184,
+                    0.01072194054722786,
+                    -0.05209837481379509,
+                    0.007011435925960541,
+                    -0.028528684750199318,
+                    -0.10189976543188095,
+                    -0.06497643887996674,
+                    -0.020741702988743782,
+                    0.025494521483778954,
+                    -0.04897500202059746,
+                    0.0283784419298172,
+                    -0.06722874939441681,
+                    -0.052257928997278214,
+                    -0.0439046174287796,
+                    0.02035028114914894,
+                    0.024931205436587334,
+                    0.017992578446865082,
+                    0.009135344997048378,
+                    -0.026354294270277023,
+                    0.0071839699521660805,
+                    0.010573647916316986,
+                    -0.06514132022857666,
+                    0.011125173419713974,
+                    -0.005361494142562151,
+                    0.01608559489250183,
+                    -0.03161616250872612,
+                    -0.017115237191319466,
+                    0.036443933844566345,
+                    -0.014248596504330635,
+                    -0.03676578029990196,
+                    -0.024358347058296204,
+                    -0.01692630909383297,
+                    -0.0013981855008751154,
+                    0.019156569615006447,
+                    -0.024906793609261513,
+                    -0.02895946241915226,
+                    0.027499455958604813,
+                    0.03474799171090126,
+                    -0.006615033373236656,
+                    -0.03271733596920967,
+                    0.06544683128595352,
+                    -0.05316201597452164
+                  ]
+                },
+                {
+                  "vertex": [
+                    1,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.0530807226896286,
+                    0.39829498529434204,
+                    0.006964152678847313,
+                    0.04385079815983772,
+                    0.07609186321496964,
+                    0.060754481703042984,
+                    0.05840059369802475,
+                    -0.029393188655376434,
+                    0.03525518625974655,
+                    -0.008570421487092972,
+                    0.001102762296795845,
+                    -0.06155991181731224,
+                    -0.01820106990635395,
+                    -0.09953214973211288,
+                    0.019229354336857796,
+                    0.14550712704658508,
+                    0.0809994488954544,
+                    0.03842884302139282,
+                    -0.017851483076810837,
+                    0.013216177001595497,
+                    0.04109974950551987,
+                    -0.010877315886318684,
+                    0.29523366689682007,
+                    -0.017554696649312973,
+                    0.047470200806856155,
+                    0.4336361289024353,
+                    -0.026720911264419556,
+                    -0.47301405668258667,
+                    -0.019924476742744446,
+                    -0.059756264090538025,
+                    -0.004246234893798828,
+                    -0.06711435317993164,
+                    0.08101366460323334,
+                    -0.03407595679163933,
+                    -0.306201308965683,
+                    -0.07546508312225342,
+                    0.0958484411239624,
+                    0.0435357466340065,
+                    -0.05157633125782013,
+                    0.018238119781017303,
+                    -0.02632005140185356,
+                    -0.29877912998199463,
+                    -0.053197696805000305,
+                    -0.3407038152217865,
+                    0.04441919922828674,
+                    0.23831890523433685,
+                    0.06937365978956223,
+                    -0.13700109720230103,
+                    -0.013200522400438786,
+                    0.04789717495441437,
+                    0.00291389599442482,
+                    -0.31086140871047974,
+                    0.027254510670900345,
+                    -0.03540876507759094,
+                    -0.01986955851316452,
+                    -0.002763969823718071,
+                    -0.03019767440855503,
+                    -0.049169398844242096,
+                    0.021956583485007286,
+                    0.06489387154579163,
+                    -0.09174780547618866,
+                    -0.049385916441679,
+                    0.4424968659877777,
+                    -0.3500201404094696
+                  ]
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": [
+                    -0.5383251905441284,
+                    1.0190563201904297,
+                    0.38362380862236023,
+                    0.627700686454773,
+                    0.6355547308921814,
+                    0.6478332877159119,
+                    0.6130939722061157,
+                    -0.35770177841186523,
+                    0.6168105602264404,
+                    -0.5938568711280823,
+                    0.600549042224884,
+                    -0.5779156684875488,
+                    0.4646126627922058,
+                    -0.6775538921356201,
+                    -0.5733559727668762,
+                    -0.018331490457057953,
+                    -0.5158098340034485,
+                    0.6481375694274902,
+                    -0.5009906888008118,
+                    -0.00760670006275177,
+                    -0.5461041331291199,
+                    0.4446330666542053,
+                    0.8904212117195129,
+                    -0.6053086519241333,
+                    -0.3120129704475403,
+                    1.0190242528915405,
+                    0.5511371493339539,
+                    -1.060481071472168,
+                    -0.6230815649032593,
+                    0.46326950192451477,
+                    0.5764431357383728,
+                    0.5227391123771667,
+                    -0.12409064173698425,
+                    -0.5079253911972046,
+                    -0.8689129948616028,
+                    -0.26541122794151306,
+                    0.6867935061454773,
+                    -0.5259914398193359,
+                    -0.47421443462371826,
+                    -0.3511718213558197,
+                    -0.6108323931694031,
+                    -0.677778422832489,
+                    0.13282033801078796,
+                    0.22595666348934174,
+                    -0.5120767951011658,
+                    -0.3476893901824951,
+                    -0.5098083019256592,
+                    0.44935673475265503,
+                    -0.6106614470481873,
+                    -0.4010799527168274,
+                    0.5598464012145996,
+                    -0.7121908068656921,
+                    -0.5454837083816528,
+                    0.46822619438171387,
+                    -0.6010953783988953,
+                    -0.5998089909553528,
+                    -0.5108436942100525,
+                    0.5451676845550537,
+                    -0.4887533485889435,
+                    0.6581550240516663,
+                    0.4968022406101227,
+                    0.5404186844825745,
+                    1.060998558998108,
+                    0.1069851666688919
+                  ]
+                }
+              ],
+              "LN_var": [
+                {
+                  "vertex": [
+                    1,
+                    "q",
+                    0
+                  ],
+                  "value": -2.4459152221679688
+                },
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": -2.538968086242676
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    0,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    1,
+                    "mlp"
+                  ],
+                  "value": 0.5238800644874573
+                },
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": -3.372870445251465
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": 0.8169921040534973
+                },
+                {
+                  "vertex": [
+                    1,
+                    "k",
+                    0
+                  ],
+                  "value": -2.4459152221679688
+                },
+                {
+                  "vertex": [
+                    1,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -2.4459152221679688
+                }
+              ],
+              "q_bias_term": [
+                {
+                  "vertex": [
+                    1,
+                    0,
+                    "attn_output-0-0-wte"
+                  ],
+                  "value": [
+                    0.30321159958839417,
+                    0.22064244747161865,
+                    0.5171616077423096,
+                    0.14667978882789612,
+                    0.3148515820503235,
+                    0.10260603576898575,
+                    0.5898452401161194,
+                    0.735615074634552,
+                    0.1211189329624176,
+                    0.2939598262310028,
+                    0.09120740741491318,
+                    0.4131862223148346,
+                    0.16271445155143738,
+                    0.03825988620519638,
+                    -0.2545229196548462,
+                    0.17295312881469727,
+                    -0.045701876282691956,
+                    0.33174943923950195,
+                    0.4797944128513336,
+                    -0.7223273515701294,
+                    0.5186660289764404,
+                    0.4822857081890106,
+                    -0.027869248762726784,
+                    -0.22309036552906036,
+                    0.1364201307296753,
+                    0.04086954519152641,
+                    -0.099277064204216,
+                    0.10480519384145737,
+                    -0.08943463861942291,
+                    0.016486655920743942,
+                    0.08153199404478073,
+                    0.6229097843170166,
+                    -0.3335253894329071,
+                    0.3543645739555359,
+                    0.471964031457901,
+                    -0.4386404752731323,
+                    0.7030055522918701,
+                    -0.2464032918214798,
+                    0.1499263048171997,
+                    0.13732442259788513,
+                    -0.5075625777244568,
+                    0.09357163310050964,
+                    -0.21860331296920776,
+                    -0.17990635335445404,
+                    0.0955556109547615,
+                    -0.07071520388126373,
+                    0.056676626205444336,
+                    -0.4561028480529785,
+                    -0.08500148355960846,
+                    -0.20603300631046295,
+                    -0.16883249580860138,
+                    -0.17953306436538696,
+                    0.2430349737405777,
+                    -0.2103690803050995,
+                    0.06139872595667839,
+                    -0.30924227833747864,
+                    0.6385339498519897,
+                    -0.3179459273815155,
+                    -0.3788869082927704,
+                    -0.030666785314679146,
+                    -0.34631386399269104,
+                    0.22271610796451569,
+                    -0.4917118549346924,
+                    -0.16946548223495483
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    0,
+                    "wpe"
+                  ],
+                  "value": [
+                    -0.382982075214386,
+                    -0.7068308591842651,
+                    0.6985247731208801,
+                    0.4655645787715912,
+                    1.2014281749725342,
+                    0.8555734753608704,
+                    0.6354551315307617,
+                    0.44297662377357483,
+                    0.5232509970664978,
+                    0.3944461941719055,
+                    -0.5618108510971069,
+                    0.6347073912620544,
+                    -0.18558941781520844,
+                    -1.806311011314392,
+                    -0.8321540951728821,
+                    1.67018723487854,
+                    -0.3992694318294525,
+                    -1.4470674991607666,
+                    0.40999501943588257,
+                    -0.1963885873556137,
+                    0.5743288993835449,
+                    -0.4199405312538147,
+                    0.099599190056324,
+                    0.1928592026233673,
+                    -0.22166842222213745,
+                    -0.6635398268699646,
+                    -1.1858428716659546,
+                    -0.09185362607240677,
+                    0.681113064289093,
+                    0.29029226303100586,
+                    0.5484364628791809,
+                    0.680171549320221,
+                    -0.513174295425415,
+                    2.620321750640869,
+                    0.7913155555725098,
+                    -0.11397714912891388,
+                    -0.1824122965335846,
+                    -1.9911967515945435,
+                    0.6336148977279663,
+                    -0.5600350499153137,
+                    0.21018506586551666,
+                    -0.4583246111869812,
+                    -0.49952369928359985,
+                    -0.04883084446191788,
+                    1.0518101453781128,
+                    -1.029023289680481,
+                    0.9756491184234619,
+                    0.13059677183628082,
+                    0.41494616866111755,
+                    0.7796794772148132,
+                    0.08410307765007019,
+                    -0.03424223139882088,
+                    -0.916802704334259,
+                    0.4033891558647156,
+                    -0.8084722757339478,
+                    0.4663363993167877,
+                    0.8828207850456238,
+                    1.4121516942977905,
+                    0.7691689729690552,
+                    0.23318247497081757,
+                    -0.06044376641511917,
+                    0.07367275655269623,
+                    0.7774865031242371,
+                    0.458883672952652
+                  ]
+                }
+              ]
+            },
+            "source": [
+              [
+                "s1 = select(k=pos) \t  # layer 0 head 0",
+                "a1 = aggregate(s=s1, v=token) \t  # layer 0 head 0",
+                "s2 = select(q=token, k=a1) \t  # layer 1 head 0",
+                "a2 = aggregate(s=s2, v=token) \t  # layer 1 head 0",
+                "logits1 = proj_to_vocab(a2)",
+                "logits2 = proj_to_vocab(bias)",
+                "prediction = softmax(logits1+\n\t\t\tlogits2)"
+              ],
+              {
+                "s1": [
+                  0,
+                  0,
+                  "wpe"
+                ],
+                "s2": [
+                  1,
+                  0,
+                  [
+                    "wte",
+                    "attn_output-0-0-wte"
+                  ]
+                ],
+                "logits1": "attn_output-1-0-wte",
+                "logits2": "vocab_bias"
+              }
+            ],
+            "renderer_adaptation": null,
+            "masks": [
+              {
+                "edge": [
+                  0,
+                  0,
+                  "wpe"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  1,
+                  0,
+                  "attn_output-0-0-wte"
+                ],
+                "value": 0
+              },
+              {
+                "edge": [
+                  1,
+                  0,
+                  [
+                    "wte",
+                    "attn_output-0-0-wte"
+                  ]
+                ],
+                "value": 1
+              }
+            ],
+            "initial": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.475,
+              "max_logit_error": 16.02466583251953,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "calibrated": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.6666666666666666,
+              "max_logit_error": 15.064223289489746,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "calibration": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.65,
+              "max_logit_error": 15.599770545959473,
+              "examples": 24,
+              "counterexamples": []
+            },
+            "evaluation": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.390625,
+              "max_logit_error": 22.894811630249023,
+              "examples": 16,
+              "counterexamples": []
+            },
+            "calibration_losses": [
+              3.3561511039733887,
+              2.0180912017822266,
+              2.403163194656372,
+              3.076594591140747,
+              1.8500490188598633,
+              2.2390902042388916,
+              2.840142250061035,
+              1.7117154598236084,
+              2.1022629737854004,
+              2.6376423835754395,
+              1.5988584756851196,
+              1.98995840549469,
+              2.4639644622802734,
+              1.506852149963379,
+              1.8982690572738647,
+              2.313826084136963,
+              1.4311550855636597,
+              1.8232465982437134,
+              2.1825807094573975,
+              1.367946982383728,
+              1.7614431381225586,
+              2.0665383338928223,
+              1.3142989873886108,
+              1.710092544555664,
+              1.9629230499267578,
+              1.2680938243865967,
+              1.6670904159545898,
+              1.869686245918274,
+              1.22785484790802,
+              1.6308804750442505,
+              1.785314917564392,
+              1.1925723552703857
+            ],
+            "trials": [
+              {
+                "edge": [
+                  0,
+                  0,
+                  "wpe"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.08333333333333333,
+                  "all_token_agreement": 0.5,
+                  "max_logit_error": 20.224117279052734,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        130,
+                        48,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 130
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        121,
+                        47,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 121
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        24,
+                        114,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 24
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        77,
+                        36,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 77
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        75,
+                        127,
+                        1,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 75
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        21,
+                        117,
+                        71,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 21
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        104,
+                        141,
+                        21,
+                        65,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 104
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 17
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  0,
+                  "attn_output-0-0-wte"
+                ],
+                "accepted": true,
+                "metrics": {
+                  "final_token_agreement": 1.0,
+                  "all_token_agreement": 0.65,
+                  "max_logit_error": 15.599770545959473,
+                  "examples": 24,
+                  "counterexamples": []
+                }
+              },
+              {
+                "edge": [
+                  1,
+                  0,
+                  [
+                    "wte",
+                    "attn_output-0-0-wte"
+                  ]
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.25,
+                  "all_token_agreement": 0.4,
+                  "max_logit_error": 19.024089813232422,
+                  "examples": 24,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        150,
+                        115,
+                        143,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 115
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        119,
+                        115,
+                        151
+                      ],
+                      "actual": 136,
+                      "expected": 119
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        47,
+                        131,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 47
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        121,
+                        47,
+                        151
+                      ],
+                      "actual": 47,
+                      "expected": 121
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        24,
+                        114,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 24
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        23,
+                        137,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 23
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        10,
+                        101,
+                        115,
+                        151
+                      ],
+                      "actual": 132,
+                      "expected": 10
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        40,
+                        3,
+                        135,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 40
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        16,
+                        15,
+                        9,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 16
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        48,
+                        61,
+                        7,
+                        151
+                      ],
+                      "actual": 65,
+                      "expected": 48
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        118,
+                        83,
+                        112,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 118
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        21,
+                        117,
+                        71,
+                        151
+                      ],
+                      "actual": 104,
+                      "expected": 21
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        80,
+                        58,
+                        131,
+                        73,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 80
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        7,
+                        17,
+                        144,
+                        27,
+                        151
+                      ],
+                      "actual": 50,
+                      "expected": 7
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        102,
+                        27,
+                        74,
+                        98,
+                        151
+                      ],
+                      "actual": 27,
+                      "expected": 102
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        17,
+                        4,
+                        0,
+                        54,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 17
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        53,
+                        13,
+                        120,
+                        96,
+                        151
+                      ],
+                      "actual": 69,
+                      "expected": 53
+                    },
+                    {
+                      "input_ids": [
+                        150,
+                        101,
+                        107,
+                        18,
+                        144,
+                        151
+                      ],
+                      "actual": 107,
+                      "expected": 101
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges_before": 3,
+            "edges_after": 2,
+            "accepted": true
+          }
+        ],
+        "primitive_matches": [
+          {
+            "id": "qk.1.0.0",
+            "op": "qk_weight_contraction",
+            "inputs": [
+              "tokens"
+            ],
+            "attributes": {
+              "layer": 1,
+              "head": 0,
+              "query_path": "wte",
+              "key_path": "attn_output-0-0-wte",
+              "claim": "path is not a direct embedding contraction; left opaque"
+            },
+            "weights": [
+              "transformer.h.1.attn.c_attn.weight",
+              "transformer.h.1.ln_1.weight"
+            ],
+            "interpretation": "opaque"
+          }
+        ]
+      },
+      "weights": [
+        "transformer.wte.weight",
+        "transformer.wpe.weight",
+        "transformer.h.0.ln_1.weight",
+        "transformer.h.0.ln_1.bias",
+        "transformer.h.0.attn.c_attn.weight",
+        "transformer.h.0.attn.c_attn.bias",
+        "transformer.h.0.attn.c_proj.weight",
+        "transformer.h.0.attn.c_proj.bias",
+        "transformer.h.0.ln_2.weight",
+        "transformer.h.0.ln_2.bias",
+        "transformer.h.0.mlp.c_fc.weight",
+        "transformer.h.0.mlp.c_fc.bias",
+        "transformer.h.0.mlp.c_proj.weight",
+        "transformer.h.0.mlp.c_proj.bias",
+        "transformer.h.1.ln_1.weight",
+        "transformer.h.1.ln_1.bias",
+        "transformer.h.1.attn.c_attn.weight",
+        "transformer.h.1.attn.c_attn.bias",
+        "transformer.h.1.attn.c_proj.weight",
+        "transformer.h.1.attn.c_proj.bias",
+        "transformer.h.1.ln_2.weight",
+        "transformer.h.1.ln_2.bias",
+        "transformer.h.1.mlp.c_fc.weight",
+        "transformer.h.1.mlp.c_fc.bias",
+        "transformer.h.1.mlp.c_proj.weight",
+        "transformer.h.1.mlp.c_proj.bias",
+        "transformer.ln_f.weight",
+        "transformer.ln_f.bias"
+      ],
+      "interpretation": "opaque"
+    }
+  ],
+  "output": "output",
+  "provenance": {
+    "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+    "revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+    "checkpoint_sha256": "d10a5d9685975ddaa4b4f18fdc35b31ae3c3786adb70e992c6dedf9ddc4fc8d3",
+    "driver": "bounded local greedy masks and auxiliary-vector KL calibration; unchanged upstream engines",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "source_weights_frozen": true,
+    "split_mlps": false,
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches",
+      "QK renderer fallback for full-path renderer undefined heatmap labels"
+    ]
+  },
+  "fidelity": {
+    "claim": "measured domain fidelity; stage execution does not establish paper reproduction or symbolic equivalence",
+    "normalization": {
+      "positions": "implicit positions 0..length-1 on the caller-supplied token ids",
+      "layernorm": "upstream engines consume per-vertex log-variance fit on the calibration rows",
+      "acceptance": "final-token argmax agreement; max_logit_error is separate and can reject a logit-level claim"
+    },
+    "accepted": true,
+    "pruned_forward_calls_after_component": 117,
+    "native_forward_calls_after_component": 4,
+    "component": {
+      "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+      "layernorm": "calibrated linearization",
+      "normalization_assumption_passed": true,
+      "logit_reconstruction": false,
+      "initial": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 19.58425521850586,
+        "examples": 24
+      },
+      "calibration": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 14.610898971557617,
+        "examples": 24
+      },
+      "evaluation": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 15.218113899230957,
+        "examples": 16
+      },
+      "component_edges_before": 32,
+      "component_edges_after": 8,
+      "native_forward_calls": 7,
+      "pruned_forward_calls": 103,
+      "trials": [
+        {
+          "edge": [
+            "lm_head",
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 19.65408706665039,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "attn_output-1-0"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.9583333333333334,
+            "max_logit_error": 14.251379013061523,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "mlp-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 19.346969604492188,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "mlp-1"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 13.727029800415039,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 13.696033477783203,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 12.49380111694336,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "k",
+            0,
+            "wpe"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.2916666666666667,
+            "max_logit_error": 24.19696807861328,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "k",
+            0,
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 10.032020568847656,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 13.824787139892578,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 16.980682373046875,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 16.38459587097168,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "q",
+            0,
+            "wpe"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.9583333333333334,
+            "max_logit_error": 22.098831176757812,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "q",
+            0,
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 16.447235107421875,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "v",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.679332733154297,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            0,
+            "v",
+            0,
+            "wte"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.2916666666666667,
+            "max_logit_error": 19.343603134155273,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "k",
+            0,
+            "attn_output-0-0"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.375,
+            "max_logit_error": 20.18443489074707,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "k",
+            0,
+            "mlp-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.679332733154297,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "k",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "k",
+            0,
+            "wte"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.7083333333333334,
+            "max_logit_error": 16.547439575195312,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "mlp",
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "mlp",
+            "attn_output-1-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "mlp",
+            "mlp-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "mlp",
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "mlp",
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.278175354003906,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "q",
+            0,
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 17.19890594482422,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "q",
+            0,
+            "mlp-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 16.51505470275879,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "q",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 16.478801727294922,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "q",
+            0,
+            "wte"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.041666666666666664,
+            "max_logit_error": 21.688852310180664,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "v",
+            0,
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 15.406096458435059,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "v",
+            0,
+            "mlp-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 14.901040077209473,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "v",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 14.610898971557617,
+            "examples": 24
+          }
+        },
+        {
+          "edge": [
+            1,
+            "v",
+            0,
+            "wte"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.0,
+            "max_logit_error": 20.115564346313477,
+            "examples": 24
+          }
+        }
+      ]
+    }
+  },
+  "version": "weightscript.ir.v1"
+}

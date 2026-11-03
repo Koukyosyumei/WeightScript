@@ -12,27 +12,12 @@ import json
 import numpy as np
 import torch
 
+from .backends.rules import rule_predict, validate_rule
 from .core import audit, fingerprint
 from .evaluate import batches
 
 
-def rule_predict(rule, ids):
-    if rule.get("op") != "count_threshold":
-        raise ValueError("constraint backend supports binary count_threshold rules")
-    if (
-        set(rule) != {"op", "threshold", "invert"}
-        or type(rule["invert"]) is not bool
-        or not isinstance(rule["threshold"], (int, float))
-        or not 0 <= rule["threshold"] <= 1
-    ):
-        raise ValueError("invalid count rule")
-    bits = [t for t in ids if t in (0, 1)]
-    if not bits:
-        raise ValueError("rule domain needs at least one bit")
-    return int((sum(bits) / len(bits) > rule["threshold"]) != rule["invert"])
-
-
-@torch.inference_mode()
+@torch.no_grad()
 def compile_rule(
     model,
     rule,
@@ -43,15 +28,22 @@ def compile_rule(
     coefficient_bound=100,
     timeout=30,
     strict=True,
+    max_variables=100000,
+    max_constraint_entries=5000000,
 ):
-    from scipy.optimize import linprog
+    validate_rule(rule)
     import z3
+    from scipy.optimize import linprog
 
     if (
         model.config.model_type != "gpt2"
         or not domain
         or margin <= 0
         or coefficient_bound <= 0
+        or not np.isfinite([margin, coefficient_bound, timeout]).all()
+        or timeout <= 0
+        or type(max_variables) is not int or max_variables < 1
+        or type(max_constraint_entries) is not int or max_constraint_entries < 1
     ):
         raise ValueError("invalid constraint compiler model/domain")
     if verification and {tuple(r["input_ids"]) for r in domain} & {
@@ -62,6 +54,13 @@ def compile_rule(
         tuple(r["input_ids"]) for r in preserve
     }:
         raise ValueError("rewrite and preservation domains overlap")
+    if verification and preserve and {tuple(r["input_ids"]) for r in verification} & {
+        tuple(r["input_ids"]) for r in preserve
+    }:
+        raise ValueError("verification and preservation domains overlap")
+    original_hash = fingerprint(model)
+    if model.training or next(model.parameters()).device.type != "cpu":
+        raise ValueError("constraint compiler requires an eval-mode CPU model")
     rows = domain + (preserve or [])
     snapshots = []
     calls = 0
@@ -69,10 +68,10 @@ def compile_rule(
         hidden = []
         residual = []
         h = model.transformer.h[-1].mlp.c_proj.register_forward_pre_hook(
-            lambda _, args: hidden.append(args[0][:, -1].detach().clone())
+            lambda _, args, hidden=hidden: hidden.append(args[0][:, -1].detach().clone())
         )
         r = model.transformer.ln_f.register_forward_pre_hook(
-            lambda _, args: residual.append(args[0][:, -1].detach().clone())
+            lambda _, args, residual=residual: residual.append(args[0][:, -1].detach().clone())
         )
         try:
             native = model(ids, use_cache=False).logits[:, -1]
@@ -90,12 +89,30 @@ def compile_rule(
             snapshots.append((hidden[0][j], residual[0][j], target))
     unembed = model.lm_head.weight.detach()
     gamma = model.transformer.ln_f.weight.detach()
-    direction = (unembed[1] - unembed[0]) * gamma
-    direction -= direction.mean()
-    if direction.norm() == 0:
-        raise ValueError("binary output contrast has no residual direction")
-    direction /= direction.norm()
+    targets = sorted({target for _, _, target in snapshots})
+    if any(target < 0 or target >= model.config.vocab_size for target in targets):
+        raise ValueError("rule output outside model vocabulary")
+    # Keep the historical binary rank-one patch; other rules use the span of
+    # target unembedding contrasts. This supports multiclass copy/selection.
+    if rule["op"] == "count_threshold":
+        contrasts = ((unembed[1] - unembed[0]) * gamma)[None, :]
+    else:
+        anchor = next((i for i in range(model.config.vocab_size) if i not in targets), 0)
+        contrasts = torch.stack([(unembed[t] - unembed[anchor]) * gamma for t in targets])
+    contrasts = contrasts - contrasts.mean(-1, keepdim=True)
+    _, singular, vh = torch.linalg.svd(contrasts.double(), full_matrices=False)
+    rank = int((singular > max(float(singular.max()) * 1e-7, 1e-12)).sum())
+    if not rank:
+        raise ValueError("output contrasts have no residual direction")
+    directions = vh[:rank].float()
     feature_count = snapshots[0][0].numel() + 1
+    variable_count = feature_count * rank
+    projected_entries = variable_count * len(snapshots) * (model.config.vocab_size - 1)
+    if variable_count > max_variables or projected_entries > max_constraint_entries:
+        raise ValueError(
+            "constraint compiler variable budget exceeded: "
+            f"variables={variable_count}, snapshots={len(snapshots)}, "
+            f"projected_entries={projected_entries}, rank={rank}")
     inequalities = []
     upper = []
     for hidden, residual, target in snapshots:
@@ -105,26 +122,26 @@ def compile_rule(
                 continue
             diff = ((unembed[target] - unembed[other]) * gamma).double()
             diff -= diff.mean()
-            inequalities.append(-float(direction.double() @ diff) * features)
+            inequalities.append(-np.outer((directions.double() @ diff).numpy(), features).reshape(-1))
             upper.append(float(residual.double() @ diff) - margin)
     matrix = np.array(inequalities)
     bound = np.array(upper)
     # Positive/negative split minimizes coefficient L1 and often uses few units.
     result = linprog(
-        np.ones(2 * feature_count),
+        np.ones(2 * variable_count),
         A_ub=np.concatenate((matrix, -matrix), axis=1),
         b_ub=bound,
-        bounds=[(0, coefficient_bound)] * (2 * feature_count),
+        bounds=[(0, coefficient_bound)] * (2 * variable_count),
         method="highs",
         options={"time_limit": timeout},
     )
     if not result.success:
-        raise ValueError(f"rule does not fit chosen rank-one patch: {result.message}")
-    coefficients = result.x[:feature_count] - result.x[feature_count:]
+        raise ValueError(f"rule does not fit chosen output-span patch: {result.message}")
+    coefficients = result.x[:variable_count] - result.x[variable_count:]
     edited = copy.deepcopy(model).eval()
-    co = torch.tensor(coefficients[:-1], dtype=torch.float32)
-    edited.transformer.h[-1].mlp.c_proj.weight.add_(co[:, None] * direction[None, :])
-    edited.transformer.h[-1].mlp.c_proj.bias.add_(float(coefficients[-1]) * direction)
+    co = torch.tensor(coefficients.reshape(rank, feature_count), dtype=torch.float32)
+    edited.transformer.h[-1].mlp.c_proj.weight.add_(co[:, :-1].T @ directions)
+    edited.transformer.h[-1].mlp.c_proj.bias.add_(co[:, -1] @ directions)
     # Eliminates the post-normalization affine offset so target comparisons are
     # linear in the pre-normalization residual; this change is audited explicitly.
     edited.transformer.ln_f.bias.zero_()
@@ -140,7 +157,7 @@ def compile_rule(
                 z3.Sum(
                     [
                         z3.RealVal(str(a)) * z3.RealVal(str(c))
-                        for a, c in zip(row, coefficients)
+                        for a, c in zip(row, coefficients) if a != 0 and c != 0
                     ]
                 )
                 > z3.RealVal(str(b + 1e-7))
@@ -195,10 +212,10 @@ def compile_rule(
         and (preservation is None or preservation["accuracy"] == 1.0)
     )
     report = {
-        "backend": "gpt2.rank_one_constraint_compiler",
+        "backend": "gpt2.rank_one_constraint_compiler" if rank == 1 else "gpt2.multidirection_constraint_compiler",
         "rule": rule,
         "passed": passed,
-        "source_sha256": fingerprint(model),
+        "source_sha256": original_hash,
         "edited_sha256": fingerprint(edited),
         "audit": audit(model, edited),
         "synthesis": synthesis_check,
@@ -208,9 +225,12 @@ def compile_rule(
             json.dumps(domain, sort_keys=True).encode()
         ).hexdigest(),
         "coefficients": coefficients.tolist(),
-        "direction": direction.tolist(),
+        "direction": directions[0].tolist() if rank == 1 else None,
+        "directions": directions.tolist(),
+        "patch_rank_bound": rank,
+        "coefficient_shape": [rank, feature_count],
         "nonzero_neuron_coefficients": int(
-            np.count_nonzero(np.abs(coefficients[:-1]) > 1e-9)
+            np.count_nonzero(np.abs(co[:, :-1].numpy()) > 1e-9)
         ),
         "solver": {
             "lp_status": result.message,
@@ -222,16 +242,40 @@ def compile_rule(
         "gradient_updates": 0,
         "limitations": "activation-informed constrained weight synthesis; not weight-only decompilation, not zero-data editing, not universal equivalence or a new language capability",
     }
+    if fingerprint(model) != original_hash:
+        raise RuntimeError("constraint compilation mutated source model")
     if not passed and strict:
         raise ValueError(f"native execution rejected synthesized program: {report}")
     return edited, report
+
+
+@torch.no_grad()
+def _decision_check(model, rule, rows, limit=8):
+    """Native last-token agreement, with a few stored mismatches."""
+    if not rows:
+        return {"checked": 0, "accuracy": None, "counterexamples": []}
+    correct = 0
+    failures = []
+    for chunk, ids in batches(rows, 128):
+        predictions = model(ids, use_cache=False).logits[:, -1].argmax(-1).tolist()
+        for row, pred in zip(chunk, predictions):
+            expected = rule_predict(rule, row["input_ids"])
+            correct += pred == expected
+            if pred != expected and len(failures) < limit:
+                failures.append({"input_ids": row["input_ids"], "actual": pred, "expected": expected})
+    return {"checked": len(rows), "accuracy": correct / len(rows), "counterexamples": failures}
 
 
 def cegis(model, rule, initial_domain, oracle_domain, heldout=None, max_rounds=4):
     """Counterexample-guided bounded synthesis; held-out evaluation happens last."""
     from .evaluate import score
 
-    if max_rounds < 1:
+    validate_rule(rule)
+    if not initial_domain or not oracle_domain:
+        raise ValueError("synthesis and oracle domains must be nonempty")
+    if {tuple(r["input_ids"]) for r in initial_domain} & {tuple(r["input_ids"]) for r in oracle_domain}:
+        raise ValueError("initial synthesis and oracle domains overlap")
+    if type(max_rounds) is not int or max_rounds < 1:
         raise ValueError("max_rounds must be positive")
     training = copy.deepcopy(initial_domain)
     history = []
@@ -241,12 +285,19 @@ def cegis(model, rule, initial_domain, oracle_domain, heldout=None, max_rounds=4
     }:
         raise ValueError("held-out domain overlaps synthesis/oracle domains")
     edited = None
-    for iteration in range(max_rounds):
+    stopped = None
+    for _iteration in range(max_rounds):
         seen = {tuple(r["input_ids"]) for r in training}
         oracle = [r for r in oracle_domain if tuple(r["input_ids"]) not in seen]
-        edited, report = compile_rule(
-            model, rule, training, verification=oracle, strict=False
-        )
+        try:
+            proposal, report = compile_rule(
+                model, rule, training, verification=oracle or None, strict=False
+            )
+        except ValueError as exc:
+            # A later round can exceed the LP budget. Keep the last solved patch.
+            stopped = str(exc)
+            break
+        edited = proposal
         calls += report["forward_calls"]
         history.append(report)
         if report["passed"]:
@@ -260,23 +311,66 @@ def cegis(model, rule, initial_domain, oracle_domain, heldout=None, max_rounds=4
             if tuple(example["input_ids"]) not in seen:
                 training.append({"input_ids": example["input_ids"]})
                 seen.add(tuple(example["input_ids"]))
+    oracle_rescore = _decision_check(edited, rule, oracle_domain) if edited is not None else None
+    if oracle_rescore is not None:
+        calls += max(1, (len(oracle_domain) + 127) // 128)
     result = {
         "backend": "counterexample_guided_constraint_compiler",
         "rule": rule,
         "rounds": len(history),
         "history": history,
-        "bounded_oracle_passed": bool(history and history[-1]["passed"]),
+        "bounded_oracle_passed": bool(oracle_rescore and oracle_rescore["accuracy"] == 1.0),
+        "oracle_rescore": oracle_rescore,
+        "oracle_rows_absorbed": len(training) - len(initial_domain),
+        "refinement_stopped": stopped,
         "source_sha256": fingerprint(model),
-        "audit": audit(model, edited),
+        "audit": None if edited is None else audit(model, edited),
         "forward_calls": calls,
         "final_synthesis_examples": len(training),
         "oracle_examples": len(oracle_domain),
         "claim": "bounded activation-informed synthesis; held-out rows are never supplied to LP or counterexample refinement",
     }
-    if heldout:
+    if heldout and edited is not None:
         labeled = [
             dict(row, target=rule_predict(rule, row["input_ids"])) for row in heldout
         ]
         result["base_heldout"] = score(model, labeled, 128)
         result["edited_heldout"] = score(edited, labeled, 128, reference=model)
+        result["heldout_decisions"] = _decision_check(edited, rule, heldout)
+        result["forward_calls"] += (result["base_heldout"]["forward_calls"]
+                                    + result["edited_heldout"]["forward_calls"]
+                                    + result["edited_heldout"]["reference_forward_calls"]
+                                    + max(1, (len(heldout) + 127) // 128))
     return edited, result
+
+
+@torch.no_grad()
+def replay_patch(model, report):
+    """Apply a serialized compiler result without probes, solvers or training.
+
+    The source and resulting hashes bind all weights; shape/finite checks happen
+    before mutation of a private copy. The original model is never changed.
+    """
+    if (report.get("backend") not in ("gpt2.rank_one_constraint_compiler",
+                                       "gpt2.multidirection_constraint_compiler")
+            or report.get("source_sha256") != fingerprint(model)):
+        raise ValueError("patch report belongs to a different checkpoint/backend")
+    rank = report.get("patch_rank_bound")
+    feature_count = model.transformer.h[-1].mlp.c_proj.weight.shape[0] + 1
+    if (type(rank) is not int or not 1 <= rank <= model.config.n_embd
+            or report.get("coefficient_shape") != [rank, feature_count]):
+        raise ValueError("invalid serialized patch shape")
+    directions = torch.tensor(report["directions"], dtype=torch.float32)
+    coefficients = torch.tensor(report["coefficients"], dtype=torch.float32)
+    if (directions.shape != (rank, model.config.n_embd)
+            or coefficients.shape != (rank * feature_count,)
+            or not torch.isfinite(directions).all() or not torch.isfinite(coefficients).all()):
+        raise ValueError("invalid serialized patch values")
+    coefficients = coefficients.reshape(rank, feature_count)
+    edited = copy.deepcopy(model).eval()
+    edited.transformer.h[-1].mlp.c_proj.weight.add_(coefficients[:, :-1].T @ directions)
+    edited.transformer.h[-1].mlp.c_proj.bias.add_(coefficients[:, -1] @ directions)
+    edited.transformer.ln_f.bias.zero_()
+    if fingerprint(edited) != report.get("edited_sha256"):
+        raise ValueError("serialized patch result checksum mismatch")
+    return edited

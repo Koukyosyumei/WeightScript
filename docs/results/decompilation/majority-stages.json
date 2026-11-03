@@ -1,0 +1,2731 @@
+{
+  "backend": "decompiling_transformers.three_stage",
+  "nodes": [
+    {
+      "id": "tokens",
+      "op": "tokens",
+      "inputs": [],
+      "attributes": {},
+      "weights": [],
+      "interpretation": "primitive"
+    },
+    {
+      "id": "output",
+      "op": "upstream_three_stage",
+      "inputs": [
+        "tokens"
+      ],
+      "attributes": {
+        "stages": [
+          {
+            "name": "component",
+            "artifact": {
+              "backend": "decompiling_transformers.stage1",
+              "nodes": [
+                {
+                  "id": "tokens",
+                  "op": "tokens",
+                  "inputs": [],
+                  "attributes": {},
+                  "weights": [],
+                  "interpretation": "primitive"
+                },
+                {
+                  "id": "positions",
+                  "op": "indices",
+                  "inputs": [],
+                  "attributes": {},
+                  "weights": [],
+                  "interpretation": "primitive"
+                },
+                {
+                  "id": "attention.0.0",
+                  "op": "upstream_attention_paths",
+                  "inputs": [
+                    "tokens",
+                    "positions"
+                  ],
+                  "attributes": {
+                    "paths": {
+                      "k": {
+                        "0": []
+                      },
+                      "q": {
+                        "0": []
+                      },
+                      "v": {
+                        "0": [
+                          "wte"
+                        ]
+                      },
+                      "mlp": [
+                        "attn_output-0-0"
+                      ]
+                    },
+                    "head": 0
+                  },
+                  "weights": [
+                    "transformer.h.0.attn.c_attn.weight",
+                    "transformer.h.0.attn.c_proj.weight"
+                  ],
+                  "interpretation": "opaque"
+                },
+                {
+                  "id": "output",
+                  "op": "upstream_pruned_model",
+                  "inputs": [
+                    "tokens",
+                    "positions",
+                    "attention.0.0"
+                  ],
+                  "attributes": {
+                    "source": "a0-0 = Attention(Q=[], K=[], V=token)\nm0 = MLP(inp=a0-0)\noutput = Unembed(inp=m0)",
+                    "config": {
+                      "0": {
+                        "k": {
+                          "0": []
+                        },
+                        "q": {
+                          "0": []
+                        },
+                        "v": {
+                          "0": [
+                            "wte"
+                          ]
+                        },
+                        "mlp": [
+                          "attn_output-0-0"
+                        ]
+                      },
+                      "lm_head": [
+                        "mlp-0"
+                      ]
+                    },
+                    "edge_masks": [
+                      {
+                        "path": [
+                          0,
+                          "k",
+                          0,
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "k",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "q",
+                          0,
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "q",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "v",
+                          0,
+                          "wte"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          0,
+                          "v",
+                          0,
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          0,
+                          "mlp",
+                          "attn_output-0-0"
+                        ],
+                        "value": 1
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "wte"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "wpe"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "attn_output-0-0"
+                        ],
+                        "value": 0
+                      },
+                      {
+                        "path": [
+                          "lm_head",
+                          "mlp-0"
+                        ],
+                        "value": 1
+                      }
+                    ],
+                    "normalization": [
+                      {
+                        "vertex": [
+                          0,
+                          "mlp"
+                        ],
+                        "log_variance": -0.5219345092773438
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "q",
+                          0
+                        ],
+                        "log_variance": -2.890861988067627
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "v",
+                          0
+                        ],
+                        "log_variance": -2.890861988067627
+                      },
+                      {
+                        "vertex": [
+                          0,
+                          "k",
+                          0
+                        ],
+                        "log_variance": -2.890861988067627
+                      },
+                      {
+                        "vertex": [
+                          "lm_head"
+                        ],
+                        "log_variance": 0.20754554867744446
+                      }
+                    ],
+                    "linear_ln": true
+                  },
+                  "weights": [],
+                  "interpretation": "opaque"
+                }
+              ],
+              "output": "output",
+              "provenance": {
+                "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+                "revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+                "checkpoint_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+                "driver": "greedy zero-ablation; upstream mask/hook/renderer implementations",
+                "completed_stages": [
+                  "component"
+                ],
+                "unimplemented_stages": [
+                  "full_path",
+                  "qk_reparameterization"
+                ],
+                "compatibility_adaptations": [
+                  "provide missing my_paths directory constant during import",
+                  "retain separate attention output biases in optimal-ablation vectors"
+                ]
+              },
+              "fidelity": {
+                "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+                "layernorm": "calibrated linearization",
+                "normalization_assumption_passed": true,
+                "logit_reconstruction": false,
+                "initial": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 5.628005027770996,
+                  "examples": 42
+                },
+                "calibration": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 4.988503456115723,
+                  "examples": 42
+                },
+                "evaluation": {
+                  "final_token_agreement": 1.0,
+                  "max_logit_error": 4.988503456115723,
+                  "examples": 128
+                },
+                "component_edges_before": 13,
+                "component_edges_after": 3,
+                "native_forward_calls": 10,
+                "pruned_forward_calls": 49,
+                "trials": [
+                  {
+                    "edge": [
+                      "lm_head",
+                      "attn_output-0-0"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.940178871154785,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "mlp-0"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.5,
+                      "max_logit_error": 6.960857391357422,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.944576263427734,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      "lm_head",
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.240171432495117,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "k",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.215441703796387,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "k",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.215455055236816,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "attn_output-0-0"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.5,
+                      "max_logit_error": 6.189640045166016,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 5.159627437591553,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "mlp",
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 4.981386661529541,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "q",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 4.981386661529541,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "q",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 4.981386661529541,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "v",
+                      0,
+                      "wpe"
+                    ],
+                    "accepted": true,
+                    "metrics": {
+                      "final_token_agreement": 1.0,
+                      "max_logit_error": 4.988503456115723,
+                      "examples": 42
+                    }
+                  },
+                  {
+                    "edge": [
+                      0,
+                      "v",
+                      0,
+                      "wte"
+                    ],
+                    "accepted": false,
+                    "metrics": {
+                      "final_token_agreement": 0.5,
+                      "max_logit_error": 5.606274604797363,
+                      "examples": 42
+                    }
+                  }
+                ]
+              },
+              "version": "weightscript.ir.v1"
+            },
+            "accepted": true
+          },
+          {
+            "name": "full_path",
+            "engine_config": {
+              "0": {
+                "k": {
+                  "0": []
+                },
+                "q": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [
+                  "attn_output-0-0-wte"
+                ]
+              },
+              "lm_head": [
+                "mlp-0"
+              ]
+            },
+            "config": {
+              "0": {
+                "k": {
+                  "0": []
+                },
+                "q": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [
+                  "attn_output-0-0-wte"
+                ]
+              },
+              "lm_head": [
+                "mlp-0"
+              ]
+            },
+            "auxiliary": {
+              "output_vertex_oa": [
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.15768904983997345,
+                    0.28359246253967285,
+                    0.28551778197288513,
+                    -0.08287665247917175,
+                    -0.16719959676265717,
+                    -0.07958760857582092,
+                    0.26357340812683105,
+                    -0.24049285054206848,
+                    0.3157857060432434,
+                    -0.2776576578617096,
+                    -0.28174516558647156,
+                    -0.21116948127746582,
+                    -0.25862619280815125,
+                    0.2201375514268875,
+                    0.2556685209274292,
+                    0.0966799184679985
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": [
+                    -0.0004519845824688673,
+                    -0.0001343681797152385,
+                    0.0002584618341643363,
+                    -0.0005432256730273366,
+                    0.0002447279402986169,
+                    -4.712785448646173e-05,
+                    0.0003616477479226887,
+                    -6.812422361690551e-05,
+                    0.00016859038441907614,
+                    1.178289585368475e-05,
+                    4.245914897182956e-05,
+                    1.591221553098876e-05,
+                    2.3343187422142364e-05,
+                    0.00012238432827871293,
+                    -2.7705224056262523e-05,
+                    2.4294313334394246e-05
+                  ]
+                },
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": [
+                    0.0011841822415590286,
+                    0.0001155864229076542,
+                    0.003998220432549715,
+                    0.00020241168385837227,
+                    -0.005048766732215881,
+                    -0.005008952226489782,
+                    0.0020280072931200266,
+                    -0.005185566842556,
+                    0.004911030642688274,
+                    -0.0033975387923419476,
+                    -0.0054503679275512695,
+                    -0.00109927321318537,
+                    -0.0016453544376417994,
+                    0.004112084396183491,
+                    0.004528544377535582,
+                    0.01265713106840849
+                  ]
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": [
+                    -0.02163543552160263,
+                    -0.034839775413274765,
+                    -0.11029378324747086,
+                    -0.0508582666516304,
+                    0.28603267669677734,
+                    0.3615390956401825,
+                    -0.11494550853967667,
+                    0.18684987723827362,
+                    -0.1343182474374771,
+                    -0.15966443717479706,
+                    0.16889899969100952,
+                    0.2312660664319992,
+                    0.14953850209712982,
+                    -0.1450781226158142,
+                    -0.08578253537416458,
+                    -0.3262733221054077
+                  ]
+                }
+              ],
+              "LN_var": [
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": -2.890861988067627
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": 0.20754554867744446
+                },
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": -0.5219345092773438
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": -2.890861988067627
+                },
+                {
+                  "vertex": [
+                    0,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -2.890861988067627
+                }
+              ],
+              "input_vertex_oa": [
+                {
+                  "vertex": "mlp-0",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "vertex": "attn_output-0-0-wte",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "vertex": "wte",
+                  "value": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ]
+                }
+              ]
+            },
+            "source": [
+              [
+                "$\\text{mlp}^{0}_{i}$ = $\\text{mlp}^{0}_{i}$($\\text{attn}(a^{0}_{0}.\\text{{token}}_{i}, [\\text{{token}}_{0}...\\text{{token}}_{i}]) \\times V^{0}_{0} \\times T \\times \\text{{token}}_{i}$)",
+                "$\\text{lm-head}_{i}$ = $\\text{lm-head}_{i}$($[mlp^0_{0}...mlp^0_{i}]$)"
+              ],
+              [
+                {
+                  "var": "$\\text{mlp}^{0}_{i}$",
+                  "type": "mlp",
+                  "components": [
+                    {
+                      "equation": "$\\text{attn}(a^{0}_{0}.\\text{{token}}_{i}, [\\text{{token}}_{0}...\\text{{token}}_{i}]) \\times V^{0}_{0} \\times T \\times \\text{{token}}_{i}$",
+                      "var": null
+                    }
+                  ]
+                },
+                {
+                  "var": "$\\text{lm-head}_{i}$",
+                  "type": "lm_head",
+                  "components": [
+                    {
+                      "equation": "$[mlp^0_{0}...mlp^0_{i}]$",
+                      "var": null
+                    }
+                  ]
+                }
+              ]
+            ],
+            "renderer_adaptation": null,
+            "masks": [
+              {
+                "edge": [
+                  0,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  0,
+                  "mlp",
+                  "attn_output-0-0-wte"
+                ],
+                "value": 1
+              },
+              {
+                "edge": [
+                  "lm_head",
+                  "mlp-0"
+                ],
+                "value": 1
+              }
+            ],
+            "initial": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.7851851851851852,
+              "max_logit_error": 5.671586036682129,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "calibrated": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.9407407407407408,
+              "max_logit_error": 5.365137100219727,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "calibration": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.9407407407407408,
+              "max_logit_error": 5.365137100219727,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "evaluation": {
+              "final_token_agreement": 0.7265625,
+              "all_token_agreement": 0.9036458333333334,
+              "max_logit_error": 5.365137100219727,
+              "examples": 128,
+              "counterexamples": [
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                }
+              ]
+            },
+            "calibration_losses": [
+              0.297223299741745,
+              0.364401638507843,
+              0.41476038098335266,
+              0.2592291831970215,
+              0.32276836037635803,
+              0.37401753664016724,
+              0.23575593531131744,
+              0.29466789960861206,
+              0.34555333852767944,
+              0.22157567739486694,
+              0.275902658700943,
+              0.3253841698169708,
+              0.21297027170658112,
+              0.26305514574050903,
+              0.31056642532348633,
+              0.2077157348394394,
+              0.2541468143463135,
+              0.2996075749397278,
+              0.2047591209411621,
+              0.24818220734596252,
+              0.2918121814727783,
+              0.20337368547916412,
+              0.24439215660095215,
+              0.28656795620918274,
+              0.20272932946681976,
+              0.2419476956129074,
+              0.2831583321094513,
+              0.20211763679981232,
+              0.24019210040569305,
+              0.2809755206108093,
+              0.20130176842212677,
+              0.23884424567222595
+            ],
+            "trials": [
+              {
+                "edge": [
+                  "lm_head",
+                  "mlp-0"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.5,
+                  "all_token_agreement": 0.5777777777777777,
+                  "max_logit_error": 6.547179222106934,
+                  "examples": 42,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  0,
+                  "mlp",
+                  "attn_output-0-0-wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.5,
+                  "all_token_agreement": 0.5777777777777777,
+                  "max_logit_error": 6.12028169631958,
+                  "examples": 42,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "edge": [
+                  0,
+                  "v",
+                  0,
+                  "wte"
+                ],
+                "accepted": false,
+                "metrics": {
+                  "final_token_agreement": 0.5,
+                  "all_token_agreement": 0.5777777777777777,
+                  "max_logit_error": 6.12028169631958,
+                  "examples": 42,
+                  "counterexamples": [
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        0,
+                        1,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        0,
+                        1,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        0,
+                        1,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        0,
+                        1,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    },
+                    {
+                      "input_ids": [
+                        2,
+                        1,
+                        0,
+                        1,
+                        0,
+                        0,
+                        3
+                      ],
+                      "actual": 1,
+                      "expected": 0
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges_before": 3,
+            "edges_after": 3,
+            "accepted": false
+          },
+          {
+            "name": "qk",
+            "engine_config": {
+              "0": {
+                "k": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [
+                  "attn_output-0-0-wte"
+                ],
+                "qk": {
+                  "0": []
+                }
+              },
+              "lm_head": [
+                "mlp-0"
+              ]
+            },
+            "config": {
+              "0": {
+                "k": {
+                  "0": []
+                },
+                "v": {
+                  "0": [
+                    "wte"
+                  ]
+                },
+                "mlp": [
+                  "attn_output-0-0-wte"
+                ],
+                "qk": {
+                  "0": []
+                }
+              },
+              "lm_head": [
+                "mlp-0"
+              ]
+            },
+            "auxiliary": {
+              "output_vertex_oa": [
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": [
+                    0.05720784515142441,
+                    0.35936301946640015,
+                    0.37984251976013184,
+                    -0.2693210542201996,
+                    -0.2553907334804535,
+                    0.15788301825523376,
+                    0.4603157937526703,
+                    0.06391286849975586,
+                    0.4334467053413391,
+                    -0.5350903272628784,
+                    -0.3772883117198944,
+                    0.03834626451134682,
+                    -0.19953329861164093,
+                    0.18654948472976685,
+                    0.27801066637039185,
+                    -0.21742473542690277
+                  ]
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": [
+                    -0.027702797204256058,
+                    -0.05501851439476013,
+                    -0.15289713442325592,
+                    -0.05897926911711693,
+                    0.4533519744873047,
+                    0.628522515296936,
+                    -0.13563776016235352,
+                    0.4670099914073944,
+                    -0.41804444789886475,
+                    -0.1761414110660553,
+                    0.446920245885849,
+                    0.42867130041122437,
+                    0.21358910202980042,
+                    -0.17809897661209106,
+                    -0.1109539270401001,
+                    -0.5791008472442627
+                  ]
+                }
+              ],
+              "LN_var": [
+                {
+                  "vertex": [
+                    0,
+                    "k",
+                    0
+                  ],
+                  "value": -2.890861988067627
+                },
+                {
+                  "vertex": [
+                    "lm_head"
+                  ],
+                  "value": 0.20754554867744446
+                },
+                {
+                  "vertex": [
+                    0,
+                    "mlp"
+                  ],
+                  "value": -0.5219345092773438
+                },
+                {
+                  "vertex": [
+                    0,
+                    "q",
+                    0
+                  ],
+                  "value": -2.890861988067627
+                },
+                {
+                  "vertex": [
+                    0,
+                    "v",
+                    0,
+                    "wte"
+                  ],
+                  "value": -2.890861988067627
+                }
+              ],
+              "q_bias_term": []
+            },
+            "source": [
+              [
+                "a1 = aggregate(s=[], v=token) \t  # layer 0 head 0",
+                "m1 = mlp(a1) \t  # layer 0 mlp",
+                "logits1 = proj_to_vocab(m1)",
+                "logits2 = proj_to_vocab(bias)",
+                "prediction = softmax(logits1+\n\t\t\tlogits2)"
+              ],
+              {
+                "logits1": "mlp-0",
+                "logits2": "vocab_bias"
+              }
+            ],
+            "renderer_adaptation": null,
+            "masks": [],
+            "initial": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.9407407407407408,
+              "max_logit_error": 5.365137100219727,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "calibrated": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.9407407407407408,
+              "max_logit_error": 5.645242691040039,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "calibration": {
+              "final_token_agreement": 1.0,
+              "all_token_agreement": 0.9407407407407408,
+              "max_logit_error": 5.645242691040039,
+              "examples": 42,
+              "counterexamples": []
+            },
+            "evaluation": {
+              "final_token_agreement": 0.7265625,
+              "all_token_agreement": 0.9036458333333334,
+              "max_logit_error": 5.645242691040039,
+              "examples": 128,
+              "counterexamples": [
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    1,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    1,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                },
+                {
+                  "input_ids": [
+                    2,
+                    0,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    0,
+                    3
+                  ],
+                  "actual": 1,
+                  "expected": 0
+                }
+              ]
+            },
+            "calibration_losses": [
+              0.2006233185529709,
+              0.23851990699768066,
+              0.28137877583503723,
+              0.19842292368412018,
+              0.23637180030345917,
+              0.27683207392692566,
+              0.1986026167869568,
+              0.23485073447227478,
+              0.2739165723323822,
+              0.19852541387081146,
+              0.23368176817893982,
+              0.2723831534385681,
+              0.19717447459697723,
+              0.23238985240459442,
+              0.27158278226852417,
+              0.1955101490020752,
+              0.23128128051757812,
+              0.27090758085250854,
+              0.19414889812469482,
+              0.2302345335483551,
+              0.26979225873947144,
+              0.19308356940746307,
+              0.2291383445262909,
+              0.26833540201187134,
+              0.19218264520168304,
+              0.2280702143907547,
+              0.26693254709243774,
+              0.19121216237545013,
+              0.22702136635780334,
+              0.2657737135887146,
+              0.18997882306575775,
+              0.2259407788515091
+            ],
+            "trials": [],
+            "edges_before": 0,
+            "edges_after": 0,
+            "accepted": false
+          }
+        ],
+        "primitive_matches": [
+          {
+            "id": "uniform.0.0",
+            "op": "uniform_causal_selection",
+            "inputs": [
+              "tokens"
+            ],
+            "attributes": {
+              "layer": 0,
+              "head": 0,
+              "evidence": "all QK and affine-key terms removed by upstream masks"
+            },
+            "weights": [
+              "transformer.h.0.attn.c_attn.weight",
+              "transformer.h.0.ln_1.weight"
+            ],
+            "interpretation": "primitive"
+          }
+        ]
+      },
+      "weights": [
+        "transformer.wte.weight",
+        "transformer.wpe.weight",
+        "transformer.h.0.ln_1.weight",
+        "transformer.h.0.ln_1.bias",
+        "transformer.h.0.attn.c_attn.weight",
+        "transformer.h.0.attn.c_attn.bias",
+        "transformer.h.0.attn.c_proj.weight",
+        "transformer.h.0.attn.c_proj.bias",
+        "transformer.h.0.ln_2.weight",
+        "transformer.h.0.ln_2.bias",
+        "transformer.h.0.mlp.c_fc.weight",
+        "transformer.h.0.mlp.c_fc.bias",
+        "transformer.h.0.mlp.c_proj.weight",
+        "transformer.h.0.mlp.c_proj.bias",
+        "transformer.ln_f.weight",
+        "transformer.ln_f.bias"
+      ],
+      "interpretation": "opaque"
+    }
+  ],
+  "output": "output",
+  "provenance": {
+    "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+    "revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+    "checkpoint_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+    "driver": "bounded local greedy masks and auxiliary-vector KL calibration; unchanged upstream engines",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "source_weights_frozen": true,
+    "split_mlps": false,
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches"
+    ]
+  },
+  "fidelity": {
+    "claim": "measured domain fidelity; stage execution does not establish paper reproduction or symbolic equivalence",
+    "normalization": {
+      "positions": "implicit positions 0..length-1 on the caller-supplied token ids",
+      "layernorm": "upstream engines consume per-vertex log-variance fit on the calibration rows",
+      "acceptance": "final-token argmax agreement; max_logit_error is separate and can reject a logit-level claim"
+    },
+    "accepted": false,
+    "pruned_forward_calls_after_component": 99,
+    "native_forward_calls_after_component": 7,
+    "component": {
+      "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+      "layernorm": "calibrated linearization",
+      "normalization_assumption_passed": true,
+      "logit_reconstruction": false,
+      "initial": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 5.628005027770996,
+        "examples": 42
+      },
+      "calibration": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 4.988503456115723,
+        "examples": 42
+      },
+      "evaluation": {
+        "final_token_agreement": 1.0,
+        "max_logit_error": 4.988503456115723,
+        "examples": 128
+      },
+      "component_edges_before": 13,
+      "component_edges_after": 3,
+      "native_forward_calls": 10,
+      "pruned_forward_calls": 49,
+      "trials": [
+        {
+          "edge": [
+            "lm_head",
+            "attn_output-0-0"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.940178871154785,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "mlp-0"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.5,
+            "max_logit_error": 6.960857391357422,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.944576263427734,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            "lm_head",
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.240171432495117,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "k",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.215441703796387,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "k",
+            0,
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.215455055236816,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "attn_output-0-0"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.5,
+            "max_logit_error": 6.189640045166016,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 5.159627437591553,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "mlp",
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 4.981386661529541,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "q",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 4.981386661529541,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "q",
+            0,
+            "wte"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 4.981386661529541,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "v",
+            0,
+            "wpe"
+          ],
+          "accepted": true,
+          "metrics": {
+            "final_token_agreement": 1.0,
+            "max_logit_error": 4.988503456115723,
+            "examples": 42
+          }
+        },
+        {
+          "edge": [
+            0,
+            "v",
+            0,
+            "wte"
+          ],
+          "accepted": false,
+          "metrics": {
+            "final_token_agreement": 0.5,
+            "max_logit_error": 5.606274604797363,
+            "examples": 42
+          }
+        }
+      ]
+    }
+  },
+  "version": "weightscript.ir.v1"
+}

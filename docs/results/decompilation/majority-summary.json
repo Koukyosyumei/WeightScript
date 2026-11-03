@@ -1,0 +1,1302 @@
+{
+  "checkpoint": "bin_majority-@1l1h16d3lr01drop",
+  "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+  "task_kind": "majority",
+  "domains": {
+    "calibration": "ed82a526a4b967ab5a51dbf1bfd1cad67fd31dc5959384c640797d597a59fc7c",
+    "oracle": "09e2749fd3f0c1cfb98c2de1e6ac704fe9ac71ed5b6d8d36448a3ae30ccbecb3",
+    "final": "f0184d7f256a41f66e67b34707859a80e26fbe96640fd393d7d95f435a07480d"
+  },
+  "domain_sizes": {
+    "calibration": 42,
+    "oracle": 128,
+    "final": 512
+  },
+  "position_assumption": "implicit positions 0..length-1; upstream training also drew random offsets",
+  "native_task": {
+    "calibration": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 42,
+      "sequences": 42
+    },
+    "oracle": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 128,
+      "sequences": 128
+    },
+    "final": {
+      "position_agreement": 1.0,
+      "sequence_agreement": 1.0,
+      "positions": 512,
+      "sequences": 512
+    }
+  },
+  "causal_summary": {
+    "accepted": false,
+    "claim": "measured domain fidelity; stage execution does not establish paper reproduction or symbolic equivalence",
+    "checkpoint_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+    "completed_stages": [
+      "component",
+      "full_path",
+      "qk"
+    ],
+    "compatibility_adaptations": [
+      "broadcast cached positional embeddings across QK batches"
+    ],
+    "normalization": {
+      "positions": "implicit positions 0..length-1 on the caller-supplied token ids",
+      "layernorm": "upstream engines consume per-vertex log-variance fit on the calibration rows",
+      "acceptance": "final-token argmax agreement; max_logit_error is separate and can reject a logit-level claim"
+    },
+    "stages": [
+      {
+        "name": "component",
+        "accepted": true,
+        "edges_before": 13,
+        "edges_after": 3,
+        "trials": 13,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 1.0,
+        "max_logit_error": 4.988503456115723,
+        "logit_reconstruction": false,
+        "normalization_assumption_passed": true
+      },
+      {
+        "name": "full_path",
+        "accepted": false,
+        "edges_before": 3,
+        "edges_after": 3,
+        "trials": 3,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 0.7265625,
+        "max_logit_error": 5.365137100219727,
+        "renderer_adaptation": null
+      },
+      {
+        "name": "qk",
+        "accepted": false,
+        "edges_before": 0,
+        "edges_after": 0,
+        "trials": 0,
+        "search_complete": true,
+        "calibration_agreement": 1.0,
+        "evaluation_agreement": 0.7265625,
+        "max_logit_error": 5.645242691040039,
+        "renderer_adaptation": null
+      }
+    ],
+    "primitive_interpretations": {
+      "primitive": 1
+    },
+    "primitive_hypotheses": [],
+    "primitive_rejections": []
+  },
+  "replay": {
+    "component": {
+      "oracle": {
+        "stage_vs_native": 1.0,
+        "native_vs_gold": 1.0,
+        "positions": 128,
+        "counterexamples": []
+      },
+      "final": {
+        "stage_vs_native": 1.0,
+        "native_vs_gold": 1.0,
+        "positions": 512,
+        "counterexamples": []
+      }
+    },
+    "full_path": {
+      "oracle": {
+        "stage_vs_native": 0.7265625,
+        "native_vs_gold": 1.0,
+        "positions": 128,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          }
+        ]
+      },
+      "final": {
+        "stage_vs_native": 0.75390625,
+        "native_vs_gold": 1.0,
+        "positions": 512,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          }
+        ]
+      }
+    },
+    "qk": {
+      "oracle": {
+        "stage_vs_native": 0.7265625,
+        "native_vs_gold": 1.0,
+        "positions": 128,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          }
+        ]
+      },
+      "final": {
+        "stage_vs_native": 0.75390625,
+        "native_vs_gold": 1.0,
+        "positions": 512,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "stage": 1,
+            "native": 0,
+            "gold": 0
+          }
+        ]
+      }
+    }
+  },
+  "edit": {
+    "backend": "counterexample_guided_constraint_compiler",
+    "rule": {
+      "op": "count_threshold",
+      "threshold": 0.5,
+      "invert": true
+    },
+    "rounds": 2,
+    "bounded_oracle_passed": true,
+    "oracle_rescore": {
+      "checked": 128,
+      "accuracy": 1.0,
+      "counterexamples": []
+    },
+    "oracle_rows_absorbed": 2,
+    "refinement_stopped": null,
+    "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+    "audit": {
+      "architecture_preserved": true,
+      "gradient_updates": 0,
+      "changed_scalars": 48,
+      "tensors": [
+        {
+          "tensor": "transformer.h.0.mlp.c_proj.weight",
+          "changed": 32,
+          "total": 1024,
+          "aliases": [],
+          "delta_l2": 8.255583763122559
+        },
+        {
+          "tensor": "transformer.ln_f.bias",
+          "changed": 16,
+          "total": 16,
+          "aliases": [],
+          "delta_l2": 1.6828514337539673
+        }
+      ]
+    },
+    "forward_calls": 33,
+    "final_synthesis_examples": 44,
+    "oracle_examples": 128,
+    "claim": "bounded activation-informed synthesis; held-out rows are never supplied to LP or counterexample refinement",
+    "base_heldout": {
+      "examples": 512,
+      "labeled": 512,
+      "accuracy_wilson_95": [
+        0,
+        0.007446975722882332
+      ],
+      "target_nll_standard_error": 0.13702757687273545,
+      "accuracy": 0.0,
+      "target_nll": 5.478165487293154,
+      "forward_calls": 4,
+      "reference_forward_calls": 0,
+      "token_disagreement": null,
+      "reference_kl_per_token": null
+    },
+    "edited_heldout": {
+      "examples": 512,
+      "labeled": 512,
+      "accuracy_wilson_95": [
+        0.9858705928553464,
+        0.9989281109196062
+      ],
+      "target_nll_standard_error": 0.005654944298306727,
+      "accuracy": 0.99609375,
+      "target_nll": 0.01017746855995938,
+      "forward_calls": 4,
+      "reference_forward_calls": 4,
+      "token_disagreement": 0.9312855113636364,
+      "reference_kl_per_token": 7.164424029263583
+    },
+    "heldout_decisions": {
+      "checked": 512,
+      "accuracy": 0.99609375,
+      "counterexamples": [
+        {
+          "input_ids": [
+            2,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3
+          ],
+          "actual": 0,
+          "expected": 1
+        },
+        {
+          "input_ids": [
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            3
+          ],
+          "actual": 1,
+          "expected": 0
+        }
+      ]
+    },
+    "rounds_slim": [
+      {
+        "passed": false,
+        "synthesis": {
+          "checked": 42,
+          "accuracy": 1.0,
+          "counterexamples": []
+        },
+        "verification": {
+          "checked": 128,
+          "accuracy": 0.984375,
+          "counterexamples": [
+            {
+              "input_ids": [
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3
+              ],
+              "actual": 0,
+              "expected": 1
+            },
+            {
+              "input_ids": [
+                2,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                3
+              ],
+              "actual": 1,
+              "expected": 0
+            }
+          ]
+        },
+        "patch_rank_bound": 1,
+        "solver": {
+          "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+          "linear_constraint_count": 210,
+          "rational_violation_check": "unsat",
+          "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+        },
+        "changed_scalars": 48
+      },
+      {
+        "passed": true,
+        "synthesis": {
+          "checked": 44,
+          "accuracy": 1.0,
+          "counterexamples": []
+        },
+        "verification": {
+          "checked": 126,
+          "accuracy": 1.0,
+          "counterexamples": []
+        },
+        "patch_rank_bound": 1,
+        "solver": {
+          "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+          "linear_constraint_count": 220,
+          "rational_violation_check": "unsat",
+          "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+        },
+        "changed_scalars": 48
+      }
+    ],
+    "requested_rule": {
+      "op": "count_threshold",
+      "threshold": 0.5,
+      "invert": true
+    },
+    "limit": "last-position output-span patch of the trained checkpoint; held-out rows were not used to fit it"
+  },
+  "semantic_fidelity": {
+    "claim": "bounded behavioral sequence hypothesis; not weight-only discovery or proof of an internal algorithm",
+    "accepted": true,
+    "selected_index": 2,
+    "calibration": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 42,
+      "sequences": 42,
+      "counterexamples": []
+    },
+    "evaluation": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 128,
+      "sequences": 128,
+      "counterexamples": []
+    },
+    "final": {
+      "agreement": 1.0,
+      "rule_task_agreement": 1.0,
+      "model_task_agreement": 1.0,
+      "positions": 512,
+      "sequences": 512,
+      "counterexamples": []
+    },
+    "evaluation_passed": true,
+    "final_passed": true,
+    "candidate_metrics": [
+      {
+        "agreement": 0.7142857142857143,
+        "rule_task_agreement": 0.7142857142857143,
+        "model_task_agreement": 1.0,
+        "positions": 42,
+        "sequences": 42,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              0,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              0,
+              0,
+              0,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              0,
+              0,
+              1,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              0,
+              1,
+              0,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              1,
+              0,
+              0,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              1,
+              0,
+              0,
+              0,
+              3
+            ],
+            "model": 0,
+            "rule": 1,
+            "gold": 0,
+            "error": null
+          }
+        ]
+      },
+      {
+        "agreement": 0.5714285714285714,
+        "rule_task_agreement": 0.5714285714285714,
+        "model_task_agreement": 1.0,
+        "positions": 42,
+        "sequences": 42,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              1,
+              0,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              0,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              0,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              1,
+              0,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              0,
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              0,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              1,
+              0,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              1,
+              1,
+              0,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              0,
+              1,
+              1,
+              1,
+              3
+            ],
+            "model": 1,
+            "rule": 0,
+            "gold": 1,
+            "error": null
+          }
+        ]
+      },
+      {
+        "agreement": 1.0,
+        "rule_task_agreement": 1.0,
+        "model_task_agreement": 1.0,
+        "positions": 42,
+        "sequences": 42,
+        "counterexamples": []
+      }
+    ],
+    "forward_calls": 23
+  },
+  "semantic_rule": {
+    "op": "span_next",
+    "kind": "majority",
+    "bos": 2,
+    "sep": 3,
+    "eos": 4
+  },
+  "semantic_method": "finite-library behavioral sequence synthesis; model forward passes used"
+}

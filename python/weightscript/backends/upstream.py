@@ -36,11 +36,18 @@ def modules(checkout):
     if status.strip():
         raise ValueError("upstream tracked source has local modifications")
     directory = root / "crasp/scripts/patching"
+    if not directory.is_dir():
+        raise ValueError("pinned upstream checkout is missing patching sources")
+    for name in ("pruning_model", "patching_helper_functions", "convert_to_code"):
+        loaded = sys.modules.get(name)
+        if loaded is not None and Path(getattr(loaded, "__file__", "")).resolve().parent != directory:
+            raise ValueError(f"upstream module collision: {name}; use a fresh process")
     sys.path.insert(0, str(directory))
     # Upstream's renderer imports a machine-local path file that is not shipped.
     # Supply only its documented directory constant; algorithm code is untouched.
     paths = types.ModuleType("my_paths")
     paths.path_to_saved_model = str(root / "share/saved_models")
+    previous_paths = sys.modules.get("my_paths")
     sys.modules["my_paths"] = paths
     try:
         pruning = importlib.import_module("pruning_model")
@@ -48,6 +55,10 @@ def modules(checkout):
         renderer = importlib.import_module("convert_to_code")
     finally:
         sys.path.remove(str(directory))
+        if previous_paths is None:
+            sys.modules.pop("my_paths", None)
+        else:
+            sys.modules["my_paths"] = previous_paths
     return pruning, helpers, renderer
 
 
@@ -101,11 +112,18 @@ def decompile(
     batch_size=32,
     linear_ln=False,
     evaluation_rows=None,
+    require_initial_fidelity=True,
 ):
     if model.config.model_type != "gpt2":
         raise ValueError("upstream backend supports GPT-2 only")
     if not rows or max_trials < 0 or not 0 <= min_fidelity <= 1:
         raise ValueError("invalid pruning domain or budget")
+    if model.training or next(model.parameters()).device.type != "cpu":
+        raise ValueError("upstream backend requires an eval-mode CPU model")
+    if evaluation_rows and {tuple(r["input_ids"]) for r in rows} & {
+        tuple(r["input_ids"]) for r in evaluation_rows
+    }:
+        raise ValueError("pruning and evaluation domains overlap")
     upstream, helpers, renderer = modules(checkout)
     original_hash = fingerprint(model)
     native_batches = list(batches(rows, batch_size))
@@ -165,6 +183,8 @@ def decompile(
                 ids, masks=mask.expand(len(ids), -1), oa_vecs=oa, use_cache=False
             ).logits
             forward_calls += 1
+            if not torch.isfinite(logits).all() or not torch.isfinite(target).all():
+                raise ValueError("nonfinite upstream or reference logits")
             # Match the final decision; report this domain explicitly.
             matches += int((logits[:, -1].argmax(-1) == target[:, -1].argmax(-1)).sum())
             total += len(ids)
@@ -177,6 +197,8 @@ def decompile(
 
     try:
         initial = measure(masks)
+        if require_initial_fidelity and initial["final_token_agreement"] < min_fidelity:
+            raise ValueError(f"upstream normalization/reconstruction assumption failed: {initial}")
         trials = []
         # Ties and iteration order deterministic; use actual upstream path masks.
         for edge, index in sorted(
@@ -256,12 +278,21 @@ def decompile(
             "revision": REVISION,
             "checkpoint_sha256": original_hash,
             "driver": "greedy zero-ablation; upstream mask/hook/renderer implementations",
+            "completed_stages": ["component"],
+            "unimplemented_stages": ["full_path", "qk_reparameterization"],
+            "compatibility_adaptations": [
+                "provide missing my_paths directory constant during import",
+                "retain separate attention output biases in optimal-ablation vectors",
+            ],
         },
         {
             "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
             "layernorm": "calibrated linearization"
             if linear_ln
             else "native LayerNorm",
+            "normalization_assumption_passed": initial["final_token_agreement"] >= min_fidelity,
+            "logit_reconstruction": initial["max_logit_error"] <= 1e-4
+            and final["max_logit_error"] <= 1e-4,
             "initial": initial,
             "calibration": final,
             "evaluation": validation,
