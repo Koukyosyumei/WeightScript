@@ -1,0 +1,8 @@
+include LICENSE README.md Cargo.toml Cargo.lock
+recursive-include docs *.md
+recursive-include src *.rs
+recursive-include tests *.rs
+recursive-include python/tests *.py
+prune artifacts
+prune target
+global-exclude *.py[cod]

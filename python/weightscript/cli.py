@@ -3,35 +3,20 @@ import inspect
 import json
 from pathlib import Path
 
-import torch
-
-from .core import (
-    audit,
-    apply_raw_edits,
-    compile_edits,
-    extract,
-    fingerprint,
-    load_model,
-    program_forward,
-    write_json,
-)
-from .evaluate import benchmark, dataset, equivalence, score
-from .checkpoint import save_undo, undo
+from ._cli_support import run_cli, positive_int, add_version
 
 
-def main():
-    import sys
-
-    if len(sys.argv) > 1 and sys.argv[1] == "workbench":
-        del sys.argv[1]
-        from .workbench import main as workbench
-
-        return workbench()
+def build_parser(subparsers=None):
     p = argparse.ArgumentParser(
         description="Inspect and edit trained GPT-2 circuits without gradients"
     )
-    p.add_argument("--threads", type=int, default=2)
-    sub = p.add_subparsers(dest="command", required=True)
+    add_version(p)
+    p.add_argument("--threads", type=positive_int, default=2)
+    sub = (
+        subparsers
+        if subparsers is not None
+        else p.add_subparsers(dest="command", required=True)
+    )
     export = sub.add_parser(
         "extract", help="export editable computation IR and readable execution source"
     )
@@ -81,7 +66,7 @@ def main():
     group.add_argument("--text")
     group.add_argument("--tokens")
     generate.add_argument("--tokenizer", help="tokenizer source (defaults to model)")
-    generate.add_argument("--max-new-tokens", type=int, default=32)
+    generate.add_argument("--max-new-tokens", type=positive_int, default=32)
     check = sub.add_parser(
         "verify", help="compare native, extracted and patched inference"
     )
@@ -105,10 +90,27 @@ def main():
     bench.add_argument("dev")
     bench.add_argument("heldout")
     bench.add_argument("report")
-    bench.add_argument("--budget", type=int, default=50)
+    bench.add_argument("--budget", type=positive_int, default=50)
     for parser in (check, ev, bench):
-        parser.add_argument("--batch-size", type=int, default=32)
-    args = p.parse_args()
+        parser.add_argument("--batch-size", type=positive_int, default=32)
+    return p
+
+
+def execute(args):
+    import torch
+    from .core import (
+        audit,
+        apply_raw_edits,
+        compile_edits,
+        extract,
+        fingerprint,
+        load_model,
+        program_forward,
+        write_json,
+    )
+    from .evaluate import benchmark, dataset, equivalence, score
+    from .checkpoint import save_undo, undo
+
     torch.set_num_threads(args.threads)
     model = load_model(args.model)
     if args.command == "extract":
@@ -347,5 +349,44 @@ def main():
             )
 
 
+def main(argv=None):
+    """Run the unified CLI; return an integer process status."""
+    import sys
+    from . import workbench
+
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Historical `weightscript-hf workbench ...` and Rust `hf workbench ...`.
+    if argv[:1] == ["workbench"]:
+        argv.pop(0)
+    parser = argparse.ArgumentParser(
+        description="Inspect, edit and audit Transformer checkpoints"
+    )
+    add_version(parser)
+    parser.add_argument("--threads", type=positive_int, default=2)
+    sub = parser.add_subparsers(dest="command", required=True)
+    build_parser(sub)
+    workbench.build_parser(sub)
+    args = parser.parse_args(argv)
+    executor = execute if args.command in HF_COMMANDS else workbench.execute
+    return run_cli(lambda: executor(args))
+
+
+HF_COMMANDS = frozenset(
+    {
+        "extract",
+        "compile",
+        "compile-raw",
+        "tensor",
+        "run",
+        "undo",
+        "generate",
+        "verify",
+        "trace",
+        "evaluate",
+        "benchmark",
+    }
+)
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

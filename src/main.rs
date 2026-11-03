@@ -66,16 +66,8 @@ fn main() {
     let arguments: Vec<String> = env::args().skip(1).collect();
     if arguments.first().map(String::as_str) == Some("hf") {
         let python = env::var("WEIGHTSCRIPT_PYTHON").unwrap_or_else(|_| "python3".into());
-        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("python");
-        let mut paths = vec![source];
-        if let Some(existing) = env::var_os("PYTHONPATH") {
-            paths.extend(env::split_paths(&existing));
-        }
+        // Use the selected interpreter's installed package, never the build checkout.
         let status = std::process::Command::new(&python)
-            .env(
-                "PYTHONPATH",
-                env::join_paths(paths).expect("invalid Python path"),
-            )
             .args(["-m", "weightscript.cli"])
             .args(&arguments[1..])
             .status();

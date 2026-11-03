@@ -5,16 +5,18 @@ import json
 import shlex
 from pathlib import Path
 
-import torch
-
-from .core import load_model, write_json
-from .evaluate import dataset
+from ._cli_support import run_cli, positive_int, add_version
 
 
-def main():
+def build_parser(subparsers=None):
     parser = argparse.ArgumentParser(description="WeightScript research workbench")
-    parser.add_argument("--threads", type=int, default=2)
-    sub = parser.add_subparsers(dest="command", required=True)
+    add_version(parser)
+    parser.add_argument("--threads", type=positive_int, default=2)
+    sub = (
+        subparsers
+        if subparsers is not None
+        else parser.add_subparsers(dest="command", required=True)
+    )
     explanation = sub.add_parser("explain")
     explanation.add_argument("model")
     explanation.add_argument("edited")
@@ -109,7 +111,14 @@ def main():
     agent.add_argument("--max-forwards", type=int, default=50)
     agent.add_argument("--max-steps", type=int, default=30)
     agent.add_argument("--policy-timeout", type=int, default=60)
-    args = parser.parse_args()
+    return parser
+
+
+def execute(args):
+    import torch
+    from .core import load_model, write_json
+    from .evaluate import dataset
+
     torch.set_num_threads(args.threads)
     if args.command == "rasp":
         from .backends.tracr import Compiled, compile_program, patch, verify, recover
@@ -280,5 +289,11 @@ def main():
         print(json.dumps({k: v for k, v in result.items() if k != "history"}, indent=2))
 
 
+def main(argv=None):
+    """Compatibility entry point for the original research command surface."""
+    args = build_parser().parse_args(argv)
+    return run_cli(lambda: execute(args))
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

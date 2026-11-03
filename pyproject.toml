@@ -7,18 +7,35 @@ name = "weightscript"
 version = "0.2.0"
 requires-python = ">=3.10"
 description = "Inspect, edit, compile and audit trained Transformer circuits without gradients"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["transformers", "model-editing", "interpretability"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: OSI Approved :: Apache Software License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = ["torch>=2.2", "transformers==4.57.1", "safetensors>=0.4", "numpy>=1.26"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
-research = ["jax[cpu]==0.4.35", "dm-haiku==0.0.13", "chex==0.1.90", "einops>=0.8", "networkx>=3", "matplotlib>=3.8", "accelerate>=1", "click>=8", "z3-solver>=4.13"]
+build = ["build>=1.2", "wheel>=0.43"]
+research = ["jax[cpu]==0.4.35", "dm-haiku==0.0.13", "chex==0.1.90", "einops>=0.8", "networkx>=3", "matplotlib>=3.8", "accelerate>=1", "click>=8", "z3-solver>=4.13", "scipy>=1.11"]
 
 [project.scripts]
-weightscript = "weightscript.workbench:main"
+weightscript = "weightscript.cli:main"
 weightscript-hf = "weightscript.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["python"]
+include = ["weightscript*"]
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.pyc"]
