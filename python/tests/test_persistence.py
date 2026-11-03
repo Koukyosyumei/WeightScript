@@ -137,7 +137,7 @@ def test_cached_policy_response_survives_failed_evaluation(
     model, tmp_path, monkeypatch
 ):
     policy_calls = []
-    original_score = agent.score
+    original_score = agent.score_objective
     scoring = [0]
 
     def policy(*args):
@@ -151,14 +151,14 @@ def test_cached_policy_response_survives_failed_evaluation(
         return original_score(*args, **kwargs)
 
     monkeypatch.setattr(agent, "propose", policy)
-    monkeypatch.setattr(agent, "score", interrupt)
+    monkeypatch.setattr(agent, "score_objective", interrupt)
     rows = [{"input_ids": [1, 2], "target": 3}]
     config = dict(
         max_steps=1, max_forwards=4, output=tmp_path / "session", save_checkpoint=False
     )
     with pytest.raises(KeyboardInterrupt):
         agent.run_session(model, ["policy"], "goal", rows, **config)
-    monkeypatch.setattr(agent, "score", original_score)
+    monkeypatch.setattr(agent, "score_objective", original_score)
     result = agent.run_session(model, ["policy"], "goal", rows, resume=True, **config)
     assert len(policy_calls) == 1
     assert (
@@ -300,6 +300,119 @@ def test_generation_refund_remains_after_resume(model, tmp_path, monkeypatch):
         agent.run_session(model, ["policy"], "goal", rows, mode="direct", **kwargs)
     # Baseline costs one forward. Generation reserved 3 and refunded 2.
     assert json.loads((output / "state.json").read_text())["spent"] == 2
+
+
+def test_sequence_session_scores_every_answer_position(model, tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    def scripted(input_ids, use_cache=False, **kwargs):
+        batch, seq = input_ids.shape
+        logits = torch.full((batch, seq, model.config.vocab_size), -20.0)
+        logits[:, 3, 5] = 10
+        logits[:, 4, 1] = 10
+        return SimpleNamespace(logits=logits)
+
+    model.forward = scripted
+    seen = {}
+
+    def policy(command, request, timeout):
+        seen["grader"] = request["context"]["grader"]
+        return {"action": "finish"}
+
+    monkeypatch.setattr(agent, "propose", policy)
+    report = agent.run_session(
+        model,
+        ["policy"],
+        "goal",
+        [{"input_ids": [1, 2, 3, 4], "targets": [5, 6], "answer_length": 2}],
+        heldout=[{"input_ids": [1, 2, 3, 0], "targets": [5, 6], "answer_length": 2}],
+        collateral=[{"input_ids": [1, 2, 0, 4], "targets": [5, 7], "answer_length": 2}],
+        objective="sequence",
+        output=tmp_path / "span",
+        max_steps=1,
+        max_forwards=4,
+        save_checkpoint=False,
+    )
+    assert "every target" in seen["grader"]
+    assert report["objective"] == "sequence"
+    assert report["baseline_dev"]["examples"] == 1
+    assert report["baseline_dev"]["labeled"] == 2
+    assert report["baseline_dev"]["accuracy"] == 0.5
+    assert report["baseline_dev"]["full_span"] is True
+    assert report["baseline_heldout"]["accuracy"] == 0.5
+    assert report["baseline_heldout"]["labeled"] == 2
+    assert report["selected_collateral"]["labeled"] == 2
+    assert report["budget"]["selection_forwards"] == 1
+
+
+def test_truncated_copy_does_not_call_the_policy(model, tmp_path, monkeypatch):
+    from weightscript.comparison import task_rows
+
+    called = []
+    monkeypatch.setattr(
+        agent,
+        "propose",
+        lambda *args, **kwargs: called.append(1) or {"action": "finish"},
+    )
+    full = task_rows("unique_copy", 0, [4], 1)[0]
+    short = {
+        "input_ids": full["input_ids"],
+        "targets": full["targets"][:1],
+        "task": "unique_copy",
+        "answer_length": 1,
+    }
+    with pytest.raises(ValueError, match="truncated"):
+        agent.run_session(
+            model,
+            ["policy"],
+            "goal",
+            [short],
+            objective="sequence",
+            output=tmp_path / "bad",
+            max_steps=1,
+            max_forwards=4,
+            save_checkpoint=False,
+        )
+    assert called == []
+
+
+def test_sequence_budget_uses_prepared_length(model, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "propose", lambda *args, **kwargs: {"action": "finish"})
+    rows = [
+        {"input_ids": [1, 2, 3], "targets": [4, 5], "answer_length": 2},
+        {"input_ids": [1, 2], "targets": [3, 4, 5], "answer_length": 3},
+        {"input_ids": [1, 2, 3, 4], "targets": [5, 6, 7], "answer_length": 3},
+    ]
+    report = agent.run_session(
+        model,
+        ["policy"],
+        "goal",
+        rows,
+        objective="sequence",
+        output=tmp_path / "budget",
+        max_steps=1,
+        max_forwards=2,
+        save_checkpoint=False,
+    )
+    assert report["budget"]["selection_forwards"] == 2
+    assert report["baseline_dev"]["labeled"] == 8
+    assert report["baseline_dev"]["labeled"] > report["baseline_dev"]["examples"]
+    overlap = rows[0]
+    called = []
+    monkeypatch.setattr(agent, "propose", lambda *args, **kwargs: called.append(1))
+    with pytest.raises(ValueError, match="collateral"):
+        agent.run_session(
+            model,
+            ["policy"],
+            "goal",
+            [overlap],
+            collateral=[overlap],
+            objective="sequence",
+            max_steps=1,
+            max_forwards=2,
+            save_checkpoint=False,
+        )
+    assert called == []
 
 
 def test_lock_is_released_when_the_holder_is_killed(tmp_path):

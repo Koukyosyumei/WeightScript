@@ -26,7 +26,7 @@ from .core import (
     program_forward,
     write_json,
 )
-from .evaluate import batches, score
+from .evaluate import batches, count_forwards, score_objective
 from .ir import graph_from_model
 from .raw import transaction
 from .session_state import SessionState, exclusive_output
@@ -110,20 +110,39 @@ def run_session(
     collateral=None,
     resume=False,
     save_checkpoint=True,
+    objective="next_token",
 ):
     if (
         mode not in {"program", "direct", "hybrid"}
+        or objective not in {"next_token", "sequence"}
         or max_forwards < 1
         or max_steps < 1
         or batch_size < 1
     ):
         raise ValueError("invalid session configuration")
-    if not dev or not all("target" in r for r in dev):
+    if not dev:
         raise ValueError("labeled development data required")
-    if heldout and {tuple(r["input_ids"]) for r in dev} & {
-        tuple(r["input_ids"]) for r in heldout
-    }:
+    if objective == "next_token":
+        if any("target" not in row or type(row["target"]) is not int for row in dev):
+            raise ValueError("labeled development data required")
+    else:
+        from .comparison import require_complete_spans
+
+        require_complete_spans(dev)
+        if heldout:
+            require_complete_spans(heldout)
+        if collateral:
+            require_complete_spans(collateral)
+
+    def row_ids(rows):
+        return {tuple(row["input_ids"]) for row in rows} if rows else set()
+
+    if row_ids(dev) & row_ids(heldout):
         raise ValueError("development and held-out data overlap")
+    if row_ids(dev) & row_ids(collateral):
+        raise ValueError("development and collateral data overlap")
+    if row_ids(heldout) & row_ids(collateral):
+        raise ValueError("held-out and collateral data overlap")
     from .provenance import runtime
 
     provenance = runtime()
@@ -140,6 +159,7 @@ def run_session(
         "batch_size": batch_size,
         "timeout": timeout,
         "seed": seed,
+        "objective": objective,
         "dev": digest(dev),
         "heldout": digest(heldout),
         "collateral": digest(collateral),
@@ -151,7 +171,16 @@ def run_session(
         return json.loads((Path(output) / "report.json").read_text())
     ledger = data["history"]
     spent = data["spent"]
-    cost = sum(1 for _ in batches(dev, batch_size))
+    cost = count_forwards(dev, batch_size, objective)
+
+    def measure(scored, rows, reference=None):
+        return score_objective(
+            scored,
+            rows,
+            batch_size=batch_size,
+            reference=reference,
+            objective=objective,
+        )
 
     def reserve(n):
         nonlocal spent
@@ -173,7 +202,7 @@ def run_session(
         )
     if data["baseline"] is None:
         reserve(cost)
-        data["baseline"] = score(model, dev, batch_size)
+        data["baseline"] = measure(model, dev)
         state.save()
     baseline = data["baseline"]
     best_metrics = data["best_metrics"] or baseline
@@ -195,6 +224,12 @@ def run_session(
         "run_id": data["run_id"],
         "goal": goal,
         "mode": mode,
+        "objective": objective,
+        "grader": (
+            "teacher-forced accuracy and mean NLL over every target token"
+            if objective == "sequence"
+            else "accuracy and NLL of the single target at the last prompt position"
+        ),
         "seed": seed,
         "checkpoint_sha256": basehash,
         "architecture": {
@@ -447,7 +482,7 @@ def run_session(
                 )
                 reserve(cost + internal_cost)
                 proposed = build_candidate(model, proposal, mode, dev)
-                metrics = score(proposed, dev, batch_size)
+                metrics = measure(proposed, dev)
                 candidate = proposed
                 data["candidate_snapshot"] = state.snapshot(model, proposed)
                 key = (metrics["accuracy"], -metrics["target_nll"])
@@ -506,6 +541,7 @@ def run_session(
         "resumed": resume,
         "runtime": provenance,
         "mode": mode,
+        "objective": objective,
         "goal": goal,
         "seed": seed,
         "base_sha256": basehash,
@@ -541,19 +577,19 @@ def run_session(
 
     if heldout:
         report["baseline_heldout"] = final_metric(
-            "baseline_heldout", lambda: score(model, heldout, batch_size)
+            "baseline_heldout", lambda: measure(model, heldout)
         )
         report["selected_heldout"] = final_metric(
             "selected_heldout",
-            lambda: score(best_model, heldout, batch_size, reference=model),
+            lambda: measure(best_model, heldout, reference=model),
         )
     if collateral:
         report["baseline_collateral"] = final_metric(
-            "baseline_collateral", lambda: score(model, collateral, batch_size)
+            "baseline_collateral", lambda: measure(model, collateral)
         )
         report["selected_collateral"] = final_metric(
             "selected_collateral",
-            lambda: score(best_model, collateral, batch_size, reference=model),
+            lambda: measure(best_model, collateral, reference=model),
         )
     if output:
         from .checkpoint import save_undo

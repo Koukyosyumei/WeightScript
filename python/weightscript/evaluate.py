@@ -201,6 +201,58 @@ def score_answers(model, rows, batch_size=32, reference=None):
     }
 
 
+def count_forwards(rows, batch_size, objective="next_token"):
+    """Forward groups charged for one scoring pass.
+
+    Next-token scoring groups prompt lengths. Sequence scoring groups the
+    teacher-forced length, `len(input_ids) + len(targets) - 1`.
+    """
+    if batch_size < 1:
+        raise ValueError("batch size must be positive")
+    if objective == "next_token":
+        return sum(1 for _ in batches(rows, batch_size))
+    if objective != "sequence":
+        raise ValueError(f"unsupported objective {objective!r}")
+    if not rows:
+        raise ValueError("sequence scoring needs nonempty targets")
+    groups = defaultdict(int)
+    for row in rows:
+        prompt, targets = row.get("input_ids"), row.get("targets")
+        if (
+            not isinstance(prompt, list)
+            or not isinstance(targets, list)
+            or not prompt
+            or not targets
+        ):
+            raise ValueError("sequence scoring needs nonempty targets")
+        groups[len(prompt) + len(targets) - 1] += 1
+    return sum((count + batch_size - 1) // batch_size for count in groups.values())
+
+
+@torch.inference_mode()
+def score_objective(model, rows, batch_size=32, reference=None, objective="next_token"):
+    """Score `next_token` at the last prompt position, or every id in `targets`."""
+    if objective == "next_token":
+        if not rows or any(
+            "target" not in row or type(row["target"]) is not int for row in rows
+        ):
+            raise ValueError("next-token scoring needs an integer target on every row")
+        metrics = score(model, rows, batch_size, reference)
+        lengths = [1] * len(rows)
+        full_span = False
+    elif objective == "sequence":
+        metrics = score_answers(model, rows, batch_size, reference)
+        lengths = [len(row["targets"]) for row in rows]
+        full_span = True
+    else:
+        raise ValueError(f"unsupported objective {objective!r}")
+    metrics["objective"] = objective
+    metrics["min_answer_tokens"] = min(lengths) if lengths else 0
+    metrics["max_answer_tokens"] = max(lengths) if lengths else 0
+    metrics["full_span"] = full_span
+    return metrics
+
+
 @torch.inference_mode()
 def equivalence(model, program, rows, batch_size=32, atol=2e-5, rtol=2e-5):
     if not rows:

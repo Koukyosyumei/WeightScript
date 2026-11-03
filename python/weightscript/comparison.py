@@ -83,7 +83,14 @@ def majority_rows(seed, lengths, count):
             if key in seen:
                 continue
             seen.add(key)
-            rows.append({"input_ids": prompt, "targets": [0 if zeros > ones else 1]})
+            rows.append(
+                {
+                    "input_ids": prompt,
+                    "targets": [0 if zeros > ones else 1],
+                    "task": "bin_majority",
+                    "answer_length": 1,
+                }
+            )
             made += 1
     return rows
 
@@ -109,7 +116,15 @@ def sequence_rows(task, seed, lengths, count):
                 continue
             seen.add(key)
             answer = tokens if task == "unique_copy" else sorted(tokens)
-            rows.append({"input_ids": prompt, "targets": [*answer, spec["eos"]]})
+            targets = [*answer, spec["eos"]]
+            rows.append(
+                {
+                    "input_ids": prompt,
+                    "targets": targets,
+                    "task": task,
+                    "answer_length": len(targets),
+                }
+            )
             made += 1
     return rows
 
@@ -246,6 +261,66 @@ def proposals_for(model, arm, seed, trials=4):
     raise ValueError(f"unsupported comparison arm {arm!r}")
 
 
+SPAN_GRADER = "teacher-forced accuracy and mean NLL over every target token"
+
+
+def _copy_content(row):
+    """Return copy/sort content tokens, or None when the prompt is not that layout."""
+    spec = TASKS["unique_copy"]
+    ids = row.get("input_ids")
+    if (
+        not isinstance(ids, list)
+        or len(ids) < 2
+        or ids[0] != spec["bos"]
+        or ids[-1] != spec["sep"]
+        or ids.count(spec["sep"]) != 1
+    ):
+        return None
+    content = ids[1:-1]
+    if any(
+        type(token) is not int or not 0 <= token < spec["content"] for token in content
+    ):
+        return None
+    return content
+
+
+def require_complete_spans(rows):
+    """Reject a copy or sort row whose labels stop before the final eos.
+
+    Majority rows and one-token language windows are complete answers. A prompt
+    that uses the copy/sort special tokens is held to the full answer even when
+    the row does not name its task. `answer_length`, when present, must match
+    the supplied targets.
+    """
+    if not rows:
+        raise ValueError("sequence scoring needs nonempty targets")
+    spec = TASKS["unique_copy"]
+    for row in rows:
+        targets = row.get("targets")
+        if (
+            not isinstance(targets, list)
+            or not targets
+            or any(type(token) is not int for token in targets)
+        ):
+            raise ValueError("sequence scoring needs nonempty targets")
+        if "answer_length" in row and row["answer_length"] != len(targets):
+            raise ValueError("targets were truncated before scoring")
+        task = row.get("task")
+        if task in {"language", "bin_majority"}:
+            continue
+        content = _copy_content(row)
+        if task in {"unique_copy", "sort"} and content is None:
+            raise ValueError("copy or sort prompt is not a complete span")
+        if content is None:
+            continue
+        if len(targets) != len(content) + 1 or targets[-1] != spec["eos"]:
+            raise ValueError("targets were truncated before scoring")
+        if task == "unique_copy" and targets[:-1] != content:
+            raise ValueError("unique_copy targets do not reproduce the prompt")
+        if task == "sort" and targets[:-1] != sorted(content):
+            raise ValueError("sort targets are not the sorted prompt")
+
+
 def token_windows(token_ids, prompt_length, count):
     """Non-overlapping next-token windows. The target is the token after the prompt."""
     if prompt_length < 1 or count < 1:
@@ -254,10 +329,40 @@ def token_windows(token_ids, prompt_length, count):
     width = prompt_length + 1
     for start in range(0, len(token_ids) - width + 1, width):
         chunk = list(token_ids[start : start + width])
-        rows.append({"input_ids": chunk[:-1], "targets": [chunk[-1]]})
+        rows.append(
+            {
+                "input_ids": chunk[:-1],
+                "targets": [chunk[-1]],
+                "task": "language",
+                "answer_length": 1,
+                "window_index": start // width,
+            }
+        )
         if len(rows) == count:
             return rows
     raise ValueError(f"passage produced {len(rows)} windows, {count} were required")
+
+
+def disjoint_seed_windows(token_ids, prompt_length, seeds, count):
+    """Give each seed its own slice of non-overlapping next-token windows."""
+    if prompt_length < 1 or count < 1 or not seeds:
+        raise ValueError("window size, count and seeds must be positive")
+    if len(set(seeds)) != len(list(seeds)):
+        raise ValueError("seeds must be unique")
+    width = prompt_length + 1
+    needed = len(list(seeds)) * count
+    available = max(0, (len(token_ids) - width + 1) // width)
+    if available < needed:
+        raise ValueError(
+            f"passage produced {available} windows, {needed} were required"
+        )
+    assigned = {}
+    for index, seed in enumerate(seeds):
+        start = index * count * width
+        assigned[seed] = token_windows(token_ids[start:], prompt_length, count)
+        for row in assigned[seed]:
+            row["window_index"] += index * count
+    return assigned
 
 
 ARMS = (
@@ -271,6 +376,14 @@ ARMS = (
 )
 
 
+def _annotate(metrics, rows):
+    lengths = [len(row["targets"]) for row in rows]
+    annotated = dict(metrics)
+    annotated["min_answer_tokens"] = min(lengths)
+    annotated["max_answer_tokens"] = max(lengths)
+    return annotated
+
+
 def compare(model, dev, heldout, collateral, seed, trials=4, arms=ARMS):
     """Select on dev only. Score held-out and collateral after selection."""
     if not dev or not heldout or not collateral:
@@ -278,6 +391,9 @@ def compare(model, dev, heldout, collateral, seed, trials=4, arms=ARMS):
     _disjoint("development and held-out", dev, heldout)
     _disjoint("development and collateral", dev, collateral)
     _disjoint("held-out and collateral", heldout, collateral)
+    require_complete_spans(dev)
+    require_complete_spans(heldout)
+    require_complete_spans(collateral)
     unknown = [arm for arm in arms if arm not in ARMS]
     if unknown:
         raise ValueError(f"unsupported comparison arms: {unknown}")
@@ -291,7 +407,7 @@ def compare(model, dev, heldout, collateral, seed, trials=4, arms=ARMS):
         arm_started = time.monotonic()
         for index, proposal in enumerate(proposals):
             candidate = _apply(model, proposal)
-            metrics = score_answers(candidate, dev)
+            metrics = _annotate(score_answers(candidate, dev), dev)
             dev_calls += metrics["forward_calls"]
             changed = audit(model, candidate)["changed_scalars"]
             trials_report.append(
@@ -316,9 +432,16 @@ def compare(model, dev, heldout, collateral, seed, trials=4, arms=ARMS):
                     "accuracy": dev_metrics["accuracy"],
                     "target_nll": dev_metrics["target_nll"],
                     "accuracy_wilson_95": dev_metrics["accuracy_wilson_95"],
+                    "labeled": dev_metrics["labeled"],
+                    "min_answer_tokens": dev_metrics["min_answer_tokens"],
+                    "max_answer_tokens": dev_metrics["max_answer_tokens"],
                 },
-                "heldout": score_answers(candidate, heldout, reference=model),
-                "collateral": score_answers(candidate, collateral, reference=model),
+                "heldout": _annotate(
+                    score_answers(candidate, heldout, reference=model), heldout
+                ),
+                "collateral": _annotate(
+                    score_answers(candidate, collateral, reference=model), collateral
+                ),
                 "changed_scalars": changed,
                 "seconds": time.monotonic() - arm_started,
                 "solver_seconds": 0.0,
@@ -327,12 +450,16 @@ def compare(model, dev, heldout, collateral, seed, trials=4, arms=ARMS):
                 "selection_domain": "development",
             }
         )
+    lengths = [len(row["targets"]) for row in (*dev, *heldout, *collateral)]
     return {
         "seed": seed,
         "trials_per_selective_arm": trials,
         "arms": list(arms),
         "methods": methods,
         "seconds": time.monotonic() - started,
+        "grader": SPAN_GRADER,
+        "min_answer_tokens": min(lengths),
+        "labeled_positions": sum(lengths),
         "claim": (
             "Development selection with one held-out and collateral measurement. "
             "Direct, program and scaling arms use the same head-scale grid. "

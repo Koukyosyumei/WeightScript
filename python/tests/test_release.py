@@ -46,6 +46,7 @@ except SystemExit as error:
         ["decompile", "--help"],
         ["rule-check", "--help"],
         ["pipeline", "--help"],
+        ["workbench", "session", "--help"],
     ):
         result = run(sys.executable, "-c", script, *args)
         assert result.returncode == 0, result.stderr

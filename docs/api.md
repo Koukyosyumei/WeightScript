@@ -81,5 +81,7 @@ client disconnect. `status` reports a dead runner and a still-live child instead
 of treating that child as a successful job. `retry` starts the command again and
 refuses to do so while the previous child is alive. `weightscript session
 --resume` continues a model-editing session from its journal. A repeated resume of
-a finished session returns the saved report. Policy responses may echo
+a finished session returns the saved report. `--objective sequence` scores every id
+in `targets` on the development, held-out, and collateral sets; the default
+`next_token` scores the single `target`. Policy responses may echo
 `request_nonce` and `run_id`; a mismatch is rejected and is not reused.

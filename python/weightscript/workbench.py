@@ -170,6 +170,12 @@ def build_parser(subparsers=None):
     )
     agent.add_argument("--heldout")
     agent.add_argument("--collateral")
+    agent.add_argument(
+        "--objective",
+        choices=["next_token", "sequence"],
+        default="next_token",
+        help="next_token scores one target; sequence scores every target token",
+    )
     agent.add_argument("--seed", type=int, default=0)
     agent.add_argument("--max-forwards", type=int, default=50)
     agent.add_argument("--max-steps", type=int, default=30)
@@ -504,6 +510,7 @@ def execute(args):
             output=args.output,
             collateral=dataset(args.collateral) if args.collateral else None,
             resume=args.resume,
+            objective=args.objective,
         )
         print(json.dumps({k: v for k, v in result.items() if k != "history"}, indent=2))
 

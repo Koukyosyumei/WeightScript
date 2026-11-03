@@ -32,6 +32,8 @@ An optional `usage` response records external-model tokens, calls and time. It i
 
 The best development candidate is retained by accuracy, then NLL; a bad final proposal cannot replace a better candidate. Invalid actions are journaled and returned as feedback. On termination, the controller evaluates the selected candidate on held-out and collateral domains, saves an ordinary checkpoint, an audit and undo tensors. Policy failures do not silently synthesize replacement edits.
 
+The session objective is `next_token` or `sequence`. `next_token` scores the single `target` at the last prompt position. `sequence` scores every id in `targets` for development selection, held-out, and collateral, and rejects a copy or sort row whose labels stop before the final answer token. A first-token match is not a full-span success. The configuration digest includes the objective, so a resume that changes it fails. Held-out and collateral rows stay out of the policy request.
+
 For trustworthy comparisons, use a policy process that does not access benchmark files outside the protocol, separate development/counterexample/final domains, match model/context/tool/time budgets, record the protocol before executing both arms, and report failures and repeated seeds. The protocol record is not public preregistration or proof against a malicious policy.
 
 ## External TUI policy
