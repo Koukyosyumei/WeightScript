@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weightscript"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Inspect, edit, compile and audit trained Transformer circuits without gradients"
+dependencies = ["torch>=2.2", "transformers==4.57.1", "safetensors>=0.4", "numpy>=1.26"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+weightscript-hf = "weightscript.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "examples": 8,
+  "forward_calls": 12,
+  "max_original_logit_error": 4.57763671875e-05,
+  "max_edited_logit_error": 6.103515625e-05,
+  "atol": 2e-05,
+  "rtol": 2e-05,
+  "claim": "numerical agreement on supplied examples; not a universal formal proof",
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 52224,
+    "tensors": [
+      {
+        "tensor": "transformer.h.0.attn.c_proj.weight",
+        "changed": 49152,
+        "total": 589824,
+        "aliases": [],
+        "delta_l2": 13.427181243896484
+      },
+      {
+        "tensor": "transformer.h.3.mlp.c_proj.weight",
+        "changed": 3072,
+        "total": 2359296,
+        "aliases": [],
+        "delta_l2": 1.3389370441436768
+      }
+    ]
+  },
+  "model": "distilbert/distilgpt2",
+  "upstream_revision": "2290a62682d06624634c1f46a6ad5be0f47f38aa",
+  "parameters": 81912576,
+  "undo_restored_original_hash": true,
+  "reload_audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 0,
+    "tensors": []
+  },
+  "purpose": "real pretrained-language-model integration smoke test; no improvement claim"
+}

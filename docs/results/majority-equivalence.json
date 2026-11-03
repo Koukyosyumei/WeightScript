@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "examples": 96,
+  "forward_calls": 12,
+  "max_original_logit_error": 0.0,
+  "max_edited_logit_error": 0.0,
+  "atol": 2e-05,
+  "rtol": 2e-05,
+  "claim": "numerical agreement on supplied examples; not a universal formal proof",
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 256,
+    "tensors": [
+      {
+        "tensor": "transformer.h.0.attn.c_proj.weight",
+        "changed": 256,
+        "total": 256,
+        "aliases": [],
+        "delta_l2": 1.665763020515442
+      }
+    ]
+  }
+}

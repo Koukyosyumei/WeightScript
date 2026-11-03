@@ -1,0 +1,395 @@
+{
+  "base_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+  "environment": {
+    "python": "3.12.15",
+    "torch": "2.15.0+cpu",
+    "transformers": "4.57.1",
+    "threads": 2,
+    "device": "cpu",
+    "dtype": "float32"
+  },
+  "data_sha256": {
+    "dev": "672ada0a37598f437e79d6ae5eb794a3ed9fb6f1a22cb1d1ad696955a0133791",
+    "heldout": "02c56f659d04e1842eea7f74990c91cccbf964ea5f94523c2084ce1c4765c7c0"
+  },
+  "protocol": "candidate selection on development data; one held-out evaluation per method; equal maximum development forward-call budget",
+  "limitations": "candidate proposals supplied externally; not a replication of the blog's LLM experiments; no automatic claim of superiority",
+  "base_dev": {
+    "examples": 96,
+    "labeled": 96,
+    "accuracy": 1.0,
+    "target_nll": 0.03402219736881307,
+    "forward_calls": 3,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "base_heldout": {
+    "examples": 96,
+    "labeled": 96,
+    "accuracy": 1.0,
+    "target_nll": 0.018925821686631632,
+    "forward_calls": 3,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "methods": [
+    {
+      "method": "direct_tensor_control",
+      "selected_candidate": 7,
+      "development_forward_calls": 24,
+      "budget": 48,
+      "trials": [
+        {
+          "candidate": 0,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.03402219736881307,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 0
+        },
+        {
+          "candidate": 1,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 0.625,
+            "target_nll": 0.6803793708483378,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 2,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 0.9895833333333334,
+            "target_nll": 0.15127033937521142,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 3,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.07717985739373034,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 4,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.05089738584304845,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 5,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.022137719198326522,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 6,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.013955066055132193,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 7,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.005302680946745871,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        }
+      ],
+      "program": {
+        "raw": [
+          {
+            "op": "scale",
+            "tensor": "transformer.h.0.attn.c_proj.weight",
+            "rows": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15
+            ],
+            "factor": 2.0
+          }
+        ]
+      },
+      "heldout": {
+        "examples": 96,
+        "labeled": 96,
+        "accuracy": 1.0,
+        "target_nll": 0.0016281088913577453,
+        "forward_calls": 3,
+        "reference_forward_calls": 3,
+        "token_disagreement": 0.032283057851239666,
+        "reference_kl_per_token": 0.18172165184966788
+      },
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 256,
+        "tensors": [
+          {
+            "tensor": "transformer.h.0.attn.c_proj.weight",
+            "changed": 256,
+            "total": 256,
+            "aliases": [],
+            "delta_l2": 1.665763020515442
+          }
+        ]
+      }
+    },
+    {
+      "method": "program_control",
+      "selected_candidate": 7,
+      "development_forward_calls": 24,
+      "budget": 48,
+      "trials": [
+        {
+          "candidate": 0,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.03402219736881307,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 0
+        },
+        {
+          "candidate": 1,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 0.625,
+            "target_nll": 0.6803793708483378,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 2,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 0.9895833333333334,
+            "target_nll": 0.15127033937521142,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 3,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.07717985739373034,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 4,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.05089738584304845,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 5,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.022137719198326522,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 6,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.013955066055132193,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        },
+        {
+          "candidate": 7,
+          "dev": {
+            "examples": 96,
+            "labeled": 96,
+            "accuracy": 1.0,
+            "target_nll": 0.005302680946745871,
+            "forward_calls": 3,
+            "reference_forward_calls": 0,
+            "token_disagreement": null,
+            "reference_kl_per_token": null
+          },
+          "changed_scalars": 256
+        }
+      ],
+      "program": {
+        "format": "weightscript-gpt2-v1",
+        "base_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+        "semantics": "float32 inference; causal attention; exact LayerNorm; no KV cache",
+        "blocks": [
+          {
+            "layer": 0,
+            "attention": {
+              "op": "causal_softmax_attention",
+              "heads": 1,
+              "qkv": "transformer.h.0.attn.c_attn",
+              "write": "transformer.h.0.attn.c_proj"
+            },
+            "mlp": {
+              "op": "gelu_new",
+              "read": "transformer.h.0.mlp.c_fc",
+              "write": "transformer.h.0.mlp.c_proj"
+            },
+            "norms": [
+              "transformer.h.0.ln_1",
+              "transformer.h.0.ln_2"
+            ]
+          }
+        ],
+        "edits": [
+          {
+            "op": "head_scale",
+            "layer": 0,
+            "head": 0,
+            "factor": 2.0
+          }
+        ]
+      },
+      "heldout": {
+        "examples": 96,
+        "labeled": 96,
+        "accuracy": 1.0,
+        "target_nll": 0.0016281088913577453,
+        "forward_calls": 3,
+        "reference_forward_calls": 3,
+        "token_disagreement": 0.032283057851239666,
+        "reference_kl_per_token": 0.18172165184966788
+      },
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 256,
+        "tensors": [
+          {
+            "tensor": "transformer.h.0.attn.c_proj.weight",
+            "changed": 256,
+            "total": 256,
+            "aliases": [],
+            "delta_l2": 1.665763020515442
+          }
+        ]
+      }
+    }
+  ],
+  "checkpoint_source": {
+    "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+    "revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+    "checkpoint": "bin_majority-@1l1h16d3lr01drop",
+    "status": "gradient-trained upstream checkpoint; no training in this experiment"
+  },
+  "experiment": "matched-intervention parity control on binary-majority prediction, development lengths 15/31/63 and held-out lengths 17/33/65",
+  "conclusion": "These arms express identical edits; parity validates the compiler, not superiority. A learned proposal policy and independent task suite are needed to compare effectiveness."
+}
