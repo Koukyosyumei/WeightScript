@@ -22,6 +22,8 @@ from weightscript.math_benchmark import (  # noqa: E402
     GenerationRejected,
     RunSpec,
     compare_runs,
+    dataset_cache_dir,
+    fetch_split,
     load_jsonl,
     protocol,
     run_evaluation,
@@ -249,6 +251,15 @@ def command_smoke(args) -> int:
     return 0 if report["comparable"] and report["complete"] else 2
 
 
+def command_fetch(args) -> int:
+    dest = args.dest or dataset_cache_dir()
+    if dest is None:
+        raise SystemExit("pass --dest or set WEIGHTSCRIPT_CACHE_DIR")
+    report = fetch_split(args.dataset_name, args.split, dest)
+    print(json.dumps(report, indent=1, ensure_ascii=False, sort_keys=True))
+    return 0 if report.get("count_matches_published") else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Weight-space programming math evaluation harness")
     parser.add_argument("--protocol", default="think35")
@@ -286,6 +297,12 @@ def build_parser() -> argparse.ArgumentParser:
     smoke_parser = sub.add_parser("smoke", help="canned two-problem run; not a benchmark score")
     smoke_parser.add_argument("--out", required=True)
     smoke_parser.set_defaults(func=command_smoke)
+
+    fetch_parser = sub.add_parser("fetch", help="download one published split into a chosen directory")
+    fetch_parser.add_argument("--dataset-name", required=True, choices=("math500", "gsm8k"))
+    fetch_parser.add_argument("--split", required=True)
+    fetch_parser.add_argument("--dest", default=None, help="directory; or set WEIGHTSCRIPT_CACHE_DIR")
+    fetch_parser.set_defaults(func=command_fetch)
     return parser
 
 

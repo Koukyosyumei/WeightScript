@@ -98,6 +98,25 @@ The only scored subset is a prefix of canonical order, chosen with
 `max_examples` before generation. There is no stride, no id filter, and no
 filter on which items an arm got wrong.
 
+## Where files go
+
+`load_hf(..., cache_dir=...)` writes the datasets cache there. With no
+argument, an existing `HF_DATASETS_CACHE` is left to the datasets library.
+If that is also unset and `WEIGHTSCRIPT_CACHE_DIR` is set, the cache is
+`<WEIGHTSCRIPT_CACHE_DIR>/datasets`. Otherwise Hugging Face's own default
+is used. `WEIGHTSCRIPT_RUNS_DIR` is the directory for result JSONL when a
+caller wants one; `run_evaluation` still writes only to the path it is given.
+`fetch` downloads one published split into `--dest` or into the resolved
+cache directory, and refuses to start when neither is set. Downloads are
+capped at 32 MiB. GSM8K's published files are parquet and are converted only
+when `pyarrow` is installed. The article loaders do not pin a dataset
+revision, and this package does not invent one. A fetched JSONL is a local
+file, so `blog_table_settings` stays false for it. One GSM8K training
+problem contains U+2028. The writer escapes that character, and the loader
+returns it unchanged.
+
+No default path names a particular machine or disk.
+
 ## Results file
 
 `run_evaluation` writes JSONL. The first record is the config and its hash.
@@ -196,6 +215,8 @@ first example is generated. Changing them later is a different results file.
 `run` grades a JSONL of generations and does not call a model.
 `compare` exits 2 when the pair is not a finished match.
 `smoke` writes a two-problem canned pair under `--out` and is not a score.
+`fetch --dataset-name math500 --split test --dest DIR` saves a local snapshot.
+It does not download a model.
 
 Declared limits that are not bugs are listed in
 `weightscript.math_benchmark.DECLARED_LIMITS` and in the sections above.

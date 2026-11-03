@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .extract import gold_of_solution, gsm8k_reference_answer
+from .locations import dataset_cache_dir
 from .protocol import GSM8K_HF, MATH500_HF, PUBLISHED_COUNTS
 
 
@@ -153,6 +154,48 @@ def _build(name: str, split: str, role: str, rows: list[dict], provenance: dict)
     return ExampleSet(name, split, role, packed, provenance)
 
 
+def dump_jsonl_line(payload: dict) -> str:
+    """One JSON object, with Unicode line separators escaped so the row stays one line."""
+
+    text = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return text.replace("\u2028", "\\u2028").replace("\u2029", "\\u2029").replace("\u0085", "\\u0085")
+
+
+def _json_objects(text: str, file_path: Path) -> list[dict]:
+    """Read JSON objects from a JSONL file, including a string that contains U+2028."""
+
+    decoder = json.JSONDecoder()
+    index = 0
+    length = len(text)
+    line_number = 1
+    rows = []
+    while index < length:
+        while index < length and text[index] in " \t":
+            index += 1
+        if index >= length:
+            break
+        if text[index] in "\r\n":
+            if text[index] == "\r" and index + 1 < length and text[index + 1] == "\n":
+                index += 2
+            else:
+                index += 1
+            line_number += 1
+            continue
+        try:
+            row, end = decoder.raw_decode(text, index)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"{file_path}:{line_number}: {error}") from error
+        if not isinstance(row, dict):
+            raise ValueError(f"{file_path}:{line_number}: expected a JSON object")
+        rows.append(row)
+        index = end
+        while index < length and text[index] not in "\r\n":
+            if not text[index].isspace():
+                raise ValueError(f"{file_path}:{line_number}: trailing data after JSON")
+            index += 1
+    return rows
+
+
 def load_jsonl(path, *, dataset: str, split: str, role: str) -> ExampleSet:
     """Load a local JSONL file of ``id``, ``problem``, and ``answer`` objects.
 
@@ -162,17 +205,7 @@ def load_jsonl(path, *, dataset: str, split: str, role: str) -> ExampleSet:
 
     file_path = Path(path)
     raw = file_path.read_bytes()
-    rows = []
-    for line_number, line in enumerate(raw.decode().splitlines(), start=1):
-        if line.strip() == "":
-            continue
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError as error:
-            raise ValueError(f"{file_path}:{line_number}: {error}") from error
-        if not isinstance(row, dict):
-            raise ValueError(f"{file_path}:{line_number}: expected a JSON object")
-        rows.append(row)
+    rows = _json_objects(raw.decode(), file_path)
     if not rows:
         raise ValueError(f"{file_path} has no examples")
     return _build(
@@ -198,6 +231,9 @@ def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir:
     ``dataset`` is ``math500`` or ``gsm8k``. MATH-500 accepts only ``test``.
     GSM8K accepts ``test`` (evaluation) or ``train`` (practice). The article
     loader does not pin a revision; pass one only when you have it.
+    ``cache_dir`` selects the datasets cache. When it is omitted, an explicit
+    ``HF_DATASETS_CACHE`` is left untouched, and ``WEIGHTSCRIPT_CACHE_DIR``
+    is used as ``<dir>/datasets`` only if that variable is unset.
     """
 
     if dataset == "math500":
@@ -222,8 +258,9 @@ def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir:
     kwargs = {"split": split}
     if revision is not None:
         kwargs["revision"] = revision
-    if cache_dir is not None:
-        kwargs["cache_dir"] = cache_dir
+    chosen_cache = dataset_cache_dir(cache_dir)
+    if chosen_cache is not None:
+        kwargs["cache_dir"] = chosen_cache
     if config is None:
         loaded = load_dataset(repo, **kwargs)
     else:
@@ -257,6 +294,7 @@ def load_hf(dataset: str, *, split: str, revision: str | None = None, cache_dir:
             "revision": revision,
             "revision_pinned": revision is not None,
             "datasets_fingerprint": fingerprint,
+            "cache_dir": chosen_cache,
         },
     )
 
@@ -287,5 +325,5 @@ def assert_disjoint(evaluation: ExampleSet, practice: ExampleSet) -> None:
 def write_jsonl(examples: ExampleSet, path) -> None:
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [json.dumps(item.to_json(), ensure_ascii=False, sort_keys=True) for item in examples.examples]
+    lines = [dump_jsonl_line(item.to_json()) for item in examples.examples]
     file_path.write_text("\n".join(lines) + "\n")

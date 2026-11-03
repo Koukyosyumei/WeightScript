@@ -67,6 +67,7 @@ DECLARED_LIMITS = (
     "vLLM, bfloat16, and the engine seed are caller-declared. This package does not load a model.",
     "Gemma's lenient headline is acc_lenient. The Qwen think35 headline is strict boxed accuracy.",
     "No LLM judge is called.",
+    "Dataset caches follow an explicit cache_dir, otherwise HF_DATASETS_CACHE, otherwise WEIGHTSCRIPT_CACHE_DIR/datasets. Result files follow the caller or WEIGHTSCRIPT_RUNS_DIR. No machine path is built in.",
 )
 
 

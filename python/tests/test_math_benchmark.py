@@ -495,3 +495,147 @@ def test_smoke_command_resumes_and_does_not_claim_the_blog_table(tmp_path):
     assert payload["comparable"] is True
     assert payload["complete"] is True
     assert "local JSONL" in " ".join(payload["blog_table_blockers"])
+
+
+def test_cache_dir_follows_env_and_never_a_machine_path(monkeypatch, tmp_path):
+    from weightscript.math_benchmark import dataset_cache_dir, runs_dir
+
+    monkeypatch.delenv("WEIGHTSCRIPT_CACHE_DIR", raising=False)
+    monkeypatch.delenv("HF_DATASETS_CACHE", raising=False)
+    monkeypatch.delenv("WEIGHTSCRIPT_RUNS_DIR", raising=False)
+    assert dataset_cache_dir() is None
+    assert runs_dir() is None
+    monkeypatch.setenv("WEIGHTSCRIPT_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("WEIGHTSCRIPT_RUNS_DIR", str(tmp_path / "runs"))
+    assert dataset_cache_dir() == str(tmp_path / "cache" / "datasets")
+    assert runs_dir() == tmp_path / "runs"
+    monkeypatch.setenv("HF_DATASETS_CACHE", str(tmp_path / "hf"))
+    assert dataset_cache_dir() is None
+    assert dataset_cache_dir(str(tmp_path / "explicit")) == str(tmp_path / "explicit")
+    package = ROOT / "python" / "weightscript" / "math_benchmark"
+    for path in package.glob("*.py"):
+        assert "/mnt/scratch" not in path.read_text()
+    assert "/mnt/scratch" not in (ROOT / "docs" / "math-benchmark.md").read_text()
+
+
+def test_load_hf_sends_the_callers_cache_dir(monkeypatch, tmp_path):
+    import types
+
+    captured = {}
+
+    class FakeSplit:
+        _fingerprint = "fp"
+
+        def __iter__(self):
+            yield {"unique_id": "u1", "problem": "What is 1+1?", "answer": "2"}
+
+    def load_dataset(repo, *args, **kwargs):
+        captured["repo"] = repo
+        captured["kwargs"] = kwargs
+        return FakeSplit()
+
+    module = types.ModuleType("datasets")
+    module.load_dataset = load_dataset
+    monkeypatch.setitem(sys.modules, "datasets", module)
+    monkeypatch.setenv("WEIGHTSCRIPT_CACHE_DIR", str(tmp_path / "env-cache"))
+    from weightscript.math_benchmark import load_hf
+
+    loaded = load_hf("math500", split="test", cache_dir=str(tmp_path / "explicit"))
+    assert captured["repo"] == "HuggingFaceH4/MATH-500"
+    assert captured["kwargs"]["cache_dir"] == str(tmp_path / "explicit")
+    assert "revision" not in captured["kwargs"]
+    assert loaded.provenance["source"] == "huggingface"
+    assert loaded.provenance["revision_pinned"] is False
+    assert loaded.provenance["cache_dir"] == str(tmp_path / "explicit")
+    assert len(loaded) == 1
+
+
+def test_snapshot_records_provenance_and_rejects_a_short_file(tmp_path):
+    from weightscript.math_benchmark import fetch_split, gsm8k_rows, math500_rows
+
+    body = "\n".join(
+        json.dumps(
+            {
+                "unique_id": "id-1",
+                "problem": "What is 1+1?",
+                "answer": "2",
+                "solution": "box",
+            }
+        )
+        for _ in range(1)
+    )
+    calls = {"n": 0}
+
+    class Response:
+        status = 200
+        headers = {"X-Repo-Commit": "abc", "Content-Length": str(len(body.encode()))}
+
+        def read(self, _n=None):
+            if calls["read"]:
+                return b""
+            calls["read"] = 1
+            return body.encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def opener(request, timeout):
+        calls["n"] += 1
+        calls["read"] = 0
+        calls["url"] = request.full_url
+        calls["timeout"] = timeout
+        return Response()
+
+    with pytest.raises(ValueError, match="published count"):
+        fetch_split("math500", "test", tmp_path, opener=opener)
+    provenance = json.loads((tmp_path / "math500" / "test.provenance.json").read_text())
+    assert provenance["observed_repo_commit"] == "abc"
+    assert provenance["revision_pinned"] is False
+    assert provenance["scores_as_published_hf_split"] is False
+    assert provenance["row_count"] == 1
+    assert provenance["count_matches_published"] is False
+    assert calls["url"].endswith("/HuggingFaceH4/MATH-500/resolve/main/test.jsonl")
+    rows = math500_rows(body)
+    assert rows[0]["id"] == "id-1"
+    gsm = gsm8k_rows([{"question": "Q", "answer": "#### 3"}], "test")
+    assert gsm[0]["id"] == "gsm8k_test_0"
+    assert gsm[0]["answer"] == "#### 3"
+
+
+def test_jsonl_keeps_a_problem_that_contains_a_line_separator(tmp_path):
+    from weightscript.math_benchmark import Example, ExampleSet, write_jsonl
+
+    problem = "balls. \u2028The box contains 6 blue balls."
+    examples = ExampleSet(
+        "gsm8k",
+        "train",
+        "practice",
+        (Example("gsm8k_train_0", problem, "10", 0),),
+        {"source": "local_jsonl"},
+    )
+    path = tmp_path / "train.jsonl"
+    write_jsonl(examples, path)
+    stored = path.read_text()
+    assert "\u2028" not in stored
+    assert "\\u2028" in stored
+    loaded = load_jsonl(path, dataset="gsm8k", split="train", role="practice")
+    assert loaded.examples[0].problem == problem
+    raw = '{"id": "a", "problem": "a\u2028b", "answer": "1"}\n'
+    raw_path = tmp_path / "raw.jsonl"
+    raw_path.write_text(raw)
+    raw_loaded = load_jsonl(raw_path, dataset="fixture", split="test", role="evaluation")
+    assert raw_loaded.examples[0].problem == "a\u2028b"
+
+
+def test_parquet_conversion_stays_optional(tmp_path):
+    import importlib.util
+
+    from weightscript.math_benchmark.snapshot import rows_from_parquet
+
+    if importlib.util.find_spec("pyarrow") is not None:
+        pytest.skip("pyarrow is installed")
+    with pytest.raises(ImportError, match="pyarrow"):
+        rows_from_parquet(tmp_path / "missing.parquet")

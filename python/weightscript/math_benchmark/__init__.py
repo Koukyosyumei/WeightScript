@@ -14,6 +14,8 @@ from .data import (
     normalize_problem,
     write_jsonl,
 )
+from .locations import dataset_cache_dir, runs_dir
+from .snapshot import fetch_split, gsm8k_rows, math500_rows
 from .extract import (
     extract_answer,
     gold_of_solution,
@@ -81,19 +83,24 @@ __all__ = [
     "SplitIsolationError",
     "assert_disjoint",
     "compare_runs",
+    "dataset_cache_dir",
     "extract_answer",
+    "fetch_split",
     "gold_of_solution",
     "grade_response",
     "gsm8k_reference_answer",
+    "gsm8k_rows",
     "is_equiv",
     "load_hf",
     "load_jsonl",
     "loop_signals",
+    "math500_rows",
     "math_verify_status",
     "normalize_problem",
     "protocol",
     "read_run",
     "render_chat",
+    "runs_dir",
     "run_evaluation",
     "user_turn",
     "write_jsonl",
