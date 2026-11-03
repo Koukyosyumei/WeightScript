@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "examples": 8,
+  "forward_calls": 12,
+  "max_original_logit_error": 0.0,
+  "max_edited_logit_error": 0.0,
+  "atol": 2e-05,
+  "rtol": 2e-05,
+  "claim": "numerical agreement on supplied examples; not a universal formal proof",
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 60928,
+    "tensors": [
+      {
+        "tensor": "model.layers.0.self_attn.o_proj.weight",
+        "changed": 57344,
+        "total": 802816,
+        "aliases": [],
+        "delta_l2": 1.7517516613006592
+      },
+      {
+        "tensor": "model.layers.12.mlp.down_proj.weight",
+        "changed": 3584,
+        "total": 4358144,
+        "aliases": [],
+        "delta_l2": 0.25600045919418335
+      }
+    ]
+  },
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "upstream_revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+  "parameters": 494032768,
+  "undo_restored_original_hash": true,
+  "reload_audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 0,
+    "tensors": []
+  },
+  "purpose": "real pretrained-language-model integration smoke test; no improvement claim"
+}

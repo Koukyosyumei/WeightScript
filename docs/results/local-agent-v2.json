@@ -1,0 +1,443 @@
+{
+  "protocol": "same local policy model, seed, development data, step limit and tool-inference budget",
+  "results": [
+    {
+      "protocol": "weightscript.agent.v1",
+      "mode": "direct",
+      "goal": "Change this trained binary-majority predictor to output the MINORITY bit. Inputs are BOS=2, bits 0/1, SEP=3; output is the next token 0 or 1. Preserve architecture and use no gradients.",
+      "seed": 37,
+      "base_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+      "policy_command": [
+        "/dev/shm/weightscript-hf-env/bin/python",
+        "/root/WeightScript/examples/local_policy.py",
+        "--model",
+        "Qwen/Qwen2.5-0.5B-Instruct",
+        "--max-new-tokens",
+        "256"
+      ],
+      "budget": {
+        "max_forwards": 12,
+        "selection_forwards": 3,
+        "max_steps": 2,
+        "steps": 2,
+        "policy_timeout_seconds": 180
+      },
+      "invalid_steps": 0,
+      "baseline_dev": {
+        "examples": 16,
+        "labeled": 16,
+        "accuracy_wilson_95": [
+          0,
+          0.1936076805344279
+        ],
+        "target_nll_standard_error": 0.7371374701372547,
+        "accuracy": 0.0,
+        "target_nll": 6.415261074900627,
+        "forward_calls": 1,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_dev": {
+        "examples": 16,
+        "labeled": 16,
+        "accuracy_wilson_95": [
+          0,
+          0.1936076805344279
+        ],
+        "target_nll_standard_error": 0.3112208258965998,
+        "accuracy": 0.0,
+        "target_nll": 3.6166936829686165,
+        "forward_calls": 1,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_proposal": {
+        "transaction": [
+          {
+            "op": "scale",
+            "tensor": "transformer.wte.weight",
+            "select": [
+              null,
+              null
+            ],
+            "value": 0.5
+          }
+        ]
+      },
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 96,
+        "tensors": [
+          {
+            "tensor": "transformer.wte.weight",
+            "changed": 96,
+            "total": 96,
+            "aliases": [
+              "lm_head.weight"
+            ],
+            "delta_l2": 1.085738182067871
+          }
+        ]
+      },
+      "history": [
+        {
+          "step": 0,
+          "response": {
+            "action": "evaluate",
+            "proposal": {
+              "transaction": [
+                {
+                  "op": "scale",
+                  "tensor": "transformer.wte.weight",
+                  "select": [
+                    null,
+                    null
+                  ],
+                  "value": 0.5
+                }
+              ]
+            },
+            "edit": "replace transformer.wte.weight with new weight value",
+            "usage": {
+              "model": "Qwen/Qwen2.5-0.5B-Instruct",
+              "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+              "input_tokens": 1546,
+              "output_tokens": 83,
+              "generation_seconds": 38.14076470799955,
+              "external_model_forward_calls": 83
+            }
+          },
+          "result": {
+            "dev": {
+              "examples": 16,
+              "labeled": 16,
+              "accuracy_wilson_95": [
+                0,
+                0.1936076805344279
+              ],
+              "target_nll_standard_error": 0.3112208258965998,
+              "accuracy": 0.0,
+              "target_nll": 3.6166936829686165,
+              "forward_calls": 1,
+              "reference_forward_calls": 0,
+              "token_disagreement": null,
+              "reference_kl_per_token": null
+            },
+            "audit": {
+              "architecture_preserved": true,
+              "gradient_updates": 0,
+              "changed_scalars": 96,
+              "tensors": [
+                {
+                  "tensor": "transformer.wte.weight",
+                  "changed": 96,
+                  "total": 96,
+                  "aliases": [
+                    "lm_head.weight"
+                  ],
+                  "delta_l2": 1.085738182067871
+                }
+              ]
+            },
+            "selected_best": true
+          },
+          "elapsed_seconds": 46.36244269500094
+        },
+        {
+          "step": 1,
+          "response": {
+            "action": "evaluate",
+            "proposal": {
+              "transaction": [
+                {
+                  "op": "scale",
+                  "tensor": "transformer.wte.weight",
+                  "select": [
+                    null,
+                    null
+                  ],
+                  "value": 0.5
+                }
+              ]
+            },
+            "edit": "replace transformer.wte.weight with new weight value",
+            "usage": {
+              "model": "Qwen/Qwen2.5-0.5B-Instruct",
+              "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+              "input_tokens": 1986,
+              "output_tokens": 83,
+              "generation_seconds": 54.15364016500098,
+              "external_model_forward_calls": 83
+            }
+          },
+          "result": {
+            "dev": {
+              "examples": 16,
+              "labeled": 16,
+              "accuracy_wilson_95": [
+                0,
+                0.1936076805344279
+              ],
+              "target_nll_standard_error": 0.3112208258965998,
+              "accuracy": 0.0,
+              "target_nll": 3.6166936829686165,
+              "forward_calls": 1,
+              "reference_forward_calls": 0,
+              "token_disagreement": null,
+              "reference_kl_per_token": null
+            },
+            "audit": {
+              "architecture_preserved": true,
+              "gradient_updates": 0,
+              "changed_scalars": 96,
+              "tensors": [
+                {
+                  "tensor": "transformer.wte.weight",
+                  "changed": 96,
+                  "total": 96,
+                  "aliases": [
+                    "lm_head.weight"
+                  ],
+                  "delta_l2": 1.085738182067871
+                }
+              ]
+            },
+            "selected_best": true
+          },
+          "elapsed_seconds": 61.743001767999885
+        }
+      ],
+      "elapsed_seconds": 108.24232252799993,
+      "metering_scope": "framework tool inference only; external policy is trusted and can access host resources; not a security sandbox",
+      "heldout_sent_to_policy": false,
+      "policy_usage": [
+        {
+          "model": "Qwen/Qwen2.5-0.5B-Instruct",
+          "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "input_tokens": 1546,
+          "output_tokens": 83,
+          "generation_seconds": 38.14076470799955,
+          "external_model_forward_calls": 83
+        },
+        {
+          "model": "Qwen/Qwen2.5-0.5B-Instruct",
+          "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "input_tokens": 1986,
+          "output_tokens": 83,
+          "generation_seconds": 54.15364016500098,
+          "external_model_forward_calls": 83
+        }
+      ],
+      "baseline_heldout": {
+        "examples": 512,
+        "labeled": 512,
+        "accuracy_wilson_95": [
+          0,
+          0.007446975722882332
+        ],
+        "target_nll_standard_error": 0.13702757687273545,
+        "accuracy": 0.0,
+        "target_nll": 5.478165487293154,
+        "forward_calls": 16,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_heldout": {
+        "examples": 512,
+        "labeled": 512,
+        "accuracy_wilson_95": [
+          0,
+          0.007446975722882332
+        ],
+        "target_nll_standard_error": 0.054948782628977295,
+        "accuracy": 0.0,
+        "target_nll": 3.355723256012425,
+        "forward_calls": 16,
+        "reference_forward_calls": 16,
+        "token_disagreement": 0.07794744318181818,
+        "reference_kl_per_token": 0.25045657919889147
+      }
+    },
+    {
+      "protocol": "weightscript.agent.v1",
+      "mode": "program",
+      "goal": "Change this trained binary-majority predictor to output the MINORITY bit. Inputs are BOS=2, bits 0/1, SEP=3; output is the next token 0 or 1. Preserve architecture and use no gradients.",
+      "seed": 37,
+      "base_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+      "policy_command": [
+        "/dev/shm/weightscript-hf-env/bin/python",
+        "/root/WeightScript/examples/local_policy.py",
+        "--model",
+        "Qwen/Qwen2.5-0.5B-Instruct",
+        "--max-new-tokens",
+        "256"
+      ],
+      "budget": {
+        "max_forwards": 12,
+        "selection_forwards": 2,
+        "max_steps": 2,
+        "steps": 2,
+        "policy_timeout_seconds": 180
+      },
+      "invalid_steps": 2,
+      "baseline_dev": {
+        "examples": 16,
+        "labeled": 16,
+        "accuracy_wilson_95": [
+          0,
+          0.1936076805344279
+        ],
+        "target_nll_standard_error": 0.7371374701372547,
+        "accuracy": 0.0,
+        "target_nll": 6.415261074900627,
+        "forward_calls": 1,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_dev": {
+        "examples": 16,
+        "labeled": 16,
+        "accuracy_wilson_95": [
+          0,
+          0.1936076805344279
+        ],
+        "target_nll_standard_error": 0.7371374701372547,
+        "accuracy": 0.0,
+        "target_nll": 6.415261074900627,
+        "forward_calls": 1,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_proposal": {},
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 0,
+        "tensors": []
+      },
+      "history": [
+        {
+          "step": 0,
+          "error": "unsupported edit 'change_bit'",
+          "response": {
+            "action": "evaluate",
+            "proposal": {
+              "edits": [
+                {
+                  "op": "change_bit",
+                  "layer": 0,
+                  "bit": 1,
+                  "value": 0
+                }
+              ]
+            },
+            "edit": "change_bit(0, 1, 0)",
+            "usage": {
+              "model": "Qwen/Qwen2.5-0.5B-Instruct",
+              "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+              "input_tokens": 1775,
+              "output_tokens": 78,
+              "generation_seconds": 44.905229032001444,
+              "external_model_forward_calls": 78
+            }
+          },
+          "elapsed_seconds": 53.39779675600039
+        },
+        {
+          "step": 1,
+          "error": "proposal violates program editing interface",
+          "response": {
+            "action": "evaluate",
+            "proposal": {
+              "edits": [
+                {
+                  "op": "change_bit",
+                  "layer": 0,
+                  "bit": 1,
+                  "value": 0
+                }
+              ],
+              "edit": "change_bit(0, 1, 0)",
+              "usage": {
+                "model": "Qwen/Qwen2.5-0.5B-Instruct",
+                "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+                "input_tokens": 1775,
+                "output_tokens": 78,
+                "generation_seconds": 44.905229032001444,
+                "external_model_forward_calls": 78
+              }
+            },
+            "edit": "change_bit(0, 1, 0)",
+            "usage": {
+              "model": "Qwen/Qwen2.5-0.5B-Instruct",
+              "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+              "input_tokens": 1983,
+              "output_tokens": 217,
+              "generation_seconds": 86.74222452300091,
+              "external_model_forward_calls": 217
+            }
+          },
+          "elapsed_seconds": 93.91942270799882
+        }
+      ],
+      "elapsed_seconds": 147.35631454299983,
+      "metering_scope": "framework tool inference only; external policy is trusted and can access host resources; not a security sandbox",
+      "heldout_sent_to_policy": false,
+      "policy_usage": [
+        {
+          "model": "Qwen/Qwen2.5-0.5B-Instruct",
+          "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "input_tokens": 1775,
+          "output_tokens": 78,
+          "generation_seconds": 44.905229032001444,
+          "external_model_forward_calls": 78
+        },
+        {
+          "model": "Qwen/Qwen2.5-0.5B-Instruct",
+          "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+          "input_tokens": 1983,
+          "output_tokens": 217,
+          "generation_seconds": 86.74222452300091,
+          "external_model_forward_calls": 217
+        }
+      ],
+      "baseline_heldout": {
+        "examples": 512,
+        "labeled": 512,
+        "accuracy_wilson_95": [
+          0,
+          0.007446975722882332
+        ],
+        "target_nll_standard_error": 0.13702757687273545,
+        "accuracy": 0.0,
+        "target_nll": 5.478165487293154,
+        "forward_calls": 16,
+        "reference_forward_calls": 0,
+        "token_disagreement": null,
+        "reference_kl_per_token": null
+      },
+      "selected_heldout": {
+        "examples": 512,
+        "labeled": 512,
+        "accuracy_wilson_95": [
+          0,
+          0.007446975722882332
+        ],
+        "target_nll_standard_error": 0.13702757687273545,
+        "accuracy": 0.0,
+        "target_nll": 5.478165487293154,
+        "forward_calls": 16,
+        "reference_forward_calls": 16,
+        "token_disagreement": 0.0,
+        "reference_kl_per_token": 1.3578290814951867e-09
+      }
+    }
+  ],
+  "claim": "small local instruction-agent case study; not a reproduction or defeat of frontier-agent benchmark"
+}

@@ -1,0 +1,221 @@
+{
+  "protocol": "weightscript.agent.v1",
+  "runtime": {
+    "framework_python_sha256": "5c8db018e81e74b31d361fee6fa2bd27842dbdce75b92b60cd227cf5227f5309",
+    "packages": {
+      "weightscript": "0.1.0",
+      "torch": "2.15.0+cpu",
+      "transformers": "4.57.1",
+      "numpy": "2.5.4",
+      "tracr": "1.0.0",
+      "jax": "0.4.35",
+      "scipy": "1.18.1",
+      "z3-solver": "5.3.3.0"
+    }
+  },
+  "mode": "direct",
+  "goal": "Improve next-token accuracy and probability on the provided sentence-completion development set by targeted weight edits, with no gradient descent. The target is a genuine pretrained SmolLM2-135M language model. Inspect tensors or traces, form a circuit hypothesis, evaluate a few sparse candidates, and retain general language behavior. Do not access evaluation data outside the tool protocol. This is an exploratory pilot, not evidence of general benchmark superiority.",
+  "seed": 42,
+  "base_sha256": "21531907ebd90359225b37f02896bde2dca63496839edf33b9300b77c5f5f0e7",
+  "policy_command": [
+    "/dev/shm/weightscript-hf-env/bin/python",
+    "-m",
+    "weightscript.tmux_policy",
+    "--workspace",
+    "/dev/shm/weightscript-codex-direct-final",
+    "--session",
+    "weightscript-direct-final",
+    "--timeout",
+    "240"
+  ],
+  "budget": {
+    "max_forwards": 150,
+    "selection_forwards": 69,
+    "max_steps": 8,
+    "steps": 8,
+    "policy_timeout_seconds": 260
+  },
+  "invalid_steps": 0,
+  "baseline_dev": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.44404355834741305,
+      0.8583535614521766
+    ],
+    "target_nll_standard_error": 0.3963428717267324,
+    "accuracy": 0.6875,
+    "target_nll": 1.712581385858357,
+    "forward_calls": 6,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_dev": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.44404355834741305,
+      0.8583535614521766
+    ],
+    "target_nll_standard_error": 0.38716928167704356,
+    "accuracy": 0.6875,
+    "target_nll": 1.6847867267206311,
+    "forward_calls": 6,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_proposal": {
+    "transaction": [
+      {
+        "op": "scale",
+        "tensor": "model.layers.28.mlp.down_proj.weight",
+        "select": [
+          null,
+          [
+            678
+          ]
+        ],
+        "value": 0.9
+      },
+      {
+        "op": "scale",
+        "tensor": "model.layers.29.mlp.down_proj.weight",
+        "select": [
+          null,
+          [
+            999
+          ]
+        ],
+        "value": -1.0
+      }
+    ]
+  },
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 1152,
+    "tensors": [
+      {
+        "tensor": "model.layers.28.mlp.down_proj.weight",
+        "changed": 576,
+        "total": 884736,
+        "aliases": [],
+        "delta_l2": 0.5869117975234985
+      },
+      {
+        "tensor": "model.layers.29.mlp.down_proj.weight",
+        "changed": 576,
+        "total": 884736,
+        "aliases": [],
+        "delta_l2": 6.740572452545166
+      }
+    ]
+  },
+  "elapsed_seconds": 105.64648484200006,
+  "metering_scope": "framework tool inference only; external policy is trusted and can access host resources; not a security sandbox",
+  "heldout_sent_to_policy": false,
+  "policy_usage": [
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    },
+    {
+      "policy": "codex-tui",
+      "tmux_session": "weightscript-direct-final",
+      "token_metering": "not available through this file bridge; retain Codex session logs"
+    }
+  ],
+  "baseline_heldout": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.44404355834741305,
+      0.8583535614521766
+    ],
+    "target_nll_standard_error": 0.33236312508372834,
+    "accuracy": 0.6875,
+    "target_nll": 1.6585757434368134,
+    "forward_calls": 6,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_heldout": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.44404355834741305,
+      0.8583535614521766
+    ],
+    "target_nll_standard_error": 0.33679695099420653,
+    "accuracy": 0.6875,
+    "target_nll": 1.6566157122142613,
+    "forward_calls": 6,
+    "reference_forward_calls": 6,
+    "token_disagreement": 0.2608695652173913,
+    "reference_kl_per_token": 0.7311580215675243
+  },
+  "baseline_collateral": {
+    "examples": 8,
+    "labeled": 8,
+    "accuracy_wilson_95": [
+      0.40927543031017727,
+      0.9285207872478887
+    ],
+    "target_nll_standard_error": 0.4341543873718971,
+    "accuracy": 0.75,
+    "target_nll": 1.2873667433159426,
+    "forward_calls": 4,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_collateral": {
+    "examples": 8,
+    "labeled": 8,
+    "accuracy_wilson_95": [
+      0.5291118177871563,
+      0.9775825085499423
+    ],
+    "target_nll_standard_error": 0.42755245248437007,
+    "accuracy": 0.875,
+    "target_nll": 1.2781994978431612,
+    "forward_calls": 4,
+    "reference_forward_calls": 4,
+    "token_disagreement": 0.2903225806451613,
+    "reference_kl_per_token": 1.0126907671651533
+  }
+}

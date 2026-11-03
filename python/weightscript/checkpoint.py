@@ -1,4 +1,5 @@
 """Sparse, hash-checked undo packages for compiled edits."""
+
 import copy
 from pathlib import Path
 
@@ -14,14 +15,24 @@ def save_undo(before, after, directory):
     original = before.state_dict()
     names = [r["tensor"] for r in changes["tensors"]]
     # safetensors requires contiguous, non-aliased storage.
-    save_file({name: original[name].detach().cpu().contiguous().clone() for name in names}, str(output / "undo.safetensors"))
-    write_json(output / "undo.json", {"before_sha256": fingerprint(before),
-                                      "after_sha256": fingerprint(after), "tensors": names})
+    save_file(
+        {name: original[name].detach().cpu().contiguous().clone() for name in names},
+        str(output / "undo.safetensors"),
+    )
+    write_json(
+        output / "undo.json",
+        {
+            "before_sha256": fingerprint(before),
+            "after_sha256": fingerprint(after),
+            "tensors": names,
+        },
+    )
 
 
 @torch.no_grad()
 def undo(model, directory):
     import json
+
     source = Path(directory)
     manifest = json.loads((source / "undo.json").read_text())
     if fingerprint(model) != manifest["after_sha256"]:
@@ -32,7 +43,11 @@ def undo(model, directory):
     restored = copy.deepcopy(model).eval()
     state = restored.state_dict()
     for name, tensor in original.items():
-        if name not in state or tensor.shape != state[name].shape or tensor.dtype != state[name].dtype:
+        if (
+            name not in state
+            or tensor.shape != state[name].shape
+            or tensor.dtype != state[name].dtype
+        ):
             raise ValueError("invalid undo tensor")
         state[name].copy_(tensor)
     if fingerprint(restored) != manifest["before_sha256"]:

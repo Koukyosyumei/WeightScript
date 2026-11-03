@@ -1,147 +1,213 @@
 # WeightScript
 
-Inspect a **trained Transformer**, edit a program describing its computation, and compile the edit back into a normal checkpoint—without gradient updates.
-
-The practical backend supports **standard Hugging Face GPT-2 checkpoints**, including DistilGPT2. It preserves LayerNorm and softmax; it does not require a specially trained interpretable architecture. The current output is a numerical computation program with named circuits, not an automatically discovered short algorithm.
+A framework for **program-guided and direct editing of trained Transformer weights**. Both paths produce ordinary, auditable checkpoints and share evaluation, provenance and undo facilities.
 
 ```text
-trained checkpoint → computation IR + circuit traces
-                   → agent/user edits IR
-                   → same-architecture checkpoint + audit + undo package
-                   → independent inference checks + held-out evaluation
+trained weights ── extraction / circuit discovery ── program ── edit ── lowering ─┐
+       └────────────────── direct tensor transaction ──────────────────────────┤
+                                                           verify / evaluate ─┴─ edited model
 ```
 
-## Install
+The framework now executes the real **decompiling_transformers** component-pruning implementation and the real **Tracr** compiler. It also provides independent GPT-2, Llama and Qwen2 execution adapters, bounded counterexample-guided rule compilation into a trained GPT-2, and an external-agent protocol.
 
-Python 3.10+ and Rust are supported. Python performs tensor computation; the Rust CLI also exposes this backend.
+Interpretation status is explicit: **opaque computation**, **numerical operation**, **behavioral hypothesis**, or **known primitive**. Numerical forward expansion alone is not called algorithm discovery. Unknown computations are retained, rather than silently replaced with guessed algorithms.
+
+## Installation
+
+Python 3.10+; Python 3.12 is used in CI. CPU float32 is the tested execution path. Rust provides a CLI launcher and an exact integer compiler fixture; the trained-model framework uses Python/PyTorch.
 
 ```bash
 python3.12 -m venv .venv
 .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
-.venv/bin/pip install -e '.[test]'
-cargo build --release
-export WEIGHTSCRIPT_PYTHON="$PWD/.venv/bin/python"
+.venv/bin/pip install -e '.[test,research]'
+.venv/bin/pip install 'tracr @ git+https://github.com/google-deepmind/tracr@9ce2b8c82b6ba10e62e86cf6f390e7536d4fd2cd'
+source .venv/bin/activate
 ```
 
-Use `weightscript-hf` from the activated environment, `.venv/bin/python -m weightscript.cli`, or `cargo run --release -- hf …`. For this session, the installed interpreter is `/dev/shm/weightscript-hf-env/bin/python`.
+The research extra installs JAX/Haiku, plotting dependencies required by upstream imports, and the constraint solvers. The base package can run native model editing without those dependencies. No upstream project is vendored.
 
-## Edit a real language model
+In this workspace, `/dev/shm/weightscript-hf-env/bin/python` has the tested dependencies. All commands can be run as `python -m weightscript.workbench` or `python -m weightscript.cli` without installing entry points. For Rust:
 
 ```bash
-weightscript-hf extract distilbert/distilgpt2 artifacts/program
-weightscript-hf tensor distilbert/distilgpt2 transformer.h.0.attn.c_proj.weight --rows 0:8 --cols 0:8
+export WEIGHTSCRIPT_PYTHON=/dev/shm/weightscript-hf-env/bin/python
+cargo run --release -- hf workbench --help
 ```
 
-The extraction contains `program.json`, checkpoint tensor names/shapes/statistics, the configuration, and the independent forward implementation for review. The program includes a source fingerprint and explicit bindings to Q/K/V, attention write projections, MLP read/write projections and LayerNorms.
+## Actual upstream decompilation
 
-Edit the `edits` array in `artifacts/program/program.json`, for example:
+```bash
+git clone https://github.com/lacoco-lab/decompiling_transformers /dev/shm/weightscript-decompiler
+git -C /dev/shm/weightscript-decompiler checkout 787398b0f4393a90ad02cd8e71be48d1e85d2b21
+python examples/fetch_research_checkpoint.py
+python examples/research_benchmark.py artifacts/upstream-majority
+weightscript decompile artifacts/upstream-majority artifacts/research/dev.jsonl artifacts/decompiled \
+  --checkout /dev/shm/weightscript-decompiler \
+  --evaluation artifacts/research/heldout.jsonl
+```
+
+This invokes upstream masks, activation/path hooks, configuration pruning and source generation. Our deterministic greedy zero-ablation driver replaces the paper's optimization-based mask search; this is **component-stage integration, not a reproduction of its entire three-stage pipeline**. Original checkpoint weights remain untouched.
+
+Saved path programs can be executed with `weightscript run-decompiled MODEL artifact.json '[2,0,1,0,3]' --checkout CHECKOUT`.
+
+Native LayerNorm is the default. `--linear-ln` enables calibration-domain variance linearization, with its fidelity measured separately. The artifact records the upstream revision, checkpoint hash, retained paths, ablation trials and calibration/evaluation agreement. A machine-local `my_paths` constant missing from the upstream checkout is supplied at import time; its algorithm source is not modified.
+
+On the trained binary-majority checkpoint, this produced:
+
+```text
+a0-0 = Attention(Q=[], K=[], V=token)
+m0 = MLP(inp=a0-0)
+output = Unembed(inp=m0)
+```
+
+The remaining MLP is still opaque until an independently evaluated primitive hypothesis is attached.
+
+## Trained weights → discovered rule → edited weights
+
+```bash
+python examples/trained_rule_roundtrip.py artifacts/upstream-majority \
+  --checkout /dev/shm/weightscript-decompiler --output artifacts/rule-roundtrip
+```
+
+This executes both lowering routes:
+
+1. Upstream causal pruning → finite-library behavioral primitive synthesis → a binary count-threshold hypothesis. This uses model inference and is **not weight-only decompilation**.
+2. Edit the hypothesis from majority to minority.
+3. **New model:** lower the program through real Tracr, then execute its serialized weights with an independent NumPy Transformer runtime.
+4. **Existing model:** solve a bounded rank-one MLP write patch with an LP, check its recorded inequalities with Z3, and test native float32 behavior. Counterexamples refine the synthesis domain. Final held-out inputs never enter the refinement loop.
+5. Export/reload and verify undo restores the original checkpoint hash.
+
+The existing-model compiler changes the final MLP write weights/bias and may zero the final LayerNorm bias to make decision constraints linear. Every changed tensor is audited. It observes hidden activations on a specified domain and solves constraints; it is **activation-informed weight synthesis**, not zero-data editing or an absence of optimization. There are no gradient updates.
+
+Recorded result: 48 changed scalars, two refinement rounds, 2,047/2,048 correct on untouched length-11 inputs for the new minority task. The remaining failure is preserved in the evidence. Original majority behavior is intentionally changed; all-position collateral changes are large. This is a controlled rule-editing result, not a claim of improved general language capability.
+
+Use the stages individually:
+
+```bash
+weightscript synthesize MODEL calibration.jsonl artifacts/hypothesis \
+  --evaluation evaluation.jsonl --causal-artifact artifacts/decompiled/artifact.json
+weightscript rasp compile artifacts/hypothesis/program.rasp.json artifacts/tracr
+weightscript rasp run artifacts/tracr '[2, 0, 1, 0, 3]'
+weightscript rasp verify artifacts/tracr artifacts/hypothesis/program.rasp.json --max-len 4
+weightscript rewrite MODEL rule.json synthesis.jsonl oracle.jsonl artifacts/rewrite --heldout final.jsonl
+```
+
+`rule.json`: `{"op":"count_threshold","threshold":0.5,"invert":true}`. The current symbolic synthesis/constraint compiler supports binary count rules; other behavior remains opaque or requires an additional lowering backend.
+
+## RASP frontend and same-layout Tracr patching
+
+The JSON frontend represents RASP tokens/indices, maps, sequence maps, selectors, aggregation and selector width. Expressions use a small allowlist; arbitrary Python source is not executed. See `previous_program()` and `count_program()` in `python/weightscript/symbolic.py` for executable examples.
+
+```bash
+weightscript rasp compile before.rasp.json artifacts/tracr-before
+weightscript rasp patch artifacts/tracr-before after.rasp.json artifacts/tracr-after
+weightscript rasp recover artifacts/tracr-before recovered.json --library candidate-programs.json
+```
+
+`patch` refuses changes in architecture, residual basis, encoders or shapes. The previous-token trigger edit changes six scalars and passed exhaustive comparison on 340 inputs. `recover` recognizes exact weight identity in a supplied finite candidate library; it is not a general Tracr decompiler and never consults stored source metadata.
+
+Serialized models use safetensors plus a JSON manifest; inference does not recompile the source program. Compiler smoke checks fail closed on mismatches. For example, upstream numerical aggregate basis inference does not cover arbitrary binary fractions; count lowering uses selector widths instead. For causal count programs, the declared observation is the last position; a noncausal RASP interpreter is not assumed equivalent at intermediate prefix positions.
+
+## Edit ordinary language-model checkpoints
+
+```bash
+weightscript-hf extract HuggingFaceTB/SmolLM2-135M artifacts/program
+weightscript-hf tensor HuggingFaceTB/SmolLM2-135M model.layers.0.self_attn.o_proj.weight --rows 0:8 --cols 0:8
+```
+
+Edit the `edits` array in `program.json`:
 
 ```json
 [
-  {"op": "head_scale", "layer": 0, "head": 2, "factor": 0.5},
-  {"op": "neuron_scale", "layer": 3, "neurons": [12, 85], "factor": 0.0}
+  {"op":"head_scale","layer":0,"head":2,"factor":0.5},
+  {"op":"neuron_scale","layer":3,"neurons":[12,85],"factor":0.0}
 ]
 ```
 
-Then compile, generate and undo:
+Supported numerical edits: `head_scale`, `attention_scale`, `neuron_scale`, and selected-neuron `remove_direction`. The latter performs `w' = w - strength * dot(w, d̂) * d̂` on write vectors, respecting each architecture's matrix orientation and grouped-query layout.
 
 ```bash
-weightscript-hf compile distilbert/distilgpt2 artifacts/program/program.json artifacts/edited --tokenizer distilbert/distilgpt2
+weightscript-hf compile MODEL artifacts/program/program.json artifacts/edited --tokenizer MODEL
+weightscript-hf verify MODEL artifacts/program/program.json inputs.jsonl artifacts/check.json
 weightscript-hf generate artifacts/edited --text 'A computer program can' --max-new-tokens 32
 weightscript-hf undo artifacts/edited artifacts/edited artifacts/restored
 ```
 
-`undo` restores model tensors; tokenizer files remain available in the edited checkpoint directory. If generating from the restored checkpoint, pass `--tokenizer artifacts/edited`.
+The compiler preserves shapes, configuration and weight tying. It binds edits to the source fingerprint, saves ordinary Hugging Face checkpoints and a hash-checked undo package. Verification compares independent program execution with native model execution. It is a numerical check on supplied inputs, not a universal formal theorem.
 
-Supported edits:
+Tested real checkpoints: **DistilGPT2, 81.9M parameters**, **SmolLM2-135M, 134.5M parameters**, and **Qwen2.5-0.5B-Instruct, 494M parameters**. SmolLM2 exercises RMSNorm, RoPE and gated MLPs. Qwen2/GQA has independent adapter tests and a real 494M-parameter checkpoint smoke test. Scaled/dynamic RoPE, sliding-window attention, Qwen3.5 hybrid layers and custom subclasses require additional adapters. Native opaque graphs and generic direct transactions are available without a semantic adapter, subject to HF native-model loading and available memory.
 
-| Program operation | Compiled weight change |
-| --- | --- |
-| `head_scale(layer, head, factor)` | Scale that head's rows in the attention output projection |
-| `attention_scale(layer, head, factor)` | Scale that head's query weights and query bias |
-| `neuron_scale(layer, neurons, factor)` | Scale selected MLP write rows |
-| `remove_direction(layer, neurons, direction, strength)` | Subtract a rank-one residual-direction component from selected MLP write rows |
-
-The direction is a nonzero list of `n_embd` numbers and is normalized by the compiler. For a selected write row `w`, the latter computes `w' = w - strength * dot(w, d̂) * d̂`. This expresses the family of targeted MLP corrections discussed in the weight-space-programming post. Direction discovery and neuron selection are supplied by an agent or researcher; they are not solved automatically.
-
-An edit must target the exact checkpoint fingerprint. Shapes, configuration and weight tying are preserved. Output directories must be empty. The compiler saves regular `config.json` / `model.safetensors` files, an audit, and hash-checked original tensors for undo. No hooks or inference wrapper are needed to use the edited checkpoint.
-
-## Inspect and verify
-
-Use token IDs to avoid assumptions about custom research tokenizers:
-
-```bash
-weightscript-hf trace MODEL 2,0,1,0,0,3 artifacts/trace.json
-weightscript-hf run MODEL artifacts/program/program.json 2,0,1,0,0,3
-weightscript-hf verify MODEL artifacts/program/program.json inputs.jsonl artifacts/check.json
-```
-
-A trace includes attention matrices, per-head entropy, QK/OV singular values, and top activated neurons. `run` executes the independent computation program directly. `verify` compares both the unedited and edited programs against native Hugging Face inference, reporting absolute logit errors and tolerances. Input JSONL:
-
-```json
-{"input_ids": [2, 0, 1, 0, 3], "target": 0}
-```
-
-`target` is optional for verification; evaluation uses it as the expected **next token after the input**. Batches are grouped by sequence length without padding. These are numerical checks on supplied examples, **not universal formal proofs**.
-
-## Run the trained-model research pilot
-
-The upstream decompilation project supplies trained task checkpoints. Download only the small binary-majority checkpoint from a pinned revision:
-
-```bash
-python examples/fetch_research_checkpoint.py
-python examples/research_benchmark.py artifacts/upstream-majority
-```
-
-This runs matched direct-tensor and program-edit controls, evaluates disjoint development and held-out length ranges, exports the selected checkpoint, and checks program/native and disk round-trip agreement. Results are saved under `artifacts/research/`. See [measured results](docs/results/pilot.md).
-
-For an ordinary pretrained language model, run:
-
-```bash
-python examples/language_smoke.py distilbert/distilgpt2
-```
-
-This downloads about 330 MB, applies head scaling and sparse MLP direction removal, verifies inference, exports/reloads the model, and verifies undo. The edit tests the tooling; it is not claimed to improve the model.
-
-## Compare editing approaches
-
-```bash
-weightscript-hf benchmark MODEL candidates.json dev.jsonl heldout.jsonl report.json --budget 50 --batch-size 32
-```
-
-`candidates.json` maps method names to proposed edits. The interfaces differ:
+## Generic direct editing and explaining changes
 
 ```json
 {
-  "direct_tensor": [
-    {"raw": [{"op": "scale", "tensor": "transformer.h.0.attn.c_proj.weight", "rows": [0, 1], "factor": 0.5}]}
-  ],
-  "program_guided": [
-    {"edits": [{"op": "neuron_scale", "layer": 0, "neurons": [0, 1], "factor": 0.5}]}
+  "transaction":[
+    {"op":"scale","tensor":"transformer.h.0.attn.c_proj.weight","select":[[0,1],null],"value":0.5}
   ]
 }
 ```
 
-Those particular examples edit different circuits; construct matched interventions when testing compiler parity. Direct edits support matrix-row `scale` and `remove_direction`. Use `compile-raw MODEL raw.json OUTPUT` to export one with the same audit/undo support.
+```bash
+weightscript-hf compile-raw MODEL transaction.json artifacts/direct
+weightscript explain MODEL artifacts/direct artifacts/explanation.json
+weightscript graph MODEL artifacts/graph.json
+```
 
-Candidate selection maximizes development next-token accuracy, breaking ties by target NLL. Each method receives the same maximum development forward-call budget. The selected candidate is evaluated once on held-out data. The report includes task accuracy/NLL, changes in all-position token predictions, reference KL, changed scalar counts, source/data hashes, software versions and evaluation call counts. Common base measurements and final/reference evaluations are reported separately from the selection budget. Candidate-generation costs, external agent calls and external inference are **not enforced or measured** by this harness. For a fair agent experiment, budget those separately and pre-register candidates before examining held-out results.
+Transactions support `set`, `add`, `scale` over arbitrary tensor dimensions and `low_rank_add` with explicit factors. Axis selectors can be full axes, index lists or bounded slices. They are atomic with respect to the source model, preserve tied storage, and reject nonfinite results. The legacy matrix-row `raw` interface remains supported.
 
-This is infrastructure for testing whether a program interface improves weight-space editing. It does **not yet beat or replicate** the linked frontier-LLM experiments. The pilot deliberately uses identical interventions in both interfaces; equal results are the expected control. See [research direction](docs/research.md) for the comparison still required.
+`explain` maps a direct edit back into numerical operations such as projection scaling and rank-one write updates, retaining unrecognized changes as opaque. Numerical low rank alone is not presented as a semantic explanation.
 
-## Scope and checks
+## Autonomous editing sessions
 
-- CPU float32, standard GPT2LMHeadModel, eager attention, causal inference without KV cache. DistilGPT2 uses this architecture. Cross-attention, upcast attention, pruned-head configurations, Qwen, Llama and custom architectures are currently unsupported.
-- Arbitrary edits to Python forward source cannot be compiled. The supported edit surface is the typed JSON operations above.
-- Exact computation extraction is separate from recovering a short symbolic algorithm. There is no D-RASP→Tracr conversion or trained-model algorithm simplifier here.
-- The tool is agent-usable, but includes no autonomous LLM proposal policy or live external-model calls.
-- Same architecture and unchanged tensors do not imply unchanged behavior. Held-out metrics are empirical and do not establish universal preservation.
+Use a **separate Codex TUI as editing agent** and keep the edited model local:
 
 ```bash
-pytest -q
+weightscript codex-start /dev/shm/weightscript-agent --session weightscript-agent
+weightscript session MODEL dev.jsonl artifacts/codex-session \
+  --policy 'python -m weightscript.tmux_policy --workspace /dev/shm/weightscript-agent --session weightscript-agent' \
+  --goal 'Desired improvement' --mode hybrid --heldout heldout.jsonl --policy-timeout 260
+```
+
+This inherits existing Codex authentication and configured model, starts a standalone TUI to keep experiment arms independent, and uses files for controller requests and genuine Codex responses. Inspect with `tmux attach -t weightscript-agent`. No new API key is required. For a reproducible small-target pilot, see `examples/codex_tui_study.py`.
+
+A small local model can alternatively serve as a policy backend for protocol testing:
+
+```bash
+weightscript session MODEL dev.jsonl artifacts/session \
+  --policy 'python examples/local_policy.py --model Qwen/Qwen2.5-0.5B-Instruct' \
+  --goal 'Describe the desired behavior change' --mode hybrid \
+  --heldout heldout.jsonl --collateral collateral.jsonl \
+  --max-forwards 50 --max-steps 10 --policy-timeout 180
+```
+
+Modes: `direct`, `program`, `hybrid`. A trusted external policy receives JSON on stdin and emits one JSON action on stdout. Tools include bounded weight inspection, circuit tracing, generation, candidate evaluation and finish. Hybrid proposals can compose rule lowering, numerical program edits and direct transactions.
+
+The controller records the protocol before proposals, retains errors, enforces step/time limits and a conservative inference-call reservation budget, and selects candidates using development accuracy/NLL. Invalid or interrupted operations can consume reserved allowance. Generation reserves its maximum token count, then refunds unused calls. Hidden probes made by the built-in constraint compiler are charged. External policy-model token/call usage is reported separately when supplied by the policy. Final and collateral evaluation are outside selection budgets and never sent to the policy.
+
+**This is not a security sandbox.** Policy commands are trusted processes with host access; inference outside the framework cannot be enforced or independently metered. No API key is required for the included local Qwen policy, but it needs a model download and CPU time. A small local model can fail to use tools or produce useful edits; such failures are results, not silently repaired proposals.
+
+```bash
+python examples/local_agent_study.py artifacts/upstream-majority
+```
+
+This is an exploratory two-arm local-agent case study, not a reproduction of the frontier-agent blog. It records invalid actions as well as scores. A serious superiority claim requires multiple agents, tasks, seeds, comparable proposal-generation costs and independent evaluation.
+
+## Evaluation and checks
+
+JSONL next-token data: `{"input_ids":[2,0,1,0,3],"target":0}`. Generation data optionally adds `expected_ids`. Next-token metrics include accuracy, Wilson intervals, target NLL and its standard error, reference KL and token disagreement. Generation metrics include exact token match, token-limit rate and repeated four-grams.
+
+```bash
+weightscript-hf benchmark MODEL candidates.json dev.jsonl heldout.jsonl report.json --budget 50
+weightscript evaluate-generation MODEL generation.jsonl generation-report.json --max-new-tokens 64
+python examples/language_smoke.py HuggingFaceTB/SmolLM2-135M --output artifacts/smoke
+WEIGHTSCRIPT_UPSTREAM=/dev/shm/weightscript-decompiler pytest -q
+ruff check --select E9,F python examples
+ruff format --check python examples
 cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
-`cargo run --release -- demo` also runs a small **compiled hard-attention** fixture with exact integer inference and exhaustive verification over 5,461 inputs. This is a compiler test fixture, not the trained-model research result.
+The legacy integer Rust fixture (`cargo run --release -- demo`) remains a bounded exhaustive compiler test, separate from the trained-model evidence.
 
-Research references: [Decompiling Transformers](https://lacoco-lab.github.io/home/decompiling_transformers/), [Tracr](https://github.com/google-deepmind/tracr), [Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/). This is an independent implementation; none of those projects is vendored.
+See [current results](docs/results/framework.md), [research status and remaining acceptance criteria](docs/research.md), and [agent protocol](docs/agent-protocol.md).
+
+References: [Decompiling Transformers](https://lacoco-lab.github.io/home/decompiling_transformers/), [Tracr](https://github.com/google-deepmind/tracr), [Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/). WeightScript does not yet demonstrate superiority to those research results.

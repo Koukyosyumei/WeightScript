@@ -1,0 +1,87 @@
+{
+  "hybrid": [
+    {
+      "session_id": "01a1a233-2104-7cc0-b6e2-137e7be6c702",
+      "workspace": "/dev/shm/weightscript-codex-editor",
+      "model": "gpt-6.1-sol",
+      "token_usage": {
+        "total_token_usage": {
+          "input_tokens": 1649501,
+          "cached_input_tokens": 1539200,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3073,
+          "reasoning_output_tokens": 334,
+          "total_tokens": 1652574
+        },
+        "last_token_usage": {
+          "input_tokens": 66799,
+          "cached_input_tokens": 66560,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 18,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 66817
+        },
+        "last_usage_includes_reasoning": true,
+        "model_context_window": 475000
+      },
+      "scope": "cumulative rollout usage at collection time; includes any debugging or later turns in the same thread"
+    }
+  ],
+  "direct": [
+    {
+      "session_id": "01a1a23a-6819-7333-920e-660877663515",
+      "workspace": "/dev/shm/weightscript-codex-direct-final",
+      "model": "gpt-6.1-sol",
+      "token_usage": {
+        "total_token_usage": {
+          "input_tokens": 895929,
+          "cached_input_tokens": 831360,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2280,
+          "reasoning_output_tokens": 121,
+          "total_tokens": 898209
+        },
+        "last_token_usage": {
+          "input_tokens": 42415,
+          "cached_input_tokens": 42240,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 9,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 42424
+        },
+        "last_usage_includes_reasoning": true,
+        "model_context_window": 475000
+      },
+      "scope": "cumulative rollout usage at collection time; includes any debugging or later turns in the same thread"
+    }
+  ],
+  "program": [
+    {
+      "session_id": "01a1a23d-a873-7392-8651-98868a70573e",
+      "workspace": "/dev/shm/weightscript-codex-program",
+      "model": "gpt-6.1-sol",
+      "token_usage": {
+        "total_token_usage": {
+          "input_tokens": 1451814,
+          "cached_input_tokens": 1397760,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2580,
+          "reasoning_output_tokens": 163,
+          "total_tokens": 1454394
+        },
+        "last_token_usage": {
+          "input_tokens": 64011,
+          "cached_input_tokens": 63744,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 9,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 64020
+        },
+        "last_usage_includes_reasoning": true,
+        "model_context_window": 475000
+      },
+      "scope": "cumulative rollout usage at collection time; includes any debugging or later turns in the same thread"
+    }
+  ],
+  "limitations": "Cumulative local rollout counters, not billing estimates. Hybrid includes a bridge-debug turn after its experiment; direct/program have independent standalone TUI threads. Context sizes and actual policy token use differ."
+}

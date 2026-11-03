@@ -1,28 +1,37 @@
-# Research target
+# Research status and acceptance criteria
 
-The target is an agent that edits trained Transformers more reliably through a numerical/program interface than by manipulating raw tensors. The current implementation supplies extraction, inspection, a limited edit language, compilation, undo, and evaluation. It does not establish superiority.
+The engineering framework implements both editing paths, upstream integrations, a bounded trained-rule round trip, generic transactions, architecture adapters and a budgeted agent controller. That does not complete the research objective of reliably improving arbitrary LLMs or outperforming the reference work.
 
-The weight-space-programming post reports that agents can inspect and modify trained networks directly. Its strongest language-model result is a sparse MLP direction correction on Qwen3.5-0.8B; its Gemma result also shows that removing a failure mode is different from adding a missing capability. A fair comparison must distinguish these cases.
+| Roadmap item | Evidence / current scope | Remaining acceptance criterion |
+| --- | --- | --- |
+| Run upstream decompiler | Real upstream component hooks/masks/source renderer; pinned revision; learned checkpoint pruned from 13 paths to 3 | Full paper three-stage pruning/primitive pipeline and broader task reproduction |
+| Run Tracr | Real pinned compiler; JSON frontend; independent serialized-weight inference; bounded verification | Expand supported primitive families without assuming every RASP program compiles faithfully |
+| Common representation | Versioned nodes, weight references, provenance, fidelity, opaque/numerical/hypothesis/primitive status | More detailed activation/path provenance across additional backends |
+| Program-to-existing-weight editing | Six-element same-layout Tracr rule patch; 48-scalar trained GPT-2 count-rule patch using bounded constraints | Generic architecture-preserving semantic lowering beyond the binary count family |
+| Direct editing | Arbitrary tensor selections, scalar/tensor updates, low-rank additions; atomic source preservation and undo | Large-model memory/device optimizations |
+| Agent execution | External JSON policies; separate authenticated Codex TUIs running direct/program/hybrid pilots; local policy option; step/time/inference allowances, errors, journals | Repeated strong-agent seeds and independent public task suites beyond the exploratory 16-probe pilot |
+| Common evaluation | Disjoint domains, hashes, accuracy/NLL/uncertainty, generation/loop metrics, collateral KL/disagreement, usage/cost records | Task-specific grading and public benchmark reproduction at the reference scale |
+| Architectures | GPT-2, Llama, Qwen2 numerical adapters; actual DistilGPT2, SmolLM2-135M and Qwen2.5-0.5B-Instruct checks; GQA tests; opaque native fallback | Scaled RoPE, sliding windows, Qwen3.5 hybrid architecture and other model families |
+| Hybrid editing | Compose symbolic rule lowering, numerical edits and tensor transactions; numerical explanation of direct differences | Demonstrate that hybrid proposal quality exceeds both separate arms |
+| Surpass prior methods | Executable comparisons and retained unsuccessful runs | **Not achieved**: statistically supported improvement over matched strong agents and reference methods |
 
-## Experiments to run next
+## What has actually been established
 
-1. Choose several trained GPT-2 checkpoints and pre-register target tasks, collateral-behavior datasets, candidate budgets and evaluation seeds. Use sufficiently challenging models/tasks to avoid the binary-majority pilot's ceiling accuracy.
-2. Give the same external agent either raw tensor access or the extracted program/circuit tools. Match context, tool, inference and wall-time budgets. Neither arm sees held-out data or uses optimization/training.
-3. Include untouched, random-edit, simple head/neuron scaling and global direction-removal controls. The existing matched-intervention pilot checks that changing interface alone does not change execution.
-4. Compare target performance, collateral task performance, KL, edited parameter fraction, invalid-edit rate and time to a valid checkpoint. Repeat over agent/model/task seeds. Report unsuccessful runs and uncertainty.
-5. Add a separate exact-adapter test for each new architecture before evaluating edits on it. Qwen3.5's architecture cannot be treated as a GPT-2 checkpoint. Porting the compiler also requires respecting projection orientation, grouped heads, rotary embeddings, normalization and possible hybrid layers.
-6. Only then compare improvement per proposal/inference budget with a reproduction of the blog's baseline. Scores from a tiny majority predictor and MATH-500 are not comparable.
+- Upstream path pruning recovers uniform token aggregation feeding an opaque MLP on the trained binary-majority checkpoint, with measured final-token fidelity.
+- A finite behavioral library matches a count-threshold hypothesis. This is activation/behavior-informed synthesis, not weight-only discovery or a universal decompilation result.
+- Editing that rule can generate a new model with Tracr, or patch the original model by solving a restricted rank-one write problem.
+- The constrained compiler needs explicit activation probes. It uses an LP rather than gradient descent. Auxiliary rational inequality checking is not an IEEE float32 proof. Native execution is tested separately.
+- Counterexamples matter: the initial patch fails on two length-9 inputs. Two refinement rounds satisfy that bounded oracle. One length-11 input still fails; final held-out accuracy is 2,047/2,048. These failures remain in the report.
+- A real 134.5M-parameter language model supports numerical program editing, export/reload and undo. The smoke-test edit is not claimed to improve language quality.
 
-A plausible advantage is compositional editing with explicit circuit provenance and a compiler that checks whether an edit maps into the existing architecture. A smaller number of edited weights alone does not establish better behavior or preservation.
+## Next research experiment
 
-## Guarantees currently available
+Fix an independent editing-agent backend, at least three trained model/task families, separate target and collateral datasets, and multiple seeds. Match policy context, model/tool inference, wall-time and proposal counts. Include untouched, random-edit, direct raw-weight, simple scaling, global direction-removal, program and hybrid arms. Charge compiler activation probes and report solver time. Do not use final evaluation failures for refinement.
 
-The tool validates checkpoint fingerprints and the supported projection structure, preserves shape/configuration/tying, records untouched tensors, and can restore the original checkpoint hash. The independent program uses actual LayerNorm, softmax and float32 computation rather than the LayerNorm linearization assumption in D-RASP extraction. Agreement tests are measured numerical evidence, not a formal equivalence theorem.
+The motivating weight-space post's Qwen math result is not directly comparable to a binary-rule rewrite. Reproducing that experiment also requires the corresponding architecture, generation settings, task data, grader and a capable editing agent. We must not report a tool-interface pilot as a defeat of that result.
 
-The integer Rust fixture is useful for exact exhaustive checks and compiler regression tests. It provides no evidence that general trained Transformers can be decompiled into short algorithms.
+## References
 
-## Sources
-
-- [Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) — motivating agent experiments and baseline limitations.
-- [Decompiling Transformers](https://lacoco-lab.github.io/home/decompiling_transformers/) — algorithm extraction, approximation/pruning tradeoffs, and trained checkpoints.
-- [Tracr](https://github.com/google-deepmind/tracr) — forward RASP compilation; not a compiler into arbitrary existing checkpoint layouts.
+- [Decompiling Transformers](https://lacoco-lab.github.io/home/decompiling_transformers/)
+- [Tracr](https://github.com/google-deepmind/tracr)
+- [Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/)

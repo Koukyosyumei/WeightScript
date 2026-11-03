@@ -1,0 +1,22 @@
+{
+  "original": {
+    "passed": true,
+    "checked": 340,
+    "max_len": 4,
+    "claim": "exhaustive bounded output comparison, float32 inference; not a universal proof"
+  },
+  "edited": {
+    "passed": true,
+    "checked": 340,
+    "max_len": 4,
+    "claim": "exhaustive bounded output comparison, float32 inference; not a universal proof"
+  },
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 6,
+    "tensors": {
+      "transformer/layer_2/mlp/linear_1::w": 6
+    }
+  }
+}

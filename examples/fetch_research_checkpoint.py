@@ -1,4 +1,5 @@
 """Download only the trained pilot checkpoint from a pinned upstream revision."""
+
 import argparse
 import hashlib
 import urllib.parse
@@ -17,7 +18,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("output", nargs="?", default="artifacts/upstream-majority")
     args = p.parse_args()
-    target = Path(args.output); target.mkdir(parents=True, exist_ok=True)
+    target = Path(args.output)
+    target.mkdir(parents=True, exist_ok=True)
     for name in ("config.json", "model.safetensors"):
         destination = target / name
         if destination.exists():
@@ -29,7 +31,10 @@ def main():
             raise ValueError(f"upstream content hash mismatch for {name}")
         destination.write_bytes(content)
         print(name, "sha256:", hashlib.sha256(content).hexdigest())
-    print("Source: https://github.com/lacoco-lab/decompiling_transformers/tree/" + REVISION)
+    print(
+        "Source: https://github.com/lacoco-lab/decompiling_transformers/tree/"
+        + REVISION
+    )
 
 
 if __name__ == "__main__":

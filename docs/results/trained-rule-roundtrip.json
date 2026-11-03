@@ -1,0 +1,610 @@
+{
+  "backend": "counterexample_guided_constraint_compiler",
+  "rule": {
+    "op": "count_threshold",
+    "threshold": 0.5,
+    "invert": true
+  },
+  "rounds": 2,
+  "history": [
+    {
+      "backend": "gpt2.rank_one_constraint_compiler",
+      "rule": {
+        "op": "count_threshold",
+        "threshold": 0.5,
+        "invert": true
+      },
+      "passed": false,
+      "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+      "edited_sha256": "8022d6d1ffbeec23409dd80c9941cd608318e0370af8e30f857073ca250abca4",
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 48,
+        "tensors": [
+          {
+            "tensor": "transformer.h.0.mlp.c_proj.weight",
+            "changed": 32,
+            "total": 1024,
+            "aliases": [],
+            "delta_l2": 8.255583763122559
+          },
+          {
+            "tensor": "transformer.ln_f.bias",
+            "changed": 16,
+            "total": 16,
+            "aliases": [],
+            "delta_l2": 1.6828514337539673
+          }
+        ]
+      },
+      "synthesis": {
+        "checked": 170,
+        "accuracy": 1.0,
+        "counterexamples": []
+      },
+      "verification": {
+        "checked": 512,
+        "accuracy": 0.99609375,
+        "counterexamples": [
+          {
+            "input_ids": [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3
+            ],
+            "actual": 0,
+            "expected": 1
+          },
+          {
+            "input_ids": [
+              2,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              3
+            ],
+            "actual": 1,
+            "expected": 0
+          }
+        ]
+      },
+      "preservation": null,
+      "synthesis_domain_sha256": "3c65c22315cdc894f8aac0b7fa31d86d13a8beb7516d7fb82f2279d99825b908",
+      "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -4.81013389996985,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.709492375770507,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "direction": [
+        0.3447292745113373,
+        0.3126162588596344,
+        -0.30948278307914734,
+        0.3444448411464691,
+        -0.04718770459294319,
+        0.0025627082213759422,
+        -0.3823322653770447,
+        0.02956182323396206,
+        -0.031204944476485252,
+        -0.3827231824398041,
+        0.011859728023409843,
+        -0.04604943469166756,
+        0.21596500277519226,
+        -0.36790281534194946,
+        0.2965581715106964,
+        0.008585301227867603
+      ],
+      "nonzero_neuron_coefficients": 2,
+      "solver": {
+        "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "linear_constraint_count": 850,
+        "rational_violation_check": "unsat",
+        "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+      },
+      "forward_calls": 12,
+      "gradient_updates": 0,
+      "limitations": "activation-informed constrained weight synthesis; not weight-only decompilation, not zero-data editing, not universal equivalence or a new language capability"
+    },
+    {
+      "backend": "gpt2.rank_one_constraint_compiler",
+      "rule": {
+        "op": "count_threshold",
+        "threshold": 0.5,
+        "invert": true
+      },
+      "passed": true,
+      "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+      "edited_sha256": "877ca3f0c1fbfa2911d1f67d9d05bbce272c993a25732592badef9676668b44b",
+      "audit": {
+        "architecture_preserved": true,
+        "gradient_updates": 0,
+        "changed_scalars": 48,
+        "tensors": [
+          {
+            "tensor": "transformer.h.0.mlp.c_proj.weight",
+            "changed": 32,
+            "total": 1024,
+            "aliases": [],
+            "delta_l2": 8.683208465576172
+          },
+          {
+            "tensor": "transformer.ln_f.bias",
+            "changed": 16,
+            "total": 16,
+            "aliases": [],
+            "delta_l2": 1.6828514337539673
+          }
+        ]
+      },
+      "synthesis": {
+        "checked": 172,
+        "accuracy": 1.0,
+        "counterexamples": []
+      },
+      "verification": {
+        "checked": 510,
+        "accuracy": 1.0,
+        "counterexamples": []
+      },
+      "preservation": null,
+      "synthesis_domain_sha256": "cb657dd409b48057df4e442a3bece6e82d842a93f4a2769e7b6b92b27815fc37",
+      "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -4.906634101702614,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        7.164010697795236,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "direction": [
+        0.3447292745113373,
+        0.3126162588596344,
+        -0.30948278307914734,
+        0.3444448411464691,
+        -0.04718770459294319,
+        0.0025627082213759422,
+        -0.3823322653770447,
+        0.02956182323396206,
+        -0.031204944476485252,
+        -0.3827231824398041,
+        0.011859728023409843,
+        -0.04604943469166756,
+        0.21596500277519226,
+        -0.36790281534194946,
+        0.2965581715106964,
+        0.008585301227867603
+      ],
+      "nonzero_neuron_coefficients": 2,
+      "solver": {
+        "lp_status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "linear_constraint_count": 860,
+        "rational_violation_check": "unsat",
+        "claim": "rational check of recorded LP inequalities with 1e-7 slack; separate native float32 domain verification"
+      },
+      "forward_calls": 14,
+      "gradient_updates": 0,
+      "limitations": "activation-informed constrained weight synthesis; not weight-only decompilation, not zero-data editing, not universal equivalence or a new language capability"
+    }
+  ],
+  "bounded_oracle_passed": true,
+  "source_sha256": "5871972a16a47614e608e86c9f79a9aecf6a1aa6d5d32ed50d809af5345fb2e8",
+  "audit": {
+    "architecture_preserved": true,
+    "gradient_updates": 0,
+    "changed_scalars": 48,
+    "tensors": [
+      {
+        "tensor": "transformer.h.0.mlp.c_proj.weight",
+        "changed": 32,
+        "total": 1024,
+        "aliases": [],
+        "delta_l2": 8.683208465576172
+      },
+      {
+        "tensor": "transformer.ln_f.bias",
+        "changed": 16,
+        "total": 16,
+        "aliases": [],
+        "delta_l2": 1.6828514337539673
+      }
+    ]
+  },
+  "forward_calls": 26,
+  "final_synthesis_examples": 172,
+  "oracle_examples": 512,
+  "claim": "bounded activation-informed synthesis; held-out rows are never supplied to LP or counterexample refinement",
+  "base_heldout": {
+    "examples": 2048,
+    "labeled": 2048,
+    "accuracy_wilson_95": [
+      0,
+      0.0018722006050612757
+    ],
+    "target_nll_standard_error": 0.06737028347410756,
+    "accuracy": 0.0,
+    "target_nll": 5.195742800773587,
+    "forward_calls": 16,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "edited_heldout": {
+    "examples": 2048,
+    "labeled": 2048,
+    "accuracy_wilson_95": [
+      0.9972392640467793,
+      0.9999138011690631
+    ],
+    "target_nll_standard_error": 0.0006069349298924524,
+    "accuracy": 0.99951171875,
+    "target_nll": 0.0045526532935014075,
+    "forward_calls": 16,
+    "reference_forward_calls": 16,
+    "token_disagreement": 0.9611253004807693,
+    "reference_kl_per_token": 7.831458275134747
+  },
+  "upstream_causal_fidelity": {
+    "claim": "empirical final-token fidelity on specified domains; no paper-wide reproduction claim",
+    "layernorm": "native LayerNorm",
+    "initial": {
+      "final_token_agreement": 1.0,
+      "max_logit_error": 1.430511474609375e-06,
+      "examples": 170
+    },
+    "calibration": {
+      "final_token_agreement": 1.0,
+      "max_logit_error": 5.000105381011963,
+      "examples": 170
+    },
+    "evaluation": {
+      "final_token_agreement": 1.0,
+      "max_logit_error": 5.000105381011963,
+      "examples": 512
+    },
+    "component_edges_before": 13,
+    "component_edges_after": 3,
+    "native_forward_calls": 23,
+    "pruned_forward_calls": 121,
+    "trials": [
+      {
+        "edge": [
+          "lm_head",
+          "attn_output-0-0"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 7.899013519287109,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          "lm_head",
+          "mlp-0"
+        ],
+        "accepted": false,
+        "metrics": {
+          "final_token_agreement": 0.0,
+          "max_logit_error": 10.243827819824219,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          "lm_head",
+          "wpe"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 7.551779747009277,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          "lm_head",
+          "wte"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.343639373779297,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "k",
+          0,
+          "wpe"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.346680641174316,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "k",
+          0,
+          "wte"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 8.119332313537598,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "mlp",
+          "attn_output-0-0"
+        ],
+        "accepted": false,
+        "metrics": {
+          "final_token_agreement": 0.5,
+          "max_logit_error": 9.145832061767578,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "mlp",
+          "wpe"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 8.28822135925293,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "mlp",
+          "wte"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.592922687530518,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "q",
+          0,
+          "wpe"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.592922687530518,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "q",
+          0,
+          "wte"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.592922687530518,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "v",
+          0,
+          "wpe"
+        ],
+        "accepted": true,
+        "metrics": {
+          "final_token_agreement": 1.0,
+          "max_logit_error": 5.000105381011963,
+          "examples": 170
+        }
+      },
+      {
+        "edge": [
+          0,
+          "v",
+          0,
+          "wte"
+        ],
+        "accepted": false,
+        "metrics": {
+          "final_token_agreement": 0.5,
+          "max_logit_error": 7.153126239776611,
+          "examples": 170
+        }
+      }
+    ]
+  },
+  "symbolic_fidelity": {
+    "claim": "hypothesis on supplied domains, not a general or weight-only equivalence",
+    "accepted": true,
+    "calibration_agreement": 1.0,
+    "evaluation_agreement": 1.0,
+    "calibration_examples": 170,
+    "evaluation_examples": 512,
+    "forward_calls": 23,
+    "candidate_agreements": [
+      0.5941176470588235,
+      0.40588235294117647,
+      0.7941176470588235,
+      0.20588235294117646,
+      1.0,
+      0.0,
+      0.7352941176470589,
+      0.2647058823529412,
+      0.5941176470588235,
+      0.40588235294117647,
+      0.6705882352941176,
+      0.6705882352941176,
+      0.4117647058823529,
+      0.5,
+      0.5
+    ]
+  },
+  "tracr_new_model": {
+    "checked": 512,
+    "accuracy": 1.0,
+    "architecture_preserved": false
+  },
+  "reload_changes": 0,
+  "undo_restored_original": true
+}
