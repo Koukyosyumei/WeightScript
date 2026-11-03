@@ -2,6 +2,7 @@
 
 from importlib import import_module
 
+from .contracts import backend_contract
 from .exceptions import MissingDependencyError, dependency_error
 
 __version__ = "0.2.0"
@@ -16,8 +17,26 @@ _EXPORTS = {
     "transaction": ("raw", "transaction"),
     "save_undo": ("checkpoint", "save_undo"),
     "undo": ("checkpoint", "undo"),
+    "decompile": ("backends.upstream", "decompile"),
+    "execute_artifact": ("backends.upstream", "execute_artifact"),
+    "decompile_stages": ("backends.upstream_stages", "decompile_stages"),
+    "execute_stages": ("backends.upstream_stages", "execute_stages"),
+    "match_qk_primitives": ("backends.upstream_primitives", "match_qk_primitives"),
+    "disjoint_domains": ("backends.pipeline", "disjoint_domains"),
+    "summarize_stages": ("backends.pipeline", "summarize_stages"),
+    "decompile_and_edit": ("backends.pipeline", "decompile_and_edit"),
+    "validate_rule": ("backends.rules", "validate_rule"),
+    "rule_predict": ("backends.rules", "rule_predict"),
+    "supervised_pairs": ("backends.rules", "supervised_pairs"),
+    "synthesize_rules": ("symbolic", "synthesize_rules"),
+    "synthesize_sequence_rules": ("symbolic", "synthesize_sequence_rules"),
+    "synthesize_binary": ("symbolic", "synthesize_binary"),
+    "lower": ("symbolic", "lower"),
+    "compile_rule": ("synthesis", "compile_rule"),
+    "cegis": ("synthesis", "cegis"),
+    "replay_patch": ("synthesis", "replay_patch"),
 }
-__all__ = [*_EXPORTS, "MissingDependencyError", "__version__"]
+__all__ = [*_EXPORTS, "MissingDependencyError", "backend_contract", "__version__"]
 
 
 def __getattr__(name):

@@ -19,11 +19,16 @@ unless listed here.
 | `fingerprint(model)` | Return a SHA-256 binding to configuration and weights. |
 | `save_undo(before, after, directory)` | Save original changed tensors and hashes in an existing directory. Returns `None`. |
 | `undo(model, directory)` | Validate the edited fingerprint and undo package, return a restored copy, and verify the original fingerprint. |
+| `backend_contract(model_type)` | Return the explicit support contract for a family. Unknown names fail closed. |
 
-Models for numerical adapters must be standard supported classes in eval mode
-with CPU float32 parameters. GPT-2, Llama and Qwen2 adapters validate architecture
-features; unsupported features raise `ValueError`. Generic direct transactions
-can operate on other native models without implying semantic adapter support.
+Models for numerical adapters must be standard supported classes in eval mode.
+GPT-2 semantic execution is CPU float32. Llama, Qwen2 and Mistral accept
+homogeneous float32, float16 or bfloat16 on one CPU or CUDA device, with the
+RoPE and sliding-window limits in [model support](model-support.md).
+`backend_contract(model_type)` returns that static contract. Unknown families,
+including `qwen3_5`, raise `ValueError` and are not executed through a native
+forward. Generic direct transactions can operate on other native models without
+implying semantic adapter support.
 Programs are mutable dictionaries: edit their `edits` list, retain the extraction
 metadata and fingerprint, and re-extract after changing the base model.
 
@@ -46,6 +51,17 @@ restored = ws.undo(edited, output)
 assert ws.fingerprint(restored) == ws.fingerprint(model)
 ```
 
+Decompilation and semantic editing are lazy exports as well. `validate_rule`,
+`rule_predict`, and `supervised_pairs` do not import a model library.
+`decompile`, `execute_artifact`, `decompile_stages`, `execute_stages`,
+`match_qk_primitives`, `disjoint_domains`, `summarize_stages`,
+`decompile_and_edit`, `synthesize_rules`, `synthesize_sequence_rules`,
+`synthesize_binary`, `lower`, `compile_rule`, `cegis`, and `replay_patch`
+import their implementations on first access. Stage `accepted` records
+final-token agreement on the caller-supplied rows. Full-span replay, logit
+error, and QK residual are separate measurements. See
+[decompilation](decompilation.md).
+
 `head_scale`, `attention_scale`, `neuron_scale` and `remove_direction` are
 numerical edits, not recovered symbolic algorithms. Direct transactions use
 `set`, `add`, `scale` or `low_rank_add`; see the [agent protocol](agent-protocol.md)
@@ -57,3 +73,13 @@ modifying `sys.argv`, returns an integer status for runtime operations, and uses
 argparse's `SystemExit` for help, version and syntax errors. Parser registration
 and execution are separate in both CLI modules so additional orchestration
 commands can integrate without loading models during help.
+
+`weightscript jobs` stores detached commands in the user state directory
+(`WEIGHTSCRIPT_STATE_DIR`, or the platform state directory, otherwise
+`~/.local/state/weightscript` on Linux). `run` starts a tmux session that survives
+client disconnect. `status` reports a dead runner and a still-live child instead
+of treating that child as a successful job. `retry` starts the command again and
+refuses to do so while the previous child is alive. `weightscript session
+--resume` continues a model-editing session from its journal. A repeated resume of
+a finished session returns the saved report. Policy responses may echo
+`request_nonce` and `run_id`; a mismatch is rejected and is not reused.

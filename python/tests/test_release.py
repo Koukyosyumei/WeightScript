@@ -40,6 +40,12 @@ except SystemExit as error:
         ["extract", "--help"],
         ["rasp", "compile", "--help"],
         ["workbench", "--help"],
+        ["jobs", "--help"],
+        ["agent-start", "--help"],
+        ["agent-usage", "--help"],
+        ["decompile", "--help"],
+        ["rule-check", "--help"],
+        ["pipeline", "--help"],
     ):
         result = run(sys.executable, "-c", script, *args)
         assert result.returncode == 0, result.stderr
@@ -60,7 +66,7 @@ def test_cli_validation_and_dependency_diagnostics(monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "execute", missing)
     assert main(["extract", "x", "y"]) == 3
-    assert "weightscript[research]" in capsys.readouterr().err
+    assert ".[research]" in capsys.readouterr().err
     assert sys.argv == original
 
 
@@ -260,7 +266,7 @@ import weightscript as ws
 try:
     ws.load_model
 except ws.MissingDependencyError as error:
-    assert 'pip install weightscript' in str(error)
+    assert 'transformers==4.57.1' in str(error)
     assert isinstance(error, ImportError)
 else:
     raise AssertionError('expected dependency error')

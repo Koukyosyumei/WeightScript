@@ -30,51 +30,93 @@ def send(session, message):
     subprocess.run(["tmux", "send-keys", "-t", session, "Enter"], check=True)
 
 
-def exchange(workspace, session, request, timeout=240):
+def _load_response(response, provider, session):
+    if response.stat().st_size > 1024 * 1024:
+        raise ValueError(f"{provider} response exceeds 1 MiB")
+    result = json.loads(response.read_text())
+    if not isinstance(result, dict):
+        raise ValueError(f"{provider} response must be an object")
+    result["usage"] = dict(
+        result.get("usage", {}),
+        policy=f"{provider}-tui",
+        tmux_session=session,
+        token_metering="not measured by this file bridge; collect it from the provider's own usage command",
+    )
+    return result
+
+
+def exchange(workspace, session, request, timeout=240, provider="codex"):
+    """Deliver one request file and wait for the agent to write the response.
+
+    An identical request is safe to retry: an existing response is returned and a
+    delivered request is not submitted twice. A different request for the same step
+    is rejected.
+    """
     root = Path(workspace).resolve()
+    if provider not in {"codex", "grok"}:
+        raise ValueError("unsupported policy provider")
     if not root.is_dir():
-        raise ValueError("Codex workspace does not exist")
+        raise ValueError(f"{provider} workspace does not exist")
     step = request["step"]
+    if type(step) is not int or step < 0:
+        raise ValueError("request step must be a nonnegative integer")
     source = root / f"request-{step:04d}.json"
     response = root / f"response-{step:04d}.json"
-    if source.exists() or response.exists():
-        raise ValueError("use a fresh workspace per agent arm")
-    temp = source.with_suffix(".tmp")
-    temp.write_text(json.dumps(request, indent=2))
-    temp.replace(source)
-    message = f"Read AGENTS.md and {source.name}. Choose one tool action for the editing goal and atomically write its JSON to {response.name}. Do not run target-model inference yourself. After writing the file, end this turn and wait for the next request."
-    send(session, message)
+    delivered = root / f"request-{step:04d}.delivered"
+    payload = json.dumps(request, indent=2, allow_nan=False)
+    if source.exists():
+        if source.read_text() != payload:
+            raise ValueError(
+                "existing request differs; refusing to reuse this workspace step"
+            )
+        if response.exists():
+            return _load_response(response, provider, session)
+    else:
+        if response.exists() or delivered.exists():
+            raise ValueError("orphaned policy file without a matching request")
+        temporary = source.with_suffix(".tmp")
+        temporary.write_text(payload)
+        temporary.replace(source)
+    if not delivered.exists():
+        message = (
+            f"Read AGENTS.md and {source.name}. Choose one tool action for the editing "
+            f"goal and atomically write its JSON to {response.name}. If the request "
+            f"contains request_nonce, copy it into the response. Do not run target-model "
+            f"inference yourself. After writing the file, end this turn and wait."
+        )
+        send(session, message)
+        delivered.write_text("sent\n")
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        if response.exists():
-            if response.stat().st_size > 1024 * 1024:
-                raise ValueError("Codex response exceeds 1 MiB")
-            result = json.loads(response.read_text())
-            if not isinstance(result, dict):
-                raise ValueError("Codex response must be an object")
-            result["usage"] = dict(
-                result.get("usage", {}),
-                policy="codex-tui",
-                tmux_session=session,
-                token_metering="not available through this file bridge; retain Codex session logs",
-            )
-            return result
+        if response.exists() and response.stat().st_size > 0:
+            return _load_response(response, provider, session)
         status = subprocess.run(
             ["tmux", "has-session", "-t", session], capture_output=True
         )
         if status.returncode:
-            raise ValueError("Codex tmux session exited before producing a response")
+            raise ValueError(
+                f"{provider} tmux session exited before producing a response"
+            )
         time.sleep(0.25)
-    raise ValueError("Codex did not produce a response before the policy deadline")
+    raise ValueError(
+        f"{provider} did not produce a response before the policy deadline"
+    )
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--workspace", required=True)
     p.add_argument("--session", required=True)
+    p.add_argument("--provider", choices=["codex", "grok"], default="codex")
     p.add_argument("--timeout", type=int, default=240)
     args = p.parse_args()
-    result = exchange(args.workspace, args.session, json.load(sys.stdin), args.timeout)
+    result = exchange(
+        args.workspace,
+        args.session,
+        json.load(sys.stdin),
+        args.timeout,
+        provider=args.provider,
+    )
     print(json.dumps(result))
 
 

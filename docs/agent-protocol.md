@@ -2,7 +2,7 @@
 
 An external command reads one request JSON object from stdin, writes one response JSON object to stdout, and exits. It is invoked separately each turn. Its logs belong on stderr. The controller caps response/log sizes at 1 MiB, applies a per-command timeout, and kills the process group on timeout. This is a trusted-process interface, not filesystem/network isolation.
 
-Requests contain `context`, `step`, `history`, `remaining_forwards`, and `remaining_steps`. Context provides the goal, mode, checkpoint hash, parameter names/shapes, development examples, baseline metrics, allowed proposal interfaces and action examples. Program and graph context are absent in direct mode. Held-out and collateral rows are never included in requests.
+Requests contain `context`, `step`, `history`, `remaining_forwards`, `remaining_steps`, `run_id` and `request_nonce`. Context provides the goal, mode, checkpoint hash, parameter names/shapes, development examples, baseline metrics, allowed proposal interfaces and action examples. Program and graph context are absent in direct mode. Held-out and collateral rows are never included in requests. A response that sets `request_nonce` or `run_id` must echo the request. Omitted nonce fields stay compatible with older policies. The same nonce is reused if the controller restarts while that request is still pending.
 
 Responses:
 
@@ -34,21 +34,23 @@ The best development candidate is retained by accuracy, then NLL; a bad final pr
 
 For trustworthy comparisons, use a policy process that does not access benchmark files outside the protocol, separate development/counterexample/final domains, match model/context/tool/time budgets, record the protocol before executing both arms, and report failures and repeated seeds. The protocol record is not public preregistration or proof against a malicious policy.
 
-## Codex TUI policy (preferred editing agent)
+## External TUI policy
 
-The editing target can be a small local model while the editing agent is an authenticated Codex CLI session. This uses the CLI's existing authentication; it does not require an API key in the experiment process.
+The editing target can be a small local model while the editing agent is a separate Grok or Codex CLI session. Each CLI uses its own existing login. WeightScript does not collect or invent credentials.
 
 ```bash
-weightscript codex-start /dev/shm/my-weightscript-agent --session my-weightscript-agent
-weightscript session MODEL dev.jsonl artifacts/codex-session \
-  --policy 'python -m weightscript.tmux_policy --workspace /dev/shm/my-weightscript-agent --session my-weightscript-agent' \
+weightscript agent-start ./my-editing-agent --provider grok --session my-editing-agent
+weightscript session MODEL dev.jsonl artifacts/agent-session \
+  --policy 'python -m weightscript.tmux_policy --provider grok --workspace ./my-editing-agent --session my-editing-agent' \
   --goal 'Desired model improvement' --mode hybrid --heldout heldout.jsonl \
   --policy-timeout 260
-weightscript codex-usage /dev/shm/my-weightscript-agent artifacts/codex-usage.json
+weightscript agent-usage artifacts/agent-usage.json --provider grok --session-id SESSION_UUID
 ```
 
-`codex-start` creates a fresh workspace, task instructions and a standalone TUI (`--no-daemon`) in tmux. It inherits the configured Codex model unless `--model` is explicitly supplied. Standalone launch avoids attaching a comparison arm to another active daemon thread. Verify the TUI's working directory/session before starting an experiment. A fresh workspace is required for each independent arm.
+`agent-start --provider grok` reads `grok --help` and launches only flags that help text advertises, including a workspace-local leader socket so the editor does not attach to another Grok session. It writes `provider.json` with the CLI version and session id. It does not scrape a reply or mark the process authenticated. `codex-start` remains the Codex-specific launcher. A fresh workspace is required for each independent arm.
 
-The bridge writes immutable `request-NNNN.json`, submits a prompt to the existing TUI, and waits for Codex to write `response-NNNN.json` atomically. No model response is fabricated or scraped from terminal text. Codex can inspect the supplied files and compute with observed tensors, while model access and evaluation run through controller actions. Separate AGENTS.md instructions prohibit benchmark access and unmetered inference; this is a trusted-agent protocol, not technical confinement.
+An identical request file is retried without sending a second prompt once delivery was recorded. If the response file is already present, it is returned. A different request for the same step is rejected.
 
-`tmux attach -t my-weightscript-agent` shows the live editing agent. The TUI process and its conversation survive controller steps. `codex-usage` reports best-effort cumulative local rollout usage for that specific working directory; it includes any debugging or later turns in that thread and is not a per-step invoice.
+The bridge writes `request-NNNN.json`, submits one prompt to the existing TUI, and waits for that provider to write `response-NNNN.json` atomically. No model response is fabricated or scraped from terminal text. The agent can inspect the supplied files, while model access and evaluation run through controller actions. Separate AGENTS.md instructions prohibit benchmark access and unmetered inference; this is a trusted-agent protocol, not technical confinement.
+
+`tmux attach -t my-editing-agent` shows the live editing agent. The tmux session is created detached, with `destroy-unattached` off, so closing the client does not by itself stop it. `codex-usage` reports best-effort cumulative local rollout usage for a Codex workspace. `agent-usage --provider grok` stores the verbatim `grok usage` output and does not fill in totals the CLI did not print.

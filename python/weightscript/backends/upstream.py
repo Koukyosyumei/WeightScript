@@ -40,7 +40,10 @@ def modules(checkout):
         raise ValueError("pinned upstream checkout is missing patching sources")
     for name in ("pruning_model", "patching_helper_functions", "convert_to_code"):
         loaded = sys.modules.get(name)
-        if loaded is not None and Path(getattr(loaded, "__file__", "")).resolve().parent != directory:
+        if (
+            loaded is not None
+            and Path(getattr(loaded, "__file__", "")).resolve().parent != directory
+        ):
             raise ValueError(f"upstream module collision: {name}; use a fresh process")
     sys.path.insert(0, str(directory))
     # Upstream's renderer imports a machine-local path file that is not shipped.
@@ -198,7 +201,9 @@ def decompile(
     try:
         initial = measure(masks)
         if require_initial_fidelity and initial["final_token_agreement"] < min_fidelity:
-            raise ValueError(f"upstream normalization/reconstruction assumption failed: {initial}")
+            raise ValueError(
+                f"upstream normalization/reconstruction assumption failed: {initial}"
+            )
         trials = []
         # Ties and iteration order deterministic; use actual upstream path masks.
         for edge, index in sorted(
@@ -290,7 +295,8 @@ def decompile(
             "layernorm": "calibrated linearization"
             if linear_ln
             else "native LayerNorm",
-            "normalization_assumption_passed": initial["final_token_agreement"] >= min_fidelity,
+            "normalization_assumption_passed": initial["final_token_agreement"]
+            >= min_fidelity,
             "logit_reconstruction": initial["max_logit_error"] <= 1e-4
             and final["max_logit_error"] <= 1e-4,
             "initial": initial,

@@ -110,6 +110,98 @@ def score(model, rows, batch_size=32, reference=None):
 
 
 @torch.inference_mode()
+def score_answers(model, rows, batch_size=32, reference=None):
+    """Teacher-forced score of every answer token. Prompts stay in input_ids.
+
+    `targets` is the answer sequence. One-token tasks use a one-element list.
+    Held-out isolation is the caller's job; this function only scores the rows
+    it is given.
+    """
+    if not rows or any(not row.get("targets") for row in rows):
+        raise ValueError("answer scoring needs nonempty targets")
+    prepared = []
+    for row in rows:
+        prompt, targets = row["input_ids"], row["targets"]
+        if (
+            not isinstance(prompt, list)
+            or not isinstance(targets, list)
+            or not prompt
+            or not targets
+            or any(type(token) is not int for token in prompt + targets)
+        ):
+            raise ValueError("prompts and targets must be nonempty integer lists")
+        prepared.append((prompt + targets[:-1], targets, len(prompt)))
+    correct = total = calls = changed = positions = 0
+    nll = nll_squared = kl = 0.0
+    groups = defaultdict(list)
+    for item in prepared:
+        groups[len(item[0])].append(item)
+    for length in sorted(groups):
+        group = groups[length]
+        for start in range(0, len(group), batch_size):
+            chunk = group[start : start + batch_size]
+            ids = torch.tensor([item[0] for item in chunk], dtype=torch.long)
+            logits = model(ids, use_cache=False).logits
+            if not torch.isfinite(logits).all():
+                raise ValueError("nonfinite model logits")
+            calls += 1
+            reference_logits = (
+                reference(ids, use_cache=False).logits
+                if reference is not None
+                else None
+            )
+            for index, (_, targets, prompt_length) in enumerate(chunk):
+                for offset, target in enumerate(targets):
+                    position = prompt_length - 1 + offset
+                    predicted = logits[index, position]
+                    if not 0 <= target < predicted.shape[-1]:
+                        raise ValueError("target outside vocabulary")
+                    correct += int(int(predicted.argmax()) == target)
+                    loss = float(-predicted.log_softmax(-1)[target])
+                    nll += loss
+                    nll_squared += loss * loss
+                    total += 1
+                    if reference_logits is not None:
+                        base = reference_logits[index, position]
+                        changed += int(int(predicted.argmax()) != int(base.argmax()))
+                        positions += 1
+                        kl += float(
+                            F.kl_div(
+                                predicted.log_softmax(-1),
+                                base.softmax(-1),
+                                reduction="sum",
+                            )
+                        )
+    interval = None
+    if total:
+        z = 1.95996398454
+        p = correct / total
+        center = (p + z * z / (2 * total)) / (1 + z * z / total)
+        radius = (
+            z
+            * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total))
+            / (1 + z * z / total)
+        )
+        interval = [max(0, center - radius), min(1, center + radius)]
+    return {
+        "examples": len(rows),
+        "labeled": total,
+        "accuracy_wilson_95": interval,
+        "target_nll_standard_error": math.sqrt(
+            max(0, nll_squared - nll * nll / total) / (total - 1) / total
+        )
+        if total > 1
+        else None,
+        "accuracy": correct / total if total else None,
+        "target_nll": nll / total if total else None,
+        "forward_calls": calls,
+        "reference_forward_calls": calls if reference is not None else 0,
+        "token_disagreement": changed / positions if positions else None,
+        "reference_kl_per_token": kl / positions if positions else None,
+    }
+
+
+@torch.inference_mode()
 def equivalence(model, program, rows, batch_size=32, atol=2e-5, rtol=2e-5):
     if not rows:
         raise ValueError("empty verification domain")

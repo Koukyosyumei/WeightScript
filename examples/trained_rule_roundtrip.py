@@ -48,11 +48,17 @@ def _contents(lengths, per_length, seed, population, forbidden):
 
 
 def _pack(contents, bos, sep, continuation):
-    return [{"input_ids": [bos, *content, sep, *continuation(content)]} for content in contents]
+    return [
+        {"input_ids": [bos, *content, sep, *continuation(content)]}
+        for content in contents
+    ]
 
 
 def _prefixes(rows, sep):
-    return [{"input_ids": row["input_ids"][: row["input_ids"].index(sep) + 1]} for row in rows]
+    return [
+        {"input_ids": row["input_ids"][: row["input_ids"].index(sep) + 1]}
+        for row in rows
+    ]
 
 
 def _native_task(model, rows, sep):
@@ -71,8 +77,12 @@ def _native_task(model, rows, sep):
                 total += 1
                 good = good and match
             sequences += int(good)
-    return {"position_agreement": correct / total, "sequence_agreement": sequences / len(rows),
-            "positions": total, "sequences": len(rows)}
+    return {
+        "position_agreement": correct / total,
+        "sequence_agreement": sequences / len(rows),
+        "positions": total,
+        "sequences": len(rows),
+    }
 
 
 def _replay_task(model, artifact, checkout, rows, sep, stage):
@@ -86,8 +96,11 @@ def _replay_task(model, artifact, checkout, rows, sep, stage):
     for chunk, ids in batches(rows, 16):
         native = model(ids, use_cache=False).logits
         if stage == "component":
-            nested = next(item for item in artifact["nodes"][-1]["attributes"]["stages"]
-                          if item["name"] == "component")["artifact"]
+            nested = next(
+                item
+                for item in artifact["nodes"][-1]["attributes"]["stages"]
+                if item["name"] == "component"
+            )["artifact"]
             actual = execute_artifact(model, nested, checkout, ids)
         else:
             actual = execute_stages(model, artifact, checkout, ids, stage)
@@ -100,10 +113,20 @@ def _replay_task(model, artifact, checkout, rows, sep, stage):
                 stage_correct += stage_token == native_token
                 total += 1
                 if stage_token != native_token and len(failures) < 8:
-                    failures.append({"input_ids": prefix, "stage": stage_token,
-                                     "native": native_token, "gold": gold})
-    return {"stage_vs_native": stage_correct / total, "native_vs_gold": native_correct / total,
-            "positions": total, "counterexamples": failures}
+                    failures.append(
+                        {
+                            "input_ids": prefix,
+                            "stage": stage_token,
+                            "native": native_token,
+                            "gold": gold,
+                        }
+                    )
+    return {
+        "stage_vs_native": stage_correct / total,
+        "native_vs_gold": native_correct / total,
+        "positions": total,
+        "counterexamples": failures,
+    }
 
 
 def _edit(model, rule, calibration, oracle, final):
@@ -112,7 +135,9 @@ def _edit(model, rule, calibration, oracle, final):
 
     source = fingerprint(model)
     try:
-        _edited, report = cegis(model, rule, calibration, oracle, heldout=final, max_rounds=3)
+        _edited, report = cegis(
+            model, rule, calibration, oracle, heldout=final, max_rounds=3
+        )
     except ValueError as exc:
         report = {"bounded_oracle_passed": False, "error": str(exc)}
     if fingerprint(model) != source:
@@ -120,10 +145,16 @@ def _edit(model, rule, calibration, oracle, final):
     history = report.pop("history", None)
     if history:
         report["rounds_slim"] = [
-            {"passed": item["passed"], "synthesis": item["synthesis"],
-             "verification": item["verification"], "patch_rank_bound": item["patch_rank_bound"],
-             "solver": item["solver"], "changed_scalars": item["audit"]["changed_scalars"]}
-            for item in history]
+            {
+                "passed": item["passed"],
+                "synthesis": item["synthesis"],
+                "verification": item["verification"],
+                "patch_rank_bound": item["patch_rank_bound"],
+                "solver": item["solver"],
+                "changed_scalars": item["audit"]["changed_scalars"],
+            }
+            for item in history
+        ]
     return report
 
 
@@ -142,12 +173,39 @@ def run_suite(checkout, output, tasks):
         "sort": "sort-@1l1h256d3lr01drop",
     }
     specs = {
-        "majority": {"bos": 2, "sep": 3, "eos": 4, "population": 2, "kind": "majority",
-                     "calibration": (1, 3, 5), "oracle": (7,), "final": (9,), "per": (1, 1, 1)},
-        "copy": {"bos": 150, "sep": 151, "eos": 152, "population": 150, "kind": "copy",
-                 "calibration": (2, 3, 4), "oracle": (6,), "final": (8,), "per": (8, 16, 16)},
-        "sort": {"bos": 150, "sep": 151, "eos": 152, "population": 150, "kind": "sorted",
-                 "calibration": (2, 3, 4), "oracle": (6,), "final": (8,), "per": (8, 16, 16)},
+        "majority": {
+            "bos": 2,
+            "sep": 3,
+            "eos": 4,
+            "population": 2,
+            "kind": "majority",
+            "calibration": (1, 3, 5),
+            "oracle": (7,),
+            "final": (9,),
+            "per": (1, 1, 1),
+        },
+        "copy": {
+            "bos": 150,
+            "sep": 151,
+            "eos": 152,
+            "population": 150,
+            "kind": "copy",
+            "calibration": (2, 3, 4),
+            "oracle": (6,),
+            "final": (8,),
+            "per": (8, 16, 16),
+        },
+        "sort": {
+            "bos": 150,
+            "sep": 151,
+            "eos": 152,
+            "population": 150,
+            "kind": "sorted",
+            "calibration": (2, 3, 4),
+            "oracle": (6,),
+            "final": (8,),
+            "per": (8, 16, 16),
+        },
     }
     out = Path(output)
     out.mkdir(parents=True, exist_ok=True)
@@ -156,6 +214,7 @@ def run_suite(checkout, output, tasks):
         spec = specs[task]
         bos, sep, eos = spec["bos"], spec["sep"], spec["eos"]
         if task == "majority":
+
             def bits(lengths):
                 chosen = []
                 for length in lengths:
@@ -163,12 +222,20 @@ def run_suite(checkout, output, tasks):
                         if item.count(0) != item.count(1):
                             chosen.append(item)
                 return chosen
-            groups = [bits(spec["calibration"]), bits(spec["oracle"]), bits(spec["final"])]
+
+            groups = [
+                bits(spec["calibration"]),
+                bits(spec["oracle"]),
+                bits(spec["final"]),
+            ]
         else:
             used = set()
             groups = []
             for lengths, count, seed in zip(
-                    (spec["calibration"], spec["oracle"], spec["final"]), spec["per"], (11, 22, 33)):
+                (spec["calibration"], spec["oracle"], spec["final"]),
+                spec["per"],
+                (11, 22, 33),
+            ):
                 chosen, used = _contents(lengths, count, seed, spec["population"], used)
                 groups.append(chosen)
 
@@ -181,15 +248,20 @@ def run_suite(checkout, output, tasks):
 
         full = [_pack(group, bos, sep, continuation) for group in groups]
         prefixes = [_prefixes(rows, sep) for rows in full]
-        domain_hashes = disjoint_domains(calibration=prefixes[0], oracle=prefixes[1], final=prefixes[2])
+        domain_hashes = disjoint_domains(
+            calibration=prefixes[0], oracle=prefixes[1], final=prefixes[2]
+        )
         disjoint_domains(calibration=full[0], oracle=full[1], final=full[2])
         model = load_model(str(Path(checkout) / "share/saved_models" / names[task]))
         source = fingerprint(model)
         markers = {"bos": bos, "sep": sep, "eos": eos}
-        candidates = [{"op": "span_next", "kind": kind, **markers}
-                      for kind in ("copy", "sorted", "majority")]
+        candidates = [
+            {"op": "span_next", "kind": kind, **markers}
+            for kind in ("copy", "sorted", "majority")
+        ]
         semantic = synthesize_sequence_rules(
-            model, candidates, full[0], full[1], full[2], min_fidelity=0.99)
+            model, candidates, full[0], full[1], full[2], min_fidelity=0.99
+        )
         if fingerprint(model) != source:
             raise RuntimeError("sequence synthesis mutated source weights")
         case = {
@@ -197,17 +269,30 @@ def run_suite(checkout, output, tasks):
             "source_sha256": source,
             "task_kind": spec["kind"],
             "domains": domain_hashes,
-            "domain_sizes": {"calibration": len(full[0]), "oracle": len(full[1]), "final": len(full[2])},
+            "domain_sizes": {
+                "calibration": len(full[0]),
+                "oracle": len(full[1]),
+                "final": len(full[2]),
+            },
             "position_assumption": "implicit positions 0..length-1; upstream training also drew random offsets",
-            "native_task": {name: _native_task(model, rows, sep)
-                            for name, rows in zip(("calibration", "oracle", "final"), full)},
+            "native_task": {
+                name: _native_task(model, rows, sep)
+                for name, rows in zip(("calibration", "oracle", "final"), full)
+            },
             "semantic": semantic.to_dict(),
         }
         artifact = None
         try:
             causal = decompile_stages(
-                model, checkout, prefixes[0], prefixes[1], max_trials=64,
-                calibration_steps=32, min_fidelity=0.99, batch_size=32)
+                model,
+                checkout,
+                prefixes[0],
+                prefixes[1],
+                max_trials=64,
+                calibration_steps=32,
+                min_fidelity=0.99,
+                batch_size=32,
+            )
             if fingerprint(model) != source:
                 raise RuntimeError("stage driver mutated source weights")
             artifact = causal.to_dict()
@@ -220,12 +305,21 @@ def run_suite(checkout, output, tasks):
                 }
             if task == "majority":
                 edit_rule = {"op": "count_threshold", "threshold": 0.5, "invert": True}
-                case["edit"] = _edit(model, edit_rule, prefixes[0], prefixes[1], prefixes[2])
+                case["edit"] = _edit(
+                    model, edit_rule, prefixes[0], prefixes[1], prefixes[2]
+                )
                 case["edit"]["requested_rule"] = edit_rule
-                case["edit"]["limit"] = "last-position output-span patch of the trained checkpoint; held-out rows were not used to fit it"
+                case["edit"]["limit"] = (
+                    "last-position output-span patch of the trained checkpoint; held-out rows were not used to fit it"
+                )
             else:
-                target = {"op": "span_next", "kind": "sorted" if task == "copy" else "copy", **markers}
+                target = {
+                    "op": "span_next",
+                    "kind": "sorted" if task == "copy" else "copy",
+                    **markers,
+                }
                 from weightscript.backends.rules import supervised_pairs
+
                 # The compiler supervises only the last position of each prefix.
                 bounded = {"calibration": [], "oracle": [], "final": []}
                 for name, rows in zip(("calibration", "oracle", "final"), full):
@@ -233,31 +327,60 @@ def run_suite(checkout, output, tasks):
                         prefix, _gold = supervised_pairs(row["input_ids"], sep)[0]
                         bounded[name].append({"input_ids": prefix})
                 case["edit"] = _edit(
-                    model, target, bounded["calibration"], bounded["oracle"], bounded["final"])
+                    model,
+                    target,
+                    bounded["calibration"],
+                    bounded["oracle"],
+                    bounded["final"],
+                )
                 case["edit"]["requested_rule"] = target
-                case["edit"]["examples"] = [len(bounded[name]) for name in ("calibration", "oracle", "final")]
-                case["edit"]["limit"] = "bounded last-position patch on four prefixes; not a sequence-wide program transplant"
+                case["edit"]["examples"] = [
+                    len(bounded[name]) for name in ("calibration", "oracle", "final")
+                ]
+                case["edit"]["limit"] = (
+                    "bounded last-position patch on four prefixes; not a sequence-wide program transplant"
+                )
             if fingerprint(model) != source:
                 raise RuntimeError("trained case mutated source weights")
         except Exception:  # noqa: BLE001 - persist this task, then continue the suite
             case["task_error"] = traceback.format_exc()
         kept = {key: case[key] for key in case if key != "semantic"}
         kept["semantic_fidelity"] = semantic.fidelity
-        kept["semantic_rule"] = None if semantic.output != "hypothesis" else semantic.nodes[-1].attributes["rule"]
+        kept["semantic_rule"] = (
+            None
+            if semantic.output != "hypothesis"
+            else semantic.nodes[-1].attributes["rule"]
+        )
         kept["semantic_method"] = semantic.provenance["method"]
         summary[task] = kept
         write_json(out / f"{task}-summary.json", kept)
         if artifact is not None:
             write_json(out / f"{task}-stages.json", artifact)
-        print(task, json.dumps({
-            "causal_accepted": None if "causal_summary" not in case else case["causal_summary"]["accepted"],
-            "semantic": semantic.fidelity["accepted"],
-            "native_final": case["native_task"]["final"],
-            "task_error": "task_error" in case,
-        }, sort_keys=True), flush=True)
-    write_json(out / "suite-index.json", {task: {"checkpoint": summary[task]["checkpoint"],
-                                                 "source_sha256": summary[task]["source_sha256"]}
-                                           for task in summary})
+        print(
+            task,
+            json.dumps(
+                {
+                    "causal_accepted": None
+                    if "causal_summary" not in case
+                    else case["causal_summary"]["accepted"],
+                    "semantic": semantic.fidelity["accepted"],
+                    "native_final": case["native_task"]["final"],
+                    "task_error": "task_error" in case,
+                },
+                sort_keys=True,
+            ),
+            flush=True,
+        )
+    write_json(
+        out / "suite-index.json",
+        {
+            task: {
+                "checkpoint": summary[task]["checkpoint"],
+                "source_sha256": summary[task]["source_sha256"],
+            }
+            for task in summary
+        },
+    )
     return summary
 
 
@@ -273,7 +396,9 @@ def main():
     args = p.parse_args()
     if args.suite:
         torch.set_num_threads(2)
-        run_suite(args.checkout, args.output, [task for task in args.tasks.split(",") if task])
+        run_suite(
+            args.checkout, args.output, [task for task in args.tasks.split(",") if task]
+        )
         return
     if not args.model:
         raise ValueError("model path is required unless --suite is set")
@@ -286,9 +411,16 @@ def main():
     calibration = domain((1, 3, 5, 7))
     evaluation = domain((9,))
     driver = decompile if args.component_only else decompile_stages
-    options = {} if args.component_only else {"calibration_steps": args.calibration_steps}
+    options = (
+        {} if args.component_only else {"calibration_steps": args.calibration_steps}
+    )
     causal = driver(
-        model, args.checkout, calibration, max_trials=64, evaluation_rows=evaluation, **options
+        model,
+        args.checkout,
+        calibration,
+        max_trials=64,
+        evaluation_rows=evaluation,
+        **options,
     )
     write_json(out / "upstream.json", causal.to_dict())
     hypothesis = synthesize_binary(

@@ -8,15 +8,17 @@ weights, and saves hash-checked undo packages.
 Requires Python 3.10+. CPU float32 is the tested execution path.
 
 ```bash
-pip install weightscript
+pip install .
 weightscript --help
 weightscript --version
 weightscript extract MODEL artifacts/program
 ```
 
-For a source checkout, use `pip install .` (or `pip install -e '.[test]'` for
-development). See [installation](docs/installation.md) for CPU PyTorch and optional
-research dependencies. Help, version, and `import weightscript` do not import model
+This package is not published on PyPI. Install it from a source checkout with
+`pip install .`, or build a wheel with `python -m build` and install that wheel.
+`pip install -e '.[test]'` is the development install. See
+[installation](docs/installation.md) for CPU PyTorch and optional research
+dependencies. Help, version, and `import weightscript` do not import model
 libraries or load checkpoints.
 
 ```python
@@ -31,11 +33,14 @@ edited.save_pretrained("artifacts/edited", safe_serialization=True)
 ws.save_undo(model, edited, "artifacts/edited")
 ```
 
-Supported numerical adapters cover standard GPT-2, Llama and Qwen2 architectures.
+Supported numerical adapters cover standard GPT-2, Llama, Qwen2 and Mistral
+architectures, including scaled RoPE and configured sliding-window attention
+where the contract allows it. Qwen3.5 and other hybrid decoders are rejected.
 Edits include head/attention scaling, neuron scaling and selected-neuron direction
 removal. Generic tensor transactions support direct edits. Unsupported architecture
 features are rejected by the semantic adapters. See the [public API](docs/api.md)
-for contracts, errors, undo and verification.
+and [model support](docs/model-support.md) for contracts, errors, undo and
+verification.
 
 ```bash
 weightscript compile MODEL artifacts/program/program.json artifacts/edited

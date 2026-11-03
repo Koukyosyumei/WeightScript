@@ -25,7 +25,9 @@ def validate_rule(rule, depth=0):
     if op not in fields or set(rule) - {"op", "ignore_tokens"} != fields[op]:
         raise ValueError("unknown operation or invalid semantic rule fields")
     ignored = rule.get("ignore_tokens", [])
-    if not isinstance(ignored, list) or any(type(t) is not int or t < 0 for t in ignored):
+    if not isinstance(ignored, list) or any(
+        type(t) is not int or t < 0 for t in ignored
+    ):
         raise ValueError("ignore_tokens must be nonnegative integer token IDs")
     for key in ("default", "token", "if_true", "if_false"):
         if key in rule and (type(rule[key]) is not int or rule[key] < 0):
@@ -37,10 +39,16 @@ def validate_rule(rule, depth=0):
         raise ValueError("comparison must be eq, lt or gt")
     if op == "count_threshold":
         threshold = rule["threshold"]
-        if (type(rule["invert"]) is not bool or type(threshold) not in (int, float)
-                or not math.isfinite(threshold) or not 0 <= threshold <= 1):
+        if (
+            type(rule["invert"]) is not bool
+            or type(threshold) not in (int, float)
+            or not math.isfinite(threshold)
+            or not 0 <= threshold <= 1
+        ):
             raise ValueError("invalid count threshold")
-    if op == "count_token" and (type(rule["threshold"]) is not int or rule["threshold"] < 0):
+    if op == "count_token" and (
+        type(rule["threshold"]) is not int or rule["threshold"] < 0
+    ):
         raise ValueError("count threshold must be a nonnegative integer")
     if op == "select_token" and rule["which"] not in ("first", "last", "min", "max"):
         raise ValueError("selection must be first, last, min or max")
@@ -77,12 +85,16 @@ def rule_predict(rule, ids):
         return tokens[index] if -len(tokens) <= index < len(tokens) else rule["default"]
     if op == "token_compare":
         try:
-            yes = _compare(tokens[rule["left"]], tokens[rule["right"]], rule["comparison"])
+            yes = _compare(
+                tokens[rule["left"]], tokens[rule["right"]], rule["comparison"]
+            )
         except IndexError as exc:
             raise ValueError("token comparison index outside rule domain") from exc
         return rule["if_true"] if yes else rule["if_false"]
     if op == "count_token":
-        yes = _compare(tokens.count(rule["token"]), rule["threshold"], rule["comparison"])
+        yes = _compare(
+            tokens.count(rule["token"]), rule["threshold"], rule["comparison"]
+        )
         return rule["if_true"] if yes else rule["if_false"]
     if op == "select_token":
         selected = [t for t in tokens if _compare(t, rule["token"], rule["comparison"])]
@@ -104,9 +116,9 @@ def _span_next(rule, tokens):
     if tokens.count(bos) != 1 or tokens.count(sep) != 1:
         raise ValueError("span rule domain needs one bos and one sep")
     begin, split = tokens.index(bos), tokens.index(sep)
-    if begin >= split or eos in tokens[begin:split + 1]:
+    if begin >= split or eos in tokens[begin : split + 1]:
         raise ValueError("bos must precede sep with no eos in the source span")
-    source, generated = tokens[begin + 1:split], tokens[split + 1:]
+    source, generated = tokens[begin + 1 : split], tokens[split + 1 :]
     if rule["kind"] == "copy":
         target = source + [eos]
     elif rule["kind"] == "sorted":
@@ -116,14 +128,18 @@ def _span_next(rule, tokens):
         if not bits or bits.count(0) == bits.count(1):
             raise ValueError("majority span is undefined")
         target = [0 if bits.count(0) > bits.count(1) else 1]
-    if generated != target[:len(generated)] or len(generated) >= len(target):
+    if generated != target[: len(generated)] or len(generated) >= len(target):
         raise ValueError("span prefix is outside the rule program")
     return target[len(generated)]
 
 
 def supervised_pairs(ids, sep):
     """Pairs ``(prefix, gold next token)`` for every position after the one sep."""
-    if not ids or any(type(token) is not int or token < 0 for token in ids) or type(sep) is not int:
+    if (
+        not ids
+        or any(type(token) is not int or token < 0 for token in ids)
+        or type(sep) is not int
+    ):
         raise ValueError("supervised span input is invalid")
     if ids.count(sep) != 1:
         raise ValueError("supervised span requires one sep")

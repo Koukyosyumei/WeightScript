@@ -9,9 +9,9 @@ The engineering framework implements both editing paths, upstream integrations, 
 | Common representation | Versioned nodes, weight references, provenance, fidelity, opaque/numerical/hypothesis/primitive status | More detailed activation/path provenance across additional backends |
 | Program-to-existing-weight editing | Output-span LP lowers count, position, min selection, and span-next rules. Trained majority invert changes 48 scalars and scores 510/512 on held-out length 9. Four-prefix copy-to-sort and sort-to-copy patches score 0/4 held out; the sort patch stops on the variable budget | Sequence-wide edits of copy and sort, and edits whose held-out accuracy stays complete |
 | Direct editing | Arbitrary tensor selections, scalar/tensor updates, low-rank additions; atomic source preservation and undo | Large-model memory/device optimizations |
-| Agent execution | External JSON policies; separate authenticated Codex TUIs running direct/program/hybrid pilots; local policy option; step/time/inference allowances, errors, journals | Repeated strong-agent seeds and independent public task suites beyond the exploratory 16-probe pilot |
+| Agent execution | External JSON policies; Codex and Grok TUI bridges; durable sessions. One live Grok program-mode seed on trained majority evaluated one count rule, rejected it on development NLL, and kept the original weights. Verbatim cost was 0.02851104 USD across two turns. See `docs/results/grok-majority-pilot.json` | Repeated strong-agent seeds and independent public task suites beyond this single rejected proposal |
 | Common evaluation | Disjoint domains, hashes, accuracy/NLL/uncertainty, generation/loop metrics, collateral KL/disagreement, usage/cost records | Task-specific grading and public benchmark reproduction at the reference scale |
-| Architectures | GPT-2, Llama, Qwen2 numerical adapters; actual DistilGPT2, SmolLM2-135M and Qwen2.5-0.5B-Instruct checks; GQA tests; opaque native fallback | Scaled RoPE, sliding windows, Qwen3.5 hybrid architecture and other model families |
+| Architectures | GPT-2, Llama, Qwen2, and Mistral numerical adapters. RoPE default, linear, dynamic NTK, and Llama-3 scaling. Qwen2 and Mistral sliding windows. See `docs/model-support.md` | Qwen3.5 and other hybrid decoders, YaRN, LongRoPE, and families without an explicit contract |
 | Hybrid editing | Compose symbolic rule lowering, numerical edits and tensor transactions; numerical explanation of direct differences | Demonstrate that hybrid proposal quality exceeds both separate arms |
 | Surpass prior methods | Executable comparisons and retained unsuccessful runs | **Not achieved**: statistically supported improvement over matched strong agents and reference methods |
 
@@ -25,9 +25,33 @@ The engineering framework implements both editing paths, upstream integrations, 
 - Counterexamples matter: the initial patch fails on two length-9 inputs. Two refinement rounds satisfy that bounded oracle. One length-11 input still fails; final held-out accuracy is 2,047/2,048. These failures remain in the report.
 - A real 134.5M-parameter language model supports numerical program editing, export/reload and undo. The smoke-test edit is not claimed to improve language quality.
 
-## Next research experiment
+## Public matched-arm measurement
 
-Fix an independent editing-agent backend, at least three trained model/task families, separate target and collateral datasets, and multiple seeds. Match policy context, model/tool inference, wall-time and proposal counts. Include untouched, random-edit, direct raw-weight, simple scaling, global direction-removal, program and hybrid arms. Charge compiler activation probes and report solver time. Do not use final evaluation failures for refinement.
+`examples/public_comparison.py` scored three seeds and four development proposals per selective arm. Held-out and collateral rows were scored after selection. The upstream checkout was revision `787398b0f4393a90ad02cd8e71be48d1e85d2b21`. Checkpoint names are `bin_majority-@1l1h16d3lr01drop`, `unique_copy-@2l1h64d3lr01drop`, and `sort-@1l1h256d3lr01drop`. The language rows are 16-token windows from the public-domain opening of Pride and Prejudice (passage sha256 `59b9b35994bdc1df809fdf02be72d208ba7fe0f5c865089f5a78031f0ef45d89`): 16 development windows, 16 held-out windows, and 8 collateral windows from the next chapter. Those language windows are repeated across seeds. The restored language fingerprint is `b424a1ed3130606acdc0cc58f02e7df4cbc6613dcaaa8730ba0e822307fe76c7` (81,912,576 parameters, GPT-2 family), taken from the undo package stored with the smoke edit. Exact rows are in `docs/results/public-baselines.json`.
+
+`methods_better_than_untouched_on_every_seed` is empty for every task. A method is listed only when held-out accuracy is strictly higher and held-out NLL is strictly lower on every seed.
+
+Majority held-out accuracy is 1.0 on all 16 examples for every arm and seed. Untouched held-out NLL is 0.0214, 0.0270, and 0.0236. The shared head-scale arms (scaling, direct, and program) lower it to 0.0052, 0.0053, and 0.0061. Direction lowers it to 0.0056, 0.0056, and 0.0065. Accuracy does not move. These are confidence changes on an already correct set, with Wilson intervals that still reach 1.0.
+
+Unique copy held-out accuracy is 1.0. Untouched held-out NLL is about 0.0002 to 0.0003. The head-scale arms raise it to about 0.0008 to 0.0013.
+
+Sort does not produce a cross-seed winner. On seed 0, direction raises development accuracy from 0.970 to 0.985 and lowers held-out accuracy from 1.000 to 0.986. On seed 2, the head-scale arms keep held-out accuracy at 0.986 and raise held-out NLL from 0.0822 to 0.1351.
+
+On the language windows every arm keeps development accuracy 0.188 and held-out accuracy 0.438. Direction changes 2,359,213 scalars and lowers held-out NLL from 3.5982 to 3.5695, with collateral KL about 0.00257. The three seeds repeat the same windows and the same deterministic edit. That is one 16-example fluctuation, not a language-quality result, and it is separate from the symbolic count-rule result of 2,047/2,048.
+
+Direct, program, and scaling match on these runs because they apply one head-scale grid. That match is an interface control.
+
+## Live Grok editing pilot
+
+`examples/grok_edit_pilot.py` ran one program-mode session on `bin_majority-@1l1h16d3lr01drop`, seed 0, with the same development, held-out, and collateral splits as the matched-arm runner. Held-out rows were not sent to the policy. The policy was the installed Grok CLI, one turn at a time, and the usage fields below are copied from `grok --output-format json`.
+
+The first turn evaluated `count_threshold` at 0.5 with `invert` false. Development accuracy stayed 1.0 and development NLL moved from 0.01742 to 0.01882. The patch changed 16 scalars in the final LayerNorm bias and was not selected. The second turn finished. The retained checkpoint is the original model: 0 changed scalars, held-out accuracy 1.0, held-out NLL 0.02138, collateral accuracy 1.0. Selection forwards were 8 of 16. Wall time was 77.6 seconds.
+
+Turn costs were 0.01730668 USD (9,548 input tokens, 4,565 output tokens, 22,945 total) and 0.01120436 USD (10,045 input tokens, 1,408 output tokens, 20,285 total). The model id in the wrapper was `grok-4.7-build`. This is one seed and one rejected rule, not an agent-quality ranking.
+
+## What remains open
+
+Paper coefficient search, MLP primitive replacement, faithful full-sequence stage equivalence, sequence-wide copy and sort edits, and a statistically supported improvement over matched strong agents are open. Qwen3.5 and other hybrid decoders stay unsupported. Unknown QK paths stay opaque. Do not use final evaluation failures for refinement.
 
 The motivating weight-space post's Qwen math result is not directly comparable to a binary-rule rewrite. Reproducing that experiment also requires the corresponding architecture, generation settings, task data, grader and a capable editing agent. We must not report a tool-interface pilot as a defeat of that result.
 

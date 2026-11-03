@@ -29,9 +29,12 @@ def dependency_error(error):
     elif name == "decompiling_transformers":
         hint = "provide the upstream checkout with --checkout; see docs/installation.md"
     elif name in _RESEARCH:
-        hint = 'install the research extra: pip install "weightscript[research]"'
+        hint = "install the research extra from a source checkout: pip install -e '.[research]'"
     elif name in {"torch", "transformers", "safetensors", "numpy"}:
-        hint = "install the runtime dependencies: pip install weightscript"
+        hint = (
+            "install runtime dependencies from a source checkout or local wheel: "
+            "pip install torch 'transformers==4.57.1' safetensors numpy"
+        )
     else:
         hint = "check the dependency installation and original module name"
     return MissingDependencyError(f"missing dependency '{name}'; {hint}")

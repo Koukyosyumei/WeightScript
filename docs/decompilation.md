@@ -32,6 +32,23 @@ from weightscript.synthesis import compile_rule, cegis, replay_patch
 
 The example `examples/trained_rule_roundtrip.py --suite --checkout CHECKOUT --output DIR` runs the three saved checkpoints `bin_majority-@1l1h16d3lr01drop`, `unique_copy-@2l1h64d3lr01drop`, and `sort-@1l1h256d3lr01drop` from `CHECKOUT/share/saved_models`.
 
+## CLI
+
+Datasets are JSON lines. Each line is an object with nonempty integer `input_ids`.
+
+```bash
+weightscript decompile MODEL CALIBRATION OUTPUT --checkout CHECKOUT --engine three-stage
+weightscript run-decompiled MODEL ARTIFACT '[2,0,1,3]' --checkout CHECKOUT --stage qk
+weightscript synthesize MODEL CALIBRATION OUTPUT --candidates rules.json --sequence
+weightscript rule-check RULE.json
+weightscript rule-predict RULE.json '[8,1,1,0,9]'
+weightscript rewrite MODEL RULE SYNTHESIS ORACLE OUTPUT --heldout HELD
+weightscript pipeline MODEL OUTPUT --checkout CHECKOUT --candidates rules.json \
+  --rule RULE.json --synthesis SYNTHESIS --oracle ORACLE --final FINAL
+```
+
+`--engine component` remains the default and writes `program.txt` beside `artifact.json`. `--engine three-stage` writes `artifact.json` and `summary.json`. `--stage component` can replay that summary's nested component artifact. `pipeline` writes `report.json` and exports a checkpoint only when the causal stage and the behavioral hypothesis are both accepted. A rejected run leaves the report in place and returns status 1.
+
 ## Normalization assumptions
 
 - Positions are `0 .. length-1`. Upstream training also sampled random position offsets. These measurements do not resample those offsets.

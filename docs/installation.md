@@ -5,21 +5,25 @@ Use Python 3.10 or newer in a virtual environment:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install weightscript
+pip install .
 weightscript --help
 ```
+
+WeightScript is not published on PyPI. Install from this source checkout, or from
+a wheel built locally with `python -m build`. Do not use `pip install weightscript`
+unless a future release is actually published.
 
 For CPU-only systems, install the desired PyTorch CPU wheel first:
 
 ```bash
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install weightscript
+pip install .
 ```
 
-From a source checkout, run `pip install .`. Development and release tools are
-available with `pip install -e '.[test,build]'`. Build with `python -m build` and
-run `pytest`. A wheel contains only the Python package; the sdist also includes
-documentation, Python tests and the independent Rust fixture sources.
+Development and release tools are available with `pip install -e '.[test,build]'`.
+Build with `python -m build` and run `pytest`. A wheel contains only the Python
+package; the sdist also includes documentation, Python tests and the independent
+Rust fixture sources.
 
 The runtime dependencies are PyTorch, Transformers (pinned for adapter
 compatibility), safetensors and NumPy. Native edits do not require research tools.
@@ -31,7 +35,7 @@ require substantial RAM.
 ## Research workflows
 
 ```bash
-pip install 'weightscript[research]'
+pip install -e '.[research]'
 pip install 'tracr @ git+https://github.com/google-deepmind/tracr@9ce2b8c82b6ba10e62e86cf6f390e7536d4fd2cd'
 git clone https://github.com/lacoco-lab/decompiling_transformers upstream-decompiler
 git -C upstream-decompiler checkout 787398b0f4393a90ad02cd8e71be48d1e85d2b21
@@ -43,7 +47,10 @@ The research extra includes JAX/Haiku, constraint solvers, and upstream plotting
 and graph dependencies. Tracr and the upstream decompiler are separate, explicit
 installations; neither is vendored. A missing research module reports an install
 hint and status 3. External agent commands also require their own executable and,
-for the Codex TUI integration, tmux and an authenticated Codex installation.
+for an external TUI, tmux and that provider's own authenticated CLI. `agent-start
+--provider grok` discovers the installed `grok` executable from its help text.
+It does not log in or invent an agent reply. Codex remains available through
+`codex-start` and is not started unless that command is used.
 
 ## Compatibility and exit status
 

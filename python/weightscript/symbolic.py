@@ -241,8 +241,16 @@ def lower(artifact, max_seq_len):
 
 
 @torch.inference_mode()
-def synthesize_rules(model, candidates, calibration, evaluation=None, *,
-                     min_fidelity=1.0, batch_size=32, causal_artifact=None):
+def synthesize_rules(
+    model,
+    candidates,
+    calibration,
+    evaluation=None,
+    *,
+    min_fidelity=1.0,
+    batch_size=32,
+    causal_artifact=None,
+):
     """Match explicit semantic ASTs, retaining the numerical model as fallback.
 
     Candidates are selected using calibration only. Evaluation failures are saved,
@@ -263,9 +271,15 @@ def synthesize_rules(model, candidates, calibration, evaluation=None, *,
     for rule in candidates:
         validate_rule(rule)
     source_hash = fingerprint(model)
-    evidence = causal_artifact.to_dict() if isinstance(causal_artifact, Artifact) else causal_artifact
-    if evidence is not None and (not isinstance(evidence, dict)
-            or evidence.get("provenance", {}).get("checkpoint_sha256") != source_hash):
+    evidence = (
+        causal_artifact.to_dict()
+        if isinstance(causal_artifact, Artifact)
+        else causal_artifact
+    )
+    if evidence is not None and (
+        not isinstance(evidence, dict)
+        or evidence.get("provenance", {}).get("checkpoint_sha256") != source_hash
+    ):
         raise ValueError("causal evidence belongs to a different checkpoint")
     calls = 0
 
@@ -277,8 +291,10 @@ def synthesize_rules(model, candidates, calibration, evaluation=None, *,
             if not torch.isfinite(logits).all():
                 raise ValueError("nonfinite model observations")
             calls += 1
-            observations.extend((row["input_ids"], int(pred))
-                                for row, pred in zip(chunk, logits.argmax(-1)))
+            observations.extend(
+                (row["input_ids"], int(pred))
+                for row, pred in zip(chunk, logits.argmax(-1))
+            )
         return observations
 
     def measure(rule, observations):
@@ -292,41 +308,87 @@ def synthesize_rules(model, candidates, calibration, evaluation=None, *,
                 actual, error = None, str(exc)
             correct += actual == expected
             if actual != expected and len(failures) < 20:
-                failures.append({"input_ids": ids, "expected": expected,
-                                 "actual": actual, "error": error})
-        return {"agreement": correct / len(observations),
-                "examples": len(observations), "counterexamples": failures}
+                failures.append(
+                    {
+                        "input_ids": ids,
+                        "expected": expected,
+                        "actual": actual,
+                        "error": error,
+                    }
+                )
+        return {
+            "agreement": correct / len(observations),
+            "examples": len(observations),
+            "counterexamples": failures,
+        }
 
     observations = observe(calibration)
     metrics = [measure(rule, observations) for rule in candidates]
     selected = max(range(len(candidates)), key=lambda i: metrics[i]["agreement"])
-    validation = measure(candidates[selected], observe(evaluation)) if evaluation else None
+    validation = (
+        measure(candidates[selected], observe(evaluation)) if evaluation else None
+    )
     accepted = metrics[selected]["agreement"] >= min_fidelity
-    nodes = [Node("tokens", "tokens", interpretation="primitive"),
-             Node("native", "native_model", ["tokens"],
-                  {"checkpoint_sha256": source_hash},
-                  [name for name, _ in model.named_parameters()], "opaque")]
+    nodes = [
+        Node("tokens", "tokens", interpretation="primitive"),
+        Node(
+            "native",
+            "native_model",
+            ["tokens"],
+            {"checkpoint_sha256": source_hash},
+            [name for name, _ in model.named_parameters()],
+            "opaque",
+        ),
+    ]
     if accepted:
-        nodes.append(Node("hypothesis", "semantic_rule", ["tokens"],
-                          {"rule": candidates[selected], "fallback": "native"},
-                          interpretation="hypothesis"))
+        nodes.append(
+            Node(
+                "hypothesis",
+                "semantic_rule",
+                ["tokens"],
+                {"rule": candidates[selected], "fallback": "native"},
+                interpretation="hypothesis",
+            )
+        )
     if fingerprint(model) != source_hash:
         raise RuntimeError("semantic synthesis mutated source model")
     return Artifact(
-        "symbolic.semantic_synthesis", nodes, "hypothesis" if accepted else "native",
-        {"checkpoint_sha256": source_hash,
-         "method": "finite-library behavioral synthesis with explicit semantic ASTs",
-         "causal_evidence": evidence, "candidates": candidates},
-        {"claim": "bounded behavioral hypothesis; internal primitive identification unproven",
-         "accepted": accepted, "selected_index": selected,
-         "calibration": metrics[selected], "evaluation": validation,
-         "evaluation_passed": validation["agreement"] >= min_fidelity if validation else None,
-         "candidate_metrics": metrics, "forward_calls": calls})
+        "symbolic.semantic_synthesis",
+        nodes,
+        "hypothesis" if accepted else "native",
+        {
+            "checkpoint_sha256": source_hash,
+            "method": "finite-library behavioral synthesis with explicit semantic ASTs",
+            "causal_evidence": evidence,
+            "candidates": candidates,
+        },
+        {
+            "claim": "bounded behavioral hypothesis; internal primitive identification unproven",
+            "accepted": accepted,
+            "selected_index": selected,
+            "calibration": metrics[selected],
+            "evaluation": validation,
+            "evaluation_passed": validation["agreement"] >= min_fidelity
+            if validation
+            else None,
+            "candidate_metrics": metrics,
+            "forward_calls": calls,
+        },
+    )
 
 
 @torch.inference_mode()
-def synthesize_sequence_rules(model, candidates, calibration, evaluation=None, final=None, *,
-                              min_fidelity=1.0, batch_size=32, causal_artifact=None):
+def synthesize_sequence_rules(
+    model,
+    candidates,
+    calibration,
+    evaluation=None,
+    final=None,
+    *,
+    min_fidelity=1.0,
+    batch_size=32,
+    causal_artifact=None,
+):
     """Match explicit span programs to teacher-forced model decisions.
 
     Calibration chooses the candidate. Evaluation and final rows are scored
@@ -366,9 +428,15 @@ def synthesize_sequence_rules(model, candidates, calibration, evaluation=None, f
         raise ValueError("sequence candidates must share bos, sep and eos")
     sep = candidates[0]["sep"]
     source_hash = fingerprint(model)
-    evidence = causal_artifact.to_dict() if isinstance(causal_artifact, Artifact) else causal_artifact
-    if evidence is not None and (not isinstance(evidence, dict)
-            or evidence.get("provenance", {}).get("checkpoint_sha256") != source_hash):
+    evidence = (
+        causal_artifact.to_dict()
+        if isinstance(causal_artifact, Artifact)
+        else causal_artifact
+    )
+    if evidence is not None and (
+        not isinstance(evidence, dict)
+        or evidence.get("provenance", {}).get("checkpoint_sha256") != source_hash
+    ):
         raise ValueError("causal evidence belongs to a different checkpoint")
     calls = 0
 
@@ -383,7 +451,9 @@ def synthesize_sequence_rules(model, candidates, calibration, evaluation=None, f
             for row, row_logits in zip(chunk, logits):
                 positions = []
                 for prefix, gold in supervised_pairs(row["input_ids"], sep):
-                    positions.append((prefix, gold, int(row_logits[len(prefix) - 1].argmax())))
+                    positions.append(
+                        (prefix, gold, int(row_logits[len(prefix) - 1].argmax()))
+                    )
                 observed.append(positions)
         return observed
 
@@ -402,37 +472,80 @@ def synthesize_sequence_rules(model, candidates, calibration, evaluation=None, f
                 model_task += predicted == gold
                 total += 1
                 if actual != predicted and len(failures) < 12:
-                    failures.append({"input_ids": prefix, "model": predicted, "rule": actual,
-                                     "gold": gold, "error": error})
-        return {"agreement": correct / total, "rule_task_agreement": rule_task / total,
-                "model_task_agreement": model_task / total, "positions": total,
-                "sequences": len(observed), "counterexamples": failures}
+                    failures.append(
+                        {
+                            "input_ids": prefix,
+                            "model": predicted,
+                            "rule": actual,
+                            "gold": gold,
+                            "error": error,
+                        }
+                    )
+        return {
+            "agreement": correct / total,
+            "rule_task_agreement": rule_task / total,
+            "model_task_agreement": model_task / total,
+            "positions": total,
+            "sequences": len(observed),
+            "counterexamples": failures,
+        }
 
     calibration_obs = observe(calibration)
     metrics = [measure(rule, calibration_obs) for rule in candidates]
     selected = max(range(len(candidates)), key=lambda i: (metrics[i]["agreement"], -i))
-    evaluation_metric = measure(candidates[selected], observe(evaluation)) if evaluation else None
+    evaluation_metric = (
+        measure(candidates[selected], observe(evaluation)) if evaluation else None
+    )
     final_metric = measure(candidates[selected], observe(final)) if final else None
     accepted = metrics[selected]["agreement"] >= min_fidelity
-    nodes = [Node("tokens", "tokens", interpretation="primitive"),
-             Node("native", "native_model", ["tokens"],
-                  {"checkpoint_sha256": source_hash},
-                  [name for name, _ in model.named_parameters()], "opaque")]
+    nodes = [
+        Node("tokens", "tokens", interpretation="primitive"),
+        Node(
+            "native",
+            "native_model",
+            ["tokens"],
+            {"checkpoint_sha256": source_hash},
+            [name for name, _ in model.named_parameters()],
+            "opaque",
+        ),
+    ]
     if accepted:
-        nodes.append(Node("hypothesis", "span_next", ["tokens"],
-                          {"rule": candidates[selected], "fallback": "native"},
-                          interpretation="hypothesis"))
+        nodes.append(
+            Node(
+                "hypothesis",
+                "span_next",
+                ["tokens"],
+                {"rule": candidates[selected], "fallback": "native"},
+                interpretation="hypothesis",
+            )
+        )
     if fingerprint(model) != source_hash:
         raise RuntimeError("sequence synthesis mutated source model")
     return Artifact(
-        "symbolic.sequence_synthesis", nodes, "hypothesis" if accepted else "native",
-        {"checkpoint_sha256": source_hash,
-         "method": "finite-library behavioral sequence synthesis; model forward passes used",
-         "causal_evidence": evidence, "candidates": candidates,
-         "selection": "calibration agreement only; evaluation and final are reports"},
-        {"claim": "bounded behavioral sequence hypothesis; not weight-only discovery or proof of an internal algorithm",
-         "accepted": accepted, "selected_index": selected,
-         "calibration": metrics[selected], "evaluation": evaluation_metric, "final": final_metric,
-         "evaluation_passed": evaluation_metric["agreement"] >= min_fidelity if evaluation_metric else None,
-         "final_passed": final_metric["agreement"] >= min_fidelity if final_metric else None,
-         "candidate_metrics": metrics, "forward_calls": calls})
+        "symbolic.sequence_synthesis",
+        nodes,
+        "hypothesis" if accepted else "native",
+        {
+            "checkpoint_sha256": source_hash,
+            "method": "finite-library behavioral sequence synthesis; model forward passes used",
+            "causal_evidence": evidence,
+            "candidates": candidates,
+            "selection": "calibration agreement only; evaluation and final are reports",
+        },
+        {
+            "claim": "bounded behavioral sequence hypothesis; not weight-only discovery or proof of an internal algorithm",
+            "accepted": accepted,
+            "selected_index": selected,
+            "calibration": metrics[selected],
+            "evaluation": evaluation_metric,
+            "final": final_metric,
+            "evaluation_passed": evaluation_metric["agreement"] >= min_fidelity
+            if evaluation_metric
+            else None,
+            "final_passed": final_metric["agreement"] >= min_fidelity
+            if final_metric
+            else None,
+            "candidate_metrics": metrics,
+            "forward_calls": calls,
+        },
+    )

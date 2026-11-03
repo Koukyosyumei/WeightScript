@@ -93,6 +93,18 @@ def build_parser(subparsers=None):
     bench.add_argument("--budget", type=positive_int, default=50)
     for parser in (check, ev, bench):
         parser.add_argument("--batch-size", type=positive_int, default=32)
+    jobs = sub.add_parser("jobs", help="detached durable command jobs")
+    jobs.add_argument("--store", default=None)
+    job_commands = jobs.add_subparsers(dest="job_action", required=True)
+    run_job = job_commands.add_parser("run")
+    run_job.add_argument("job_argv", nargs=argparse.REMAINDER)
+    job_commands.add_parser("list")
+    for name in ("status", "retry"):
+        item = job_commands.add_parser(name)
+        item.add_argument("job_id")
+    job_logs = job_commands.add_parser("logs")
+    job_logs.add_argument("job_id")
+    job_logs.add_argument("--lines", type=positive_int, default=100)
     return p
 
 
@@ -367,6 +379,15 @@ def main(argv=None):
     build_parser(sub)
     workbench.build_parser(sub)
     args = parser.parse_args(argv)
+    if args.command == "jobs":
+        from .jobs import run_action
+
+        def run_job():
+            code = run_action(args)
+            if code:
+                raise SystemExit(code)
+
+        return run_cli(run_job)
     executor = execute if args.command in HF_COMMANDS else workbench.execute
     return run_cli(lambda: executor(args))
 

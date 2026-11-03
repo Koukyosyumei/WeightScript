@@ -1,0 +1,221 @@
+{
+  "task": "bin_majority",
+  "checkpoint": "bin_majority-@1l1h16d3lr01drop",
+  "repository": "https://github.com/lacoco-lab/decompiling_transformers",
+  "upstream_revision": "787398b0f4393a90ad02cd8e71be48d1e85d2b21",
+  "seed": 0,
+  "mode": "program",
+  "goal": "Improve development next-token accuracy and negative log likelihood for this binary-majority model. Select only on the development rows in the request. Inspect at most one tensor, evaluate at most one proposal, then finish. Do not ask for held-out labels.",
+  "run_id": "ead19682c5614df791428ca54349f409",
+  "budget": {
+    "max_forwards": 16,
+    "selection_forwards": 8,
+    "max_steps": 3,
+    "steps": 2,
+    "policy_timeout_seconds": 180
+  },
+  "invalid_steps": 0,
+  "baseline_development": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.8063923194655722,
+      1
+    ],
+    "target_nll_standard_error": 0.006545984341264964,
+    "accuracy": 1.0,
+    "target_nll": 0.017421739028577576,
+    "forward_calls": 2,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_development": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.8063923194655722,
+      1
+    ],
+    "target_nll_standard_error": 0.006545984341264964,
+    "accuracy": 1.0,
+    "target_nll": 0.017421739028577576,
+    "forward_calls": 2,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_proposal": {},
+  "baseline_heldout": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.8063923194655722,
+      1
+    ],
+    "target_nll_standard_error": 0.014674263828981227,
+    "accuracy": 1.0,
+    "target_nll": 0.02137632084031793,
+    "forward_calls": 2,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_heldout": {
+    "examples": 16,
+    "labeled": 16,
+    "accuracy_wilson_95": [
+      0.8063923194655722,
+      1
+    ],
+    "target_nll_standard_error": 0.014674263828981227,
+    "accuracy": 1.0,
+    "target_nll": 0.02137632084031793,
+    "forward_calls": 2,
+    "reference_forward_calls": 2,
+    "token_disagreement": 0.0,
+    "reference_kl_per_token": 9.977806517521719e-10
+  },
+  "baseline_collateral": {
+    "examples": 6,
+    "labeled": 6,
+    "accuracy_wilson_95": [
+      0.6096657120978477,
+      1
+    ],
+    "target_nll_standard_error": 5.5603271385736084e-05,
+    "accuracy": 1.0,
+    "target_nll": 0.0003762651977012865,
+    "forward_calls": 1,
+    "reference_forward_calls": 0,
+    "token_disagreement": null,
+    "reference_kl_per_token": null
+  },
+  "selected_collateral": {
+    "examples": 6,
+    "labeled": 6,
+    "accuracy_wilson_95": [
+      0.6096657120978477,
+      1
+    ],
+    "target_nll_standard_error": 5.5603271385736084e-05,
+    "accuracy": 1.0,
+    "target_nll": 0.0003762651977012865,
+    "forward_calls": 1,
+    "reference_forward_calls": 1,
+    "token_disagreement": 0.0,
+    "reference_kl_per_token": 1.4175990751634042e-09
+  },
+  "changed_scalars": 0,
+  "heldout_sent_to_policy": false,
+  "policy_usage": [
+    {
+      "provider": "grok-exec",
+      "session_id": "01a1a2c7-8cca-7742-bc9d-0bfa202de3b3",
+      "model_usage": {
+        "grok-4.7-build": {
+          "inputTokens": 9548,
+          "outputTokens": 4565,
+          "cacheReadInputTokens": 8832,
+          "cacheCreationInputTokens": 0,
+          "modelCalls": 1,
+          "costUSD": 0.01730668
+        }
+      },
+      "input_tokens": 9548,
+      "output_tokens": 4565,
+      "total_tokens": 22945,
+      "total_cost_usd": 0.01730668,
+      "scope": "verbatim fields from grok --output-format json for this turn"
+    },
+    {
+      "provider": "grok-exec",
+      "session_id": "01a1a2c8-73b9-7003-b875-339d5b288608",
+      "model_usage": {
+        "grok-4.7-build": {
+          "inputTokens": 10045,
+          "outputTokens": 1408,
+          "cacheReadInputTokens": 8832,
+          "cacheCreationInputTokens": 0,
+          "modelCalls": 1,
+          "costUSD": 0.01120436
+        }
+      },
+      "input_tokens": 10045,
+      "output_tokens": 1408,
+      "total_tokens": 20285,
+      "total_cost_usd": 0.01120436,
+      "scope": "verbatim fields from grok --output-format json for this turn"
+    }
+  ],
+  "history": [
+    {
+      "step": 0,
+      "action": "evaluate",
+      "error": null,
+      "elapsed_seconds": 59.13600323099672,
+      "usage": {
+        "provider": "grok-exec",
+        "session_id": "01a1a2c7-8cca-7742-bc9d-0bfa202de3b3",
+        "model_usage": {
+          "grok-4.7-build": {
+            "inputTokens": 9548,
+            "outputTokens": 4565,
+            "cacheReadInputTokens": 8832,
+            "cacheCreationInputTokens": 0,
+            "modelCalls": 1,
+            "costUSD": 0.01730668
+          }
+        },
+        "input_tokens": 9548,
+        "output_tokens": 4565,
+        "total_tokens": 22945,
+        "total_cost_usd": 0.01730668,
+        "scope": "verbatim fields from grok --output-format json for this turn"
+      },
+      "proposal": {
+        "rule": {
+          "op": "count_threshold",
+          "threshold": 0.5,
+          "invert": false
+        }
+      },
+      "selected_best": false,
+      "development_accuracy": 1.0,
+      "development_nll": 0.018821681383997202,
+      "changed_scalars": 16
+    },
+    {
+      "step": 1,
+      "action": "finish",
+      "error": null,
+      "elapsed_seconds": null,
+      "usage": {
+        "provider": "grok-exec",
+        "session_id": "01a1a2c8-73b9-7003-b875-339d5b288608",
+        "model_usage": {
+          "grok-4.7-build": {
+            "inputTokens": 10045,
+            "outputTokens": 1408,
+            "cacheReadInputTokens": 8832,
+            "cacheCreationInputTokens": 0,
+            "modelCalls": 1,
+            "costUSD": 0.01120436
+          }
+        },
+        "input_tokens": 10045,
+        "output_tokens": 1408,
+        "total_tokens": 20285,
+        "total_cost_usd": 0.01120436,
+        "scope": "verbatim fields from grok --output-format json for this turn"
+      },
+      "selected_best": null,
+      "development_accuracy": null,
+      "development_nll": null,
+      "changed_scalars": null
+    }
+  ],
+  "elapsed_seconds": 77.63822474799963,
+  "metering_scope": "framework tool inference only; external policy is trusted and can access host resources; not a security sandbox",
+  "interpretation": "One seed and one trained majority checkpoint. The policy is a live Grok CLI turn, and usage fields are copied from that turn's JSON. Held-out rows were not sent to the policy. A development NLL change on this already accurate task is not a superiority result."
+}

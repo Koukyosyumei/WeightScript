@@ -68,7 +68,7 @@ The standalone program-only Codex run chose two attention-head scalings in layer
 | All-position disagreement | — | 26.1% | 1.45% | 0% |
 | Changed scalars | 0 | 1,152 | 73,728 | 73,728 |
 
-[Codex program summary](codex-program.json) · [Codex direct summary](codex-direct.json) · [Codex hybrid summary](codex-hybrid.json). The full controller journals, source checkpoints and tmux sessions remain local under `artifacts/` and `/dev/shm/`. Final/collateral examples are not sent to the policy. The file bridge is not a security sandbox. Cumulative Codex token usage can be collected from that workspace's own rollout with `weightscript codex-usage`; debugging turns must not be mistaken for experimental usage.
+[Codex program summary](codex-program.json) · [Codex direct summary](codex-direct.json) · [Codex hybrid summary](codex-hybrid.json). The full controller journals and source checkpoints from that study remained in the local artifact directory. The tmux workspaces for those runs were on a machine-local temporary filesystem; that location is provenance for the recorded study, not an install path or a runtime default. Final/collateral examples are not sent to the policy. The file bridge is not a security sandbox. Cumulative Codex token usage can be collected from that workspace's own rollout with `weightscript codex-usage`; debugging turns must not be mistaken for experimental usage.
 
 ## Interpretation
 

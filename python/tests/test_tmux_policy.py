@@ -18,8 +18,13 @@ def test_file_bridge_uses_actual_response_and_refuses_stale_files(
     result = tmux_policy.exchange(tmp_path, "test-editor", request, timeout=1)
     assert result["action"] == "finish"
     assert result["usage"]["policy"] == "codex-tui"
-    with pytest.raises(ValueError, match="fresh workspace"):
-        tmux_policy.exchange(tmp_path, "test-editor", request, timeout=1)
+    calls = []
+    monkeypatch.setattr(tmux_policy, "send", lambda *args: calls.append(args))
+    again = tmux_policy.exchange(tmp_path, "test-editor", request, timeout=1)
+    assert again["action"] == "finish" and calls == []
+    changed = dict(request, context={"mode": "program"})
+    with pytest.raises(ValueError, match="differs"):
+        tmux_policy.exchange(tmp_path, "test-editor", changed, timeout=1)
 
 
 def test_bridge_rejects_invalid_reply(tmp_path, monkeypatch):
